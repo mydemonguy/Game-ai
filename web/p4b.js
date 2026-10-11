@@ -9,56 +9,34 @@ function bar(e,y){if(e.hp>=e.max)return;const w=Math.max(70,e.w+20),x=e.x-w/2,f=
   X.fillStyle='rgba(5,4,12,.75)';X.fillRect(x-2,y-2,w+4,12);X.fillStyle='#ff3d6e';X.fillRect(x,y,w*f,8);X.fillStyle='rgba(255,255,255,.35)';X.fillRect(x,y,w*f,2)}
 function hitFlash(e,cx,cy,r){if(e.flash>0)glow(cx,cy,r,'#ffffff',e.flash*5)}
 
-const SW=[[-3.37,-.67],[-.57,-2.77],[-3.97,-.37]];
-function knightPose(p){const mv=p.ground?Math.min(1,Math.abs(p.vx)/450):0;let ang=-.67+Math.sin(lvT*2)*.04;
-  if(p.atk>0){const q=1-p.atk/.22,s=SW[(p.combo||1)-1];ang=s[0]+(s[1]-s[0])*Math.min(1,q*1.4)}else if(p.dashT>0)ang=-1.75;else if(!p.ground)ang=-1.3;
-  return{mv,sw:Math.sin(p.run)*mv,air:!p.ground,ang,bob:p.ground?(mv?-Math.abs(Math.cos(p.run))*6*mv:Math.sin(lvT*2.2)*1.5):0,sq:p.squash,vx:p.vx,lean:p.dashT>0?.28:mv*.07}}
-function drawKnightBody(x,y,face,P,mono){const M=c=>mono||c;X.save();X.translate(x,y);X.scale(face*(1+P.sq*.12),1-P.sq*.12);X.rotate(P.lean);X.translate(0,P.bob);
-  const flow=Math.min(1,Math.abs(P.vx)/600),w1=Math.sin(lvT*7)*6,w2=Math.sin(lvT*7+1.3)*8;
-  /* cape */
-  X.fillStyle=mono||lg(0,-130,-60,-20,['#6a40c0','#2a1656']);X.beginPath();X.moveTo(-4,-132);X.quadraticCurveTo(-34-flow*30,-110+w1,-60-flow*55,-36+w2-flow*30);
-  X.lineTo(-46-flow*44,-22+w1-flow*24);X.lineTo(-34-flow*30,-34+w2-flow*14);X.lineTo(-18,-46);X.lineTo(-10,-92);X.closePath();X.fill();
-  if(!mono){X.strokeStyle='#d9b45a';X.lineWidth=2.5;X.beginPath();X.moveTo(-60-flow*55,-36+w2-flow*30);X.lineTo(-46-flow*44,-22+w1-flow*24);X.lineTo(-34-flow*30,-34+w2-flow*14);X.stroke()}
-  /* back arm + legs */
-  limb(-10,-124,32,14,.25+P.sw*.5,M('#4d5578'));
-  leg(-8,-74,P.air?-.55:-P.sw,P.air?.95:.22+Math.max(0,P.sw)*1.1,M('#4b5374'),M('#2a2f45'),38,34,20);
-  leg(10,-74,P.air?.35:P.sw,P.air?.55:.22+Math.max(0,-P.sw)*1.1,M('#8a94ba'),M('#424a6e'),38,34,20);
-  /* torso */
-  X.fillStyle=mono||lg(-26,-134,26,-72,['#eef2ff','#a3aed4','#5d6890']);X.beginPath();X.moveTo(-24,-74);X.lineTo(-29,-124);X.quadraticCurveTo(-4,-140,27,-130);X.lineTo(23,-74);X.closePath();X.fill();
-  if(!mono){X.strokeStyle='rgba(30,34,60,.5)';X.lineWidth=2;X.beginPath();X.moveTo(4,-132);X.lineTo(2,-80);X.moveTo(-24,-97);X.quadraticCurveTo(0,-91,23,-99);X.moveTo(-24,-87);X.quadraticCurveTo(0,-81,23,-88);X.stroke();
-    X.strokeStyle='rgba(255,255,255,.55)';X.beginPath();X.moveTo(-26,-122);X.quadraticCurveTo(-4,-137,24,-128);X.stroke();
-    glow(4,-110,26,'#5ce1ff',.55+.2*Math.sin(lvT*4));X.fillStyle='#d8fbff';X.beginPath();X.moveTo(4,-119);X.lineTo(10,-110);X.lineTo(4,-101);X.lineTo(-2,-110);X.fill();
-    X.fillStyle='#3a2a1e';X.fillRect(-25,-81,48,9);X.fillStyle='#e8c46a';X.fillRect(-2,-82,10,11);X.fillStyle='#7a5a2a';X.fillRect(1,-79,4,5);
-    X.fillStyle=lg(0,-72,0,-34,['#55309a','#2e1860']);X.beginPath();X.moveTo(-12,-72);X.lineTo(16,-72);X.lineTo(13+P.sw*6,-36);X.lineTo(-9+P.sw*6,-38);X.closePath();X.fill();
-    X.strokeStyle='#d9b45a';X.lineWidth=2;X.stroke();X.fillStyle='#d9b45a';X.beginPath();X.moveTo(2+P.sw*3,-64);X.lineTo(6+P.sw*3,-56);X.lineTo(2+P.sw*3,-48);X.lineTo(-2+P.sw*3,-56);X.fill()}
-  /* helmet + plume */
-  X.fillStyle=mono||'#b48cff';X.beginPath();X.moveTo(0,-172);X.quadraticCurveTo(-26,-198+Math.sin(lvT*5)*3,-50-flow*14,-172+Math.sin(lvT*6)*4);X.quadraticCurveTo(-24,-175,-6,-160);X.fill();
-  X.fillStyle=mono||lg(-20,-174,24,-130,['#f6f8ff','#adb8dc','#5f6a92']);X.beginPath();X.arc(4,-152,22,0,7);X.fill();X.fillRect(-18,-152,44,18);
-  if(!mono){X.fillStyle='#1a1f34';X.fillRect(6,-160,22,8);X.fillStyle='#d8fbff';X.fillRect(9,-158,17,3);glow(19,-156,24,'#5ce1ff',.95);
-    X.strokeStyle='rgba(30,34,60,.5)';X.lineWidth=2;X.beginPath();X.moveTo(4,-174);X.lineTo(4,-136);X.moveTo(-18,-140);X.lineTo(26,-140);X.stroke();
-    X.fillStyle='#d9b45a';X.beginPath();X.moveTo(-2,-176);X.lineTo(4,-186);X.lineTo(10,-176);X.fill()}
-  /* pauldron */
-  X.fillStyle=mono||lg(0,-142,0,-110,['#f6f8ff','#8f9bc2']);X.beginPath();X.ellipse(4,-126,23,15,-.15,0,7);X.fill();
-  if(!mono){X.fillStyle=lg(0,-132,0,-112,['#dfe5ff','#7a86ae']);X.beginPath();X.ellipse(6,-118,18,10,-.15,0,7);X.fill();X.fillStyle='#d9b45a';X.fillRect(-14,-121,38,3)}
-  /* sword arm + starblade */
-  X.save();X.translate(8,-122);X.rotate(P.ang);X.fillStyle=M('#929ec6');X.fillRect(-8,0,16,28);X.fillStyle=M('#6a759c');X.fillRect(-9,26,18,26);X.fillStyle=M('#d9b45a');X.fillRect(-9,26,18,3);
-  X.translate(0,52);X.fillStyle=M('#3a2a1a');X.fillRect(-5,-16,10,18);X.fillStyle=M('#e8c46a');X.fillRect(-22,-4,44,8);X.fillStyle=M('#e8c46a');X.beginPath();X.arc(0,-18,5,0,7);X.fill();
-  if(!mono)glow(0,0,14,'#5ce1ff',.9);
-  X.fillStyle=mono||lg(-7,0,7,0,['#7fe9ff','#ffffff','#7fe9ff']);X.beginPath();X.moveTo(-7,4);X.lineTo(7,4);X.lineTo(5,140);X.lineTo(0,162);X.lineTo(-5,140);X.closePath();X.fill();
-  if(!mono){X.fillStyle='#5ce1ff';X.fillRect(-1.5,10,3,124);for(const t of[30,80,130])glow(0,t,30,'#5ce1ff',.4);
-    for(let i=0;i<3;i++){X.fillStyle='#ffffff';X.globalAlpha=.6+.4*Math.sin(lvT*6+i);X.fillRect(-1,24+i*36,2,6);X.globalAlpha=1}}
-  X.restore();X.restore()}
-function drawKnight(p){const P=knightPose(p);
-  for(const g of p.ghosts){X.globalAlpha=g.life/.22*.38;drawKnightBody(g.x,g.y,g.face,P,'#9d7cff')}X.globalAlpha=1;
-  shadow(p.x,46*(1-Math.min(.5,(GY-p.y)/600)));
-  if(p.inv>0&&p.dashT<=0&&Math.floor(p.inv*22)%2)X.globalAlpha=.45;
-  drawKnightBody(p.x,p.y,p.face,P,null);X.globalAlpha=1;
-  if(p.atk>0){const s=SW[(p.combo||1)-1],a=p.atk/.22,a0=Math.min(s[0],P.ang)+1.5708,a1=Math.max(s[0],P.ang)+1.5708,col=p.combo===3?'#c9a8ff':'#7fe9ff';
-    X.save();X.translate(p.x,p.y+P.bob);X.scale(p.face,1);X.globalCompositeOperation='lighter';
-    X.strokeStyle=col;X.globalAlpha=.22*a+.08;X.lineWidth=p.combo===3?70:52;X.beginPath();X.arc(8,-122,162,a0,a1);X.stroke();
-    X.globalAlpha=.5*a+.15;X.lineWidth=p.combo===3?22:16;X.beginPath();X.arc(8,-122,180,a0,a1);X.stroke();
-    X.strokeStyle='#ffffff';X.globalAlpha=.8*a;X.lineWidth=4;X.beginPath();X.arc(8,-122,190,Math.max(a0,a1-.9),a1);X.stroke();X.restore();X.globalAlpha=1}}
-
+/* ---------- the hero: sprite-sheet dino (frames packed by sprites/make_atlas.py) ---------- */
+const DIMG=new Image();let DGHOST=null;
+DIMG.onload=()=>{try{const c=document.createElement('canvas');c.width=DIMG.width;c.height=DIMG.height;const g=c.getContext('2d');g.drawImage(DIMG,0,0);
+  g.globalCompositeOperation='source-in';g.fillStyle='#a58cff';g.fillRect(0,0,c.width,c.height);DGHOST=c}catch(e){}C._dirty=1};
+DIMG.src=DINO.src;
+function dinoFrame(p){const A=DINO.anims;
+  if(p.dead)return A.dead[Math.min(7,Math.floor((p.deadT||0)*12))];
+  if(p.atk>0){const q=1-p.atk/.22;return p.combo===3?A.jump[q<.3?2:10]:A.jump[q<.25?3:5]}
+  if(p.dashT>0)return A.run[2];
+  if(!p.ground)return p.vy<-500?A.jump[4]:p.vy<0?A.jump[5]:p.vy<500?A.jump[7]:A.jump[8];
+  if(p.landT>0)return A.jump[9+Math.min(2,Math.floor((.15-p.landT)/.05))];
+  const v=Math.abs(p.vx);if(v>330)return A.run[Math.floor(p.run*1.1)%8];if(v>40)return A.walk[Math.floor(p.run*1.6)%10];return A.idle[Math.floor(lvT*12)%10]}
+function dinoDraw(img,k,x,y,face,sx,sy){const M=DINO,fx=(k%M.cols)*M.fw,fy=Math.floor(k/M.cols)*M.fh;X.save();X.translate(x,y);X.scale(face*sx,sy);
+  X.drawImage(img,fx,fy,M.fw,M.fh,-M.ax,-M.ay,M.fw,M.fh);X.restore()}
+const CLAW=[[-1.25,1.0],[1.05,-1.2],[-1.6,1.4]];
+function drawKnight(p){if(!DIMG.complete||!DIMG.naturalWidth)return;
+  for(const g of p.ghosts){X.globalAlpha=g.life/.22*.45;dinoDraw(DGHOST||DIMG,DINO.anims.run[2],g.x,g.y,g.face,1,1)}X.globalAlpha=1;
+  shadow(p.x,60*(1-Math.min(.5,(GY-p.y)/600)));
+  if(p.en>=50&&!p.dead)glow(p.x+p.face*10,p.y-100,110,'#5ce1ff',.18+.08*Math.sin(lvT*5));
+  const lunge=p.atk>0?1+.06*Math.sin((1-p.atk/.22)*Math.PI):1,sx=(1+p.squash*.1)*lunge,sy=1-p.squash*.1;
+  if(p.inv>0&&p.dashT<=0&&!p.dead&&Math.floor(p.inv*22)%2)X.globalAlpha=.45;
+  dinoDraw(DIMG,dinoFrame(p),p.x,p.y,p.face,sx,sy);X.globalAlpha=1;
+  if(p.atk>0){const c=CLAW[(p.combo||1)-1],q=Math.min(1,(1-p.atk/.22)*1.5),a=p.atk/.22,big=p.combo===3,col=big?'#c9a8ff':'#7fe9ff';
+    const a0=c[0],a1=c[0]+(c[1]-c[0])*q,lo=Math.min(a0,a1),hi=Math.max(a0,a1);
+    X.save();X.translate(p.x+p.face*(big?90:70),p.y-100);X.scale(p.face,1);X.globalCompositeOperation='lighter';
+    X.strokeStyle=col;X.globalAlpha=.2*a+.06;X.lineWidth=big?80:56;X.beginPath();X.arc(0,0,big?150:120,lo,hi);X.stroke();
+    X.lineCap='round';for(let i=0;i<3;i++){const r=(big?120:96)+i*(big?22:17);X.globalAlpha=.75*a;X.lineWidth=big?9:7;X.strokeStyle=i===1?'#ffffff':col;X.beginPath();X.arc(0,0,r,lo,hi);X.stroke()}
+    X.restore();X.globalAlpha=1}}
 function drawHollow(e){const big=e.type==='b',s=big?1.38:1;shadow(e.x,big?74:46);
   const walk=e.state==='walk'?Math.sin(lvT*9+e.seed)*.55*Math.min(1,Math.abs(e.vx)/150):0,crouch=e.state==='wind'?7:0;
   const iron=big?'#3d2f54':'#30263f',dark=big?'#241a33':'#1d1528',rim='#7a6a9c';

@@ -106,9 +106,9 @@ const dm=()=>1+G.lv*.12;
 function rng(s){return()=>{s=(s*16807)%2147483647;return(s-1)/2147483646}}
 const overlap=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
 const ebox=e=>({x:e.x-e.w/2,y:e.y-e.h,w:e.w,h:e.h});
-const pbox=()=>({x:pl.x-32,y:pl.y-150,w:64,h:150});
+const pbox=()=>({x:pl.x-42,y:pl.y-168,w:84,h:168});
 
-function newPlayer(){return{x:300,y:GY,vx:0,vy:0,face:1,hp:100,max:100,en:30,ground:true,jumps:0,atk:0,atkCD:0,combo:0,comboT:0,inv:0,hurtT:0,hitDone:new Set(),run:0,dashT:0,dashCD:0,squash:0,hits:0,hitsT:0,ghostT:0,ghosts:[]}}
+function newPlayer(){return{x:300,y:GY,vx:0,vy:0,face:1,hp:100,max:100,en:30,ground:true,jumps:0,atk:0,atkCD:0,combo:0,comboT:0,inv:0,hurtT:0,hitDone:new Set(),run:0,dashT:0,dashCD:0,squash:0,landT:0,dead:0,deadT:0,hits:0,hitsT:0,ghostT:0,ghosts:[]}}
 
 const ETYPES={
  g:{w:80,h:165,hp:42,spd:260,dmg:10,score:100},
@@ -143,7 +143,7 @@ function hurtPlayer(d,kx){const p=pl;if(p.inv>0||G.state!=='play')return;d=Math.
   if(p.hp<=0){p.hp=0;gameOver()}}
 
 function updPlayer(dt){const p=pl,L=LV[G.lv];
-  p.inv=Math.max(0,p.inv-dt);p.atkCD-=dt;p.comboT-=dt;p.hurtT-=dt;p.dashCD-=dt;p.squash=Math.max(0,p.squash-dt*5);
+  p.inv=Math.max(0,p.inv-dt);p.atkCD-=dt;p.comboT-=dt;p.hurtT-=dt;p.dashCD-=dt;p.squash=Math.max(0,p.squash-dt*5);p.landT-=dt;
   p.hitsT-=dt;if(p.hitsT<=0)p.hits=0;
   for(const g of p.ghosts)g.life-=dt;p.ghosts=p.ghosts.filter(g=>g.life>0);
   let ax=0;if(p.hurtT<=0){if(K.left)ax-=1;if(K.right)ax+=1}
@@ -160,7 +160,7 @@ function updPlayer(dt){const p=pl,L=LV[G.lv];
   if(P.special&&p.en>=50&&p.hurtT<=0){p.en-=50;shots.push({x:p.x+p.face*70,y:p.y-85,vx:p.face*1600,vy:0,r:70,dmg:48,friend:true,life:.85,pierce:true,hit:new Set(),col:'#5ce1ff',wave:true});
     S.special();buzz(30);shake=10;burst(p.x+p.face*60,p.y-85,'#5ce1ff',20,700);ring(p.x+p.face*60,p.y-85,'#5ce1ff',220)}
   if(p.dashT<=0)p.vy+=3300*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;
-  if(p.y>=GY){if(!p.ground&&p.vy>700){dust(p.x,GY);p.squash=1}p.y=GY;p.vy=0;p.ground=true;p.jumps=0}
+  if(p.y>=GY){if(!p.ground){if(p.vy>700){dust(p.x,GY);p.squash=1}p.landT=.15}p.y=GY;p.vy=0;p.ground=true;p.jumps=0}
   let mn=60,mx=L.len;if(lock){mn=cam+60;mx=cam+W-(touchy?RSAFE-40:60)}
   p.x=Math.max(mn,Math.min(mx,p.x));
   p.run+=Math.abs(p.vx)*dt*.02;

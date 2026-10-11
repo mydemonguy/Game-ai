@@ -28,7 +28,7 @@ function drawParts(){X.save();X.globalCompositeOperation='lighter';
   for(const q of parts){X.globalAlpha=Math.max(0,q.life/q.max);if(q.streak){X.strokeStyle=q.col;X.lineWidth=3;X.beginPath();X.moveTo(q.x,q.y);X.lineTo(q.x-q.vx*.035,q.y-q.vy*.035);X.stroke()}
     else{X.fillStyle=q.col;X.fillRect(q.x-q.sz/2,q.y-q.sz/2,q.sz,q.sz)}}X.restore();X.globalAlpha=1}
 function drawTexts(){X.textAlign='center';for(const t of texts){X.globalAlpha=Math.min(1,t.life*2);X.font=`700 ${t.big?52:typeof t.s==='number'?38:30}px ${FU}`;X.lineWidth=6;X.strokeStyle='rgba(0,0,0,.7)';X.strokeText(t.s,t.x,t.y);X.fillStyle=t.col;X.fillText(t.s,t.x,t.y)}X.globalAlpha=1}
-function drawWorld(){const L=bg.L;if(!L.boss)drawGate(L);drawHz();drawPicks();
+function drawWorld(){const L=bg.L;drawProps();if(!L.boss)drawGate(L);drawHz();drawPicks();
   for(const e of en)if(!e.fly)e.type==='c'?drawCaster(e):drawHollow(e);
   if(boss&&!boss.dead)drawBoss(boss);
   if(pl)drawKnight(pl);
@@ -71,7 +71,7 @@ function syncPad(){if(pad.hidden||!pl)return;const e=Math.round(pl.en)/100,c=Mat
   if(c!==padC){padC=c;DSB.style.setProperty('--c',c)}}
 function frame(now){const dt=Math.min(.033,Math.max(0,(now-last)/1000));last=now;
   try{if(G.state==='play'&&!G.paused)update(dt);
-    else if(G.state==='over'){updParts(dt);lvT+=dt;shake*=.9}
+    else if(G.state==='over'){updParts(dt);lvT+=dt;shake*=.9;if(pl)pl.deadT=(pl.deadT||0)+dt}
     else if(G.state==='menu'){lvT+=dt;cam+=dt*70;if(cam>bg.L.len-W)cam=0}
     if(G.state==='play'&&!G.paused||G.state==='over'||G.state==='menu'||C._dirty){C._dirty=0;render()}syncPad()}catch(err){console.error(err)}
   requestAnimationFrame(frame)}

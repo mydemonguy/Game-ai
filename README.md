@@ -39,3 +39,8 @@ The game's source is in `web/` (p1.html = page + touch controls, p2–p5 = game 
 Run `web/build.sh` to assemble it into `app/src/main/assets/index.html` (fonts embedded for offline play), then push; GitHub builds a new APK and publishes it under **Releases**.
 
 Builds are signed with `app/aetherfall-debug.keystore`, so each new APK installs as an update over the old one. It is a debug key for this hobby project, not for a Play Store release.
+
+## Credits
+
+- Dino sprite: the free dino sprite pack supplied by the project owner (frames packed into `web/sprites/dino.webp` by `web/sprites/make_atlas.py`).
+- Fonts: Cinzel and Chakra Petch (SIL Open Font License, see `web/fonts/`).

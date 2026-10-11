@@ -51,7 +51,7 @@ function buildBG(L){const r=rng(L.len*7+L.name.length*97),ks=KINDS[L.theme],far=
   const fog2=X.createLinearGradient(0,GY-200,0,GY);fog2.addColorStop(0,rgba(L.sky[1],0));fog2.addColorStop(1,rgba(L.sky[1],.35));
   const ray=X.createLinearGradient(0,0,0,GY);ray.addColorStop(0,rgba(L.planet,.9));ray.addColorStop(.7,rgba(L.planet,.25));ray.addColorStop(1,rgba(L.planet,0));
   const pg=X.createRadialGradient(-60,-60,20,0,0,190);pg.addColorStop(0,'#ffffff');pg.addColorStop(.28,L.planet);pg.addColorStop(.85,shade(L.planet,-.55));pg.addColorStop(1,shade(L.sky[1],-.2));
-  return{L,far,mid,near,fg,stars,motes,neb,rays,clouds,sky,fog,fog2,ray,pg,tile:groundTile(L),skyC:null,skyW:0}}
+  return addLayers({L,far,mid,near,fg,stars,motes,neb,rays,clouds,sky,fog,fog2,ray,pg,tile:groundTile(L),skyC:null,skyW:0})}
 /* sky, nebulae and planet barely move, so they are painted once into an offscreen canvas */
 function bakeSky(B){const L=B.L,c=document.createElement('canvas');c.width=W+340;c.height=GY+60;const o=X;X=c.getContext('2d',{alpha:false});
   try{X.translate(60,60);X.fillStyle=B.sky;X.fillRect(-60,-60,c.width,c.height);
@@ -101,15 +101,6 @@ function shape(o,ox,base,col,glo,depth){const x=o.x-ox,w=o.w,h=o.h;if(x>W+80||x+
   case'crane':X.rect(x+w*.4,base-h,w*.12,h);X.fill();X.beginPath();X.moveTo(x-w*.4,base-h);X.lineTo(x+w*1.4,base-h);X.lineTo(x+w*1.4,base-h+14);X.lineTo(x-w*.4,base-h+14);X.fill();
     X.strokeStyle=col;X.lineWidth=3;X.beginPath();X.moveTo(x+w*1.2,base-h+14);X.lineTo(x+w*1.2,base-h*.5+Math.sin(lvT+o.s)*20);X.stroke();X.fillRect(x+w*1.1,base-h*.5+Math.sin(lvT+o.s)*20,w*.2,30);
     glow(x+w*.46,base-h-8,14,'#ff3d3d',lit*(Math.sin(lvT*4)>.0?1:.2));break}}
-function drawFG(){const B=bg,L=B.L,col=shade(L.gnd,-.55),k=FGK[L.theme];X.fillStyle=col;
-  for(const o of B.fg){const x=o.x-cam*1.25,w=o.w,h=o.h;if(x>W+60||x+w<-60)continue;X.beginPath();
-    if(k==='rubble'){X.moveTo(x,H);X.lineTo(x+w*.1,H-h*.6);X.lineTo(x+w*.3,H-h);X.lineTo(x+w*.55,H-h*.7);X.lineTo(x+w*.8,H-h*.85);X.lineTo(x+w,H);X.fill()}
-    else if(k==='shards'){for(let i=0;i<4;i++){const sx=x+i*w*.25,sh=h*(.6+((o.s*13+i)%1)*.8);X.moveTo(sx,H);X.lineTo(sx+w*.08,H-sh);X.lineTo(sx+w*.16,H);}X.fill();
-      X.strokeStyle=rgba(L.glow,.35);X.lineWidth=2;X.stroke()}
-    else if(k==='rail'){X.fillRect(x,H-h,w,8);for(let i=0;i<=4;i++)X.fillRect(x+i*w/4-4,H-h,8,h);glow(x+w/2,H-h,16,L.glow,.4)}
-    else if(k==='pipes'){X.fillRect(x,H-h,w,26);X.fillRect(x+w*.7,H-h-60,26,h+60);glow(x+w*.7+13,H-h-60,20,L.glow,.5+Math.sin(lvT*5+o.s*9)*.3)}
-    else if(k==='spikes'){for(let i=0;i<6;i++){const sx=x+i*w/6;X.moveTo(sx,H);X.lineTo(sx+w/12,H-h*(.5+((o.s*7+i)%1)));X.lineTo(sx+w/6,H)}X.fill()}
-    else{const sw=Math.sin(lvT*.8+o.s*6)*14;X.strokeStyle=col;X.lineWidth=10;X.setLineDash([22,10]);X.beginPath();X.moveTo(x,H-h-120);X.quadraticCurveTo(x+w/2+sw,H-h+30,x+w,H-h-140);X.stroke();X.setLineDash([])}}}
 function drawBG(){const B=bg,L=B.L;if(B.skyW!==W)bakeSky(B);X.drawImage(B.skyC,-60-Math.min(260,cam*.02),-60);
   for(const s of B.stars){if(s.x>W+40)continue;X.globalAlpha=.25+.55*Math.abs(Math.sin(lvT*.8+s.t));X.fillStyle='#fff';X.fillRect(s.x,s.y,s.s,s.s)}X.globalAlpha=1;
   if(L.theme==='throne')glow(W*.72-cam*.02-60,300,200,L.glow,.12+Math.sin(lvT*2)*.08);
