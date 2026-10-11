@@ -45,7 +45,7 @@ function buildBG(L){const r=rng(L.len*7+L.name.length*97),ks=KINDS[L.theme],far=
   const fog2=X.createLinearGradient(0,GY-200,0,GY);fog2.addColorStop(0,rgba(L.sky[1],0));fog2.addColorStop(1,rgba(L.sky[1],.35));
   const ray=X.createLinearGradient(0,0,0,GY);ray.addColorStop(0,rgba(L.planet,.9));ray.addColorStop(.7,rgba(L.planet,.25));ray.addColorStop(1,rgba(L.planet,0));
   const pg=X.createRadialGradient(-60,-60,20,0,0,190);pg.addColorStop(0,'#ffffff');pg.addColorStop(.28,L.planet);pg.addColorStop(.85,shade(L.planet,-.55));pg.addColorStop(1,shade(L.sky[1],-.2));
-  return addLayers({L,far,mid,near,fg,stars,motes,neb,rays,clouds,sky,fog,fog2,ray,pg,tile:groundTile(L),skyC:null,skyW:0})}
+  return addAtmos(addLayers({L,far,mid,near,fg,stars,motes,neb,rays,clouds,sky,fog,fog2,ray,pg,tile:groundTile(L),skyC:null,skyW:0}))}
 /* sky, nebulae and planet barely move, so they are painted once into an offscreen canvas */
 function bakeSky(B){const L=B.L,c=document.createElement('canvas');c.width=W+340;c.height=GY+60;const o=X;X=c.getContext('2d',{alpha:false});
   try{X.translate(60,60);X.fillStyle=B.sky;X.fillRect(-60,-60,c.width,c.height);
@@ -107,18 +107,20 @@ function shape(o,ox,base,col,glo,depth){const x=o.x-ox,w=o.w,h=o.h;if(x>W+80||x+
   case'crane':X.rect(x+w*.4,base-h,w*.12,h);X.fill();X.beginPath();X.moveTo(x-w*.4,base-h);X.lineTo(x+w*1.4,base-h);X.lineTo(x+w*1.4,base-h+14);X.lineTo(x-w*.4,base-h+14);X.fill();
     X.strokeStyle=col;X.lineWidth=3;X.beginPath();X.moveTo(x+w*1.2,base-h+14);X.lineTo(x+w*1.2,base-h*.5+Math.sin(lvT+o.s)*20);X.stroke();X.fillRect(x+w*1.1,base-h*.5+Math.sin(lvT+o.s)*20,w*.2,30);
     glow(x+w*.46,base-h-8,14,'#ff3d3d',lit*(Math.sin(lvT*4)>.0?1:.2));break}}
-function drawBG(){const B=bg,L=B.L;if(B.skyW!==W)bakeSky(B);X.drawImage(B.skyC,-60-Math.min(260,cam*.02),-60);
+function drawBG(){const B=bg,L=B.L;if(B.skyW!==W)bakeSky(B);if(AMB[L.theme].heat)drawSkyShimmer(B);else X.drawImage(B.skyC,-60-Math.min(260,cam*.02),-60);
   for(const s of B.stars){if(s.x>W+40)continue;X.globalAlpha=.25+.55*Math.abs(Math.sin(lvT*.8+s.t));X.fillStyle='#fff';X.fillRect(s.x,s.y,s.s,s.s)}X.globalAlpha=1;
   if(L.theme==='core')glow(W*.72-cam*.02-60,300,200,L.glow,.12+Math.sin(lvT*2)*.08);
   for(const c of B.clouds){const x=((c.x-cam*.06-lvT*c.v)%3200+3200)%3200-400;glow(x,c.y,c.w,'#ffffff',c.a,c.w*.22)}
   X.save();X.globalCompositeOperation='lighter';X.fillStyle=B.ray;
   for(const r of B.rays){const x=((r.x-cam*.08)%2600+2600)%2600-150,sway=Math.sin(lvT*.25+r.ph)*40;X.globalAlpha=r.a*(.75+.25*Math.sin(lvT*.6+r.ph));X.beginPath();X.moveTo(x,0);X.lineTo(x+r.w,0);X.lineTo(x+r.w*2.2+r.lean+sway,GY);X.lineTo(x+r.lean+sway,GY);X.fill()}
   X.restore();X.globalAlpha=1;
+  drawSkyLife();
   for(const o of B.far)shape(o,cam*.12,GY-50,L.far,L.glow,2);
   X.fillStyle=B.fog;X.fillRect(-60,GY-340,W+120,340);
   for(const o of B.mid)shape(o,cam*.35,GY-6,L.mid,L.glow,1);
   for(const o of B.walls){const x=o.x-cam*.62;if(x>W+20||x+o.b.w<-20)continue;drawBaked(o.b,x,GY+34-o.b.h)}
-  const off=-(((cam%512)+512)%512);for(let x=off;x<W;x+=512)X.drawImage(B.tile,x,GY);
+  drawSigns();
+  const off=-(((cam%512)+512)%512);for(let x=off;x<W;x+=512)X.drawImage(B.tile,x,GY);drawConveyor();
   X.save();X.globalCompositeOperation='lighter';X.fillStyle=rgba(L.glow,.5);X.fillRect(-60,GY-1,W+120,3);X.restore();
   X.strokeStyle=rgba(L.glow,.1);X.lineWidth=2;const o2=-(cam%240);
   for(let x=o2-240;x<W+240;x+=240){X.beginPath();X.moveTo(x,GY);X.lineTo(x+(x-W/2)*.55,H);X.stroke()}}

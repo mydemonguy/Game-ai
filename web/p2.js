@@ -54,50 +54,50 @@ function clearInput(){if(typeof stickEnd==='function'&&stick.id!==null)stickEnd(
 
 /* ---------- world data ---------- */
 const LV=[
- {name:'Hangar Nine',ch:'Chapter I',theme:'hangar',len:6200,sky:['#12151c','#262d3a','#4a566a'],planet:'#ffb070',far:'#20262f',mid:'#2b323d',gnd:'#191d24',glow:'#ff9a2a',
-  waves:[['g','g'],['g','d','g'],['g','g','g'],['d','g','d','g']]},
- {name:'The Iron Armory',ch:'Chapter II',theme:'armory',len:6600,sky:['#0f1512','#212c26','#43574b'],planet:'#ffd08a',far:'#1c2620',mid:'#26332b',gnd:'#141b17',glow:'#ff8a3a',
-  waves:[['g','d','d'],['g','g','b'],['d','d','g','g'],['b','g','d','g']]},
- {name:'Orbital Dock Aeris',ch:'Chapter III',theme:'station',len:7000,sky:['#0c1222','#203256','#5a78a6'],planet:'#cfeaff',far:'#2a3856',mid:'#354564',gnd:'#262c38',glow:'#ff9a2a',
-  waves:[['d','d','g'],['b','d','d'],['g','g','g','d','d'],['b','b','d']]},
- {name:'The Amber Foundry',ch:'Chapter IV',theme:'cargo',len:7000,sky:['#18120a','#3a2a16','#86643a'],planet:'#ffd27a',far:'#2a2013',mid:'#382a17',gnd:'#1c160e',glow:'#ffb347',
-  waves:[['c','g','g'],['b','c','d'],['g','g','c','c'],['b','b','c','d']]},
- {name:'Gates of the Null Citadel',ch:'Chapter V',theme:'citadel',len:7400,sky:['#07050f','#1c1238','#4e2f7c'],planet:'#c9a8ff',far:'#160c30',mid:'#201240',gnd:'#0c0718',glow:'#b48cff',
-  waves:[['c','c','d','d'],['b','b','g','g','c'],['d','d','d','c','c'],['b','b','b','c']]},
- {name:'Throne of the Rift',ch:'Chapter VI',theme:'core',len:6000,sky:['#060406','#1a0a0e','#4a140e'],planet:'#ff4a2a',far:'#140b0c',mid:'#1e1113',gnd:'#0d0909',glow:'#ff4a2a',
-  waves:[['c','b','d'],['g','g','c','c','b']],boss:true}
+ {name:'Hangar Nine',ch:'Chapter I',theme:'hangar',len:7400,sky:['#12151c','#262d3a','#4a566a'],planet:'#ffb070',far:'#20262f',mid:'#2b323d',gnd:'#191d24',glow:'#ff9a2a',
+  waves:[['g','g'],['g','d','g'],['g','g','g'],['d','g','d','g'],['g','g','b']]},
+ {name:'The Iron Armory',ch:'Chapter II',theme:'armory',len:7800,sky:['#0f1512','#212c26','#43574b'],planet:'#ffd08a',far:'#1c2620',mid:'#26332b',gnd:'#141b17',glow:'#ff8a3a',
+  waves:[['g','d','d'],['g','g','b'],['d','d','g','g'],['b','g','d','g'],['b','b','d','d']]},
+ {name:'Orbital Dock Aeris',ch:'Chapter III',theme:'station',len:8400,sky:['#0c1222','#203256','#5a78a6'],planet:'#cfeaff',far:'#2a3856',mid:'#354564',gnd:'#262c38',glow:'#ff9a2a',
+  waves:[['d','d','g'],['b','d','d'],['g','g','g','d','d'],['b','b','d'],['B','d','d']]},
+ {name:'The Amber Foundry',ch:'Chapter IV',theme:'cargo',len:8400,sky:['#18120a','#3a2a16','#86643a'],planet:'#ffd27a',far:'#2a2013',mid:'#382a17',gnd:'#1c160e',glow:'#ffb347',
+  waves:[['c','g','g'],['b','c','d'],['g','g','c','c'],['b','b','c','d'],['c','c','g','g','b']]},
+ {name:'Gates of the Null Citadel',ch:'Chapter V',theme:'citadel',len:8800,sky:['#07050f','#1c1238','#4e2f7c'],planet:'#c9a8ff',far:'#160c30',mid:'#201240',gnd:'#0c0718',glow:'#b48cff',
+  waves:[['c','c','d','d'],['b','b','g','g','c'],['d','d','d','c','c'],['b','b','b','c'],['B','c','c']]},
+ {name:'Throne of the Rift',ch:'Chapter VI',theme:'core',len:7200,sky:['#060406','#1a0a0e','#4a140e'],planet:'#ff4a2a',far:'#140b0c',mid:'#1e1113',gnd:'#0d0909',glow:'#ff4a2a',
+  waves:[['c','b','d'],['g','g','c','c','b'],['B','d','d']],boss:true}
 ];
 LV.forEach(L=>{const n=L.waves.length,end=L.boss?L.len-2200:L.len-900;L.trig=L.waves.map((_,i)=>Math.round(900+(end-900)*i/Math.max(1,n-1)))});
 
 const STORY={
  intro:[
-  {ey:'The Age of Aether',h:'The Light Between Stars',b:`<p>For a thousand years the kingdom of <b>Ithra</b> drew its power from the Aether, the living light that flows between the stars. It lit their cities, sang through their crystal forests and lifted their skyships into the clouds.</p><p>The <b>Starblade Order</b> kept the peace. Each knight carried a sword forged from the heart of a dying star.</p>`},
-  {ey:'The Fall',h:'Malakar Opens the Rift',b:`<p>Then Archmage <b>Malakar</b>, the Order's own Grand Master, tore open the Rift at the world's core. Void poured out. He fused his followers with machine and shadow and named them the <b>Hollowed</b>.</p><p>The Order fell in a single night. Ithra went dark.</p>`},
-  {ey:'Awakening',h:'The Last Starblade',b:`<p>Thirty years later, in a sealed cryo-vault beneath the ruined temple, <b>Kael Varen</b> opens his eyes. In his hand is the last starblade. Inside it lives <b>Lyra</b>, the blade's star-spirit, and she has been waiting.</p><p><span class="who">LYRA:</span> "Get up, knight. The Rift is still open, and you are all the light this world has left."</p>`}
+  {ey:'The Age of Aether',h:'The Starblood Clan',b:`<p>For a thousand years the kingdom of <b>Ithra</b> ran on the Aether, the living light that flows between the stars.</p><p>Its keepers were the <b>Starblood</b>, a clan of dinosaurs whose claws could hold starlight. They guarded the great reactors, and the reactors kept every city in Ithra bright.</p>`},
+  {ey:'The Fall',h:'Malakar Opens the Rift',b:`<p>Then <b>Malakar</b>, the clan's own Egg-Keeper, cracked the reactors open and tore a Rift at the world's core. He fused his followers with machine and shadow and named them the <b>Hollowed</b>.</p><p>He hunted the Starblood until none were left. Ithra went dark.</p>`},
+  {ey:'Hatching',h:'The Last Starblood',b:`<p>Thirty years later, in a frozen stasis pod deep inside Hangar Nine, one egg cracks. Out tumbles <b>Tyko</b>: small, green, and very hungry.</p><p>Wrapped around the shell is a glowing collar, and inside it lives <b>Lyra</b>, the star-spirit who kept the egg warm all those years.</p><p><span class="who">LYRA:</span> "Hello, little one. I'm sorry you woke up in the dark. Let's go and turn the lights back on."</p>`}
  ],
  brief:[
-  `<p><span class="who">LYRA:</span> "Hangar Nine, under the old temple of Veyra. The Order's last ships rusted here. The Hollowed patrol it now. Their cores are stolen souls wrapped in iron. Free them."</p>`,
-  `<p><span class="who">LYRA:</span> "The Iron Armory. Malakar builds his green war-drones here and fuels them with Aether stolen from the reactors. Shut it down."</p>`,
-  `<p><span class="who">LYRA:</span> "Orbital Dock Aeris. His fleet docks here before every raid. Stay off the hull edges, Kael. It's a long fall to the clouds."</p>`,
-  `<p><span class="who">LYRA:</span> "The Amber Foundry is where the Hollowed are made. Kael, I found records here. Malakar didn't just lead the Order. He forged <i>this</i> blade. He forged <i>me</i>."</p>`,
-  `<p><span class="who">LYRA:</span> "The Null Citadel. Its gates were built to keep the Void <i>in</i>. He turned them inside out. Every Hollowed he has left is waiting here."</p>`,
-  `<p><span class="who">MALAKAR:</span> "Little star. You came home to your maker."</p><p><span class="who">LYRA:</span> "Don't listen to him. Strike true, Kael. This ends tonight."</p>`
+  `<p><span class="who">LYRA:</span> "This is Hangar Nine, where your clan's ships used to launch. The Hollowed patrol it now. Their cores are stolen souls wrapped in iron, and your claws can set them free."</p><p><span class="who">LYRA:</span> "Smash the supply crates. Your clan hid food and Aether in them."</p>`,
+  `<p><span class="who">LYRA:</span> "The Iron Armory. Malakar builds his green war-drones here and fuels them with Aether stolen from your clan's reactors. Jump to reach them, and grab every Star Fruit you see. You're still growing."</p>`,
+  `<p><span class="who">LYRA:</span> "Orbital Dock Aeris. His fleet docks here before every raid, and an <b>Iron Warden</b> guards the gate. When it slams the deck, jump over the shockwave."</p>`,
+  `<p><span class="who">LYRA:</span> "The Amber Foundry is where the Hollowed are made. Tyko... I found the clan records. Malakar wasn't just the Egg-Keeper. He kept <i>your</i> egg. He's the one who froze it."</p>`,
+  `<p><span class="who">LYRA:</span> "The Null Citadel. Its gates were built to keep the Void <i>in</i>. He turned them inside out. Everything he has left is waiting here, so take every shard you can carry."</p>`,
+  `<p><span class="who">MALAKAR:</span> "Little hatchling. I saved you for last. I thought one Starblood should see the end."</p><p><span class="who">LYRA:</span> "Don't listen to him. You're not the last of anything, Tyko. You're the first of what comes next."</p>`
  ],
  clear:[
-  'The first souls rise free from their iron shells, glowing for a moment before they fade into the dawn.',
+  'The first souls rise free from their iron shells and drift into the dawn. Tyko watches them go, then sneezes out a tiny spark of starlight.',
   'The armory reactors cool and go dark. No more war-drones will launch from Ithra.',
-  'Malakar\'s flagship burns on its moorings. The Hollowed fleet will not fly tonight.',
-  'The amber furnaces go cold. No more Hollowed will be made in Ithra.',
+  'The Iron Warden falls and Malakar\'s flagship burns on its moorings. The fleet will not fly tonight.',
+  'The amber furnaces go cold. Deep in the foundry, Tyko finds a shelf of frozen eggs. Lyra marks the spot. "We\'ll come back for them. I promise."',
   'The Citadel gates crack open. Beyond them, the Rift pulses like a red heart.'
  ],
  ending:[
-  {ey:'Malakar Falls',h:'The Rift Closes',b:`<p><span class="who">MALAKAR:</span> "I only wanted... to make the light last forever..."</p><p>Kael drives the starblade into the heart of the Rift. Lyra's light pours out of the sword, brighter than any star, and the wound in the world begins to seal.</p>`},
-  {ey:'Epilogue',h:'Dawn Over Ithra',b:`<p>When Kael wakes, the sky is blue. The crystal forests sing. Skyships rise over Veyra, and the freed souls of the Hollowed drift upward like lanterns.</p><p>The starblade is dark now. But sometimes, late at night, it hums.</p><p><span class="who">LYRA:</span> "The stars remember you, knight."</p>`}
+  {ey:'Malakar Falls',h:'The Rift Closes',b:`<p><span class="who">MALAKAR:</span> "I only wanted... to keep the light safe... somewhere no one could waste it..."</p><p>Tyko takes the deepest breath of his short life and roars. Every shard of Aether he gathered pours out of him, brighter than any star, and the wound in the world begins to seal.</p>`},
+  {ey:'Epilogue',h:'Dawn Over Ithra',b:`<p>When Tyko wakes, the sky is blue. The reactors hum again, and the freed souls of the Hollowed drift upward like lanterns.</p><p>In the foundry, one by one, the frozen eggs begin to crack.</p><p><span class="who">LYRA:</span> "Well, little one. Looks like you have a lot of brothers and sisters to teach."</p>`}
  ]
 };
 
 /* ---------- state ---------- */
-const G={state:'menu',lv:0,score:0,paused:false,best:0};
+const G={state:'menu',lv:0,score:0,paused:false,best:0,lives:3,respawnT:0};
 let unlocked=1;try{unlocked=Math.max(1,Math.min(6,+localStorage.getItem('aetherfall_unlock')||1));G.best=+localStorage.getItem('aetherfall_best')||0}catch(e){}
 function saveProg(){try{localStorage.setItem('aetherfall_unlock',unlocked);localStorage.setItem('aetherfall_best',Math.max(G.best,G.score))}catch(e){}}
 let rings=[],pl,en=[],shots=[],parts=[],picks=[],texts=[],hz=[],spawnQ=[],cam=0,lock=false,waveI=0,shake=0,boss=null,bossDone=false,lvT=0,hitStop=0,banner=null,bg=null,flashT=0,doneT=0;
@@ -108,18 +108,19 @@ const overlap=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
 const ebox=e=>({x:e.x-e.w/2,y:e.y-e.h,w:e.w,h:e.h});
 const pbox=()=>({x:pl.x-42,y:pl.y-168,w:84,h:168});
 
-function newPlayer(){return{x:300,y:GY,vx:0,vy:0,face:1,hp:100,max:100,en:30,ground:true,jumps:0,atk:0,atkCD:0,combo:0,comboT:0,inv:0,hurtT:0,hitDone:new Set(),run:0,dashT:0,dashCD:0,squash:0,landT:0,dead:0,deadT:0,hits:0,hitsT:0,ghostT:0,ghosts:[]}}
+function newPlayer(){return{x:300,y:GY,vx:0,vy:0,face:1,hp:100,max:100,en:30,ground:true,jumps:0,atk:0,atkCD:0,combo:0,comboT:0,inv:0,hurtT:0,hitDone:new Set(),run:0,dashT:0,dashCD:0,squash:0,landT:0,dead:0,deadT:0,shield:0,shieldT:0,fury:0,hits:0,hitsT:0,ghostT:0,ghosts:[]}}
 
 const ETYPES={
  g:{w:80,h:165,hp:42,spd:260,dmg:10,score:100},
  b:{w:140,h:270,hp:130,spd:150,dmg:22,score:300,heavy:true},
  d:{w:70,h:70,hp:28,spd:0,dmg:8,score:150,fly:true},
- c:{w:80,h:160,hp:55,spd:0,dmg:9,score:250}
+ c:{w:80,h:160,hp:55,spd:0,dmg:9,score:250},
+ B:{w:170,h:320,hp:420,spd:125,dmg:24,score:1500,heavy:true}
 };
 function spawnEnemy(type,side){const T=ETYPES[type],x=side<0?cam-120:cam+W+120;
   const e={type,x,y:T.fly?520+Math.random()*130:GY,w:T.w,h:T.h,hp:T.hp*dm(),max:T.hp*dm(),vx:0,vy:0,face:-side,state:'walk',t:.6+Math.random()*.8,flash:0,seed:Math.random()*10,heavy:T.heavy,fly:T.fly,hy:0,score:T.score};
   e.hy=e.y;if(type==='c'){e.x=side<0?cam+260:cam+W-RSAFE-60;e.y=GY;e.fade=1;e.t=1.2}
-  en.push(e);burst(e.x,e.y-e.h/2,'#ff4fd8',14);}
+  en.push(e);burst(e.x,e.y-e.h/2,'#ff4fd8',14);if(type==='B'){showBanner('Iron Warden','Elite · jump its shockwaves',1.8);S.boom();shake=12}}
 function spawnWave(list){list.forEach((t,i)=>spawnQ.push({t:i*.55,type:t,side:i%2?-1:1}))}
 
 /* ---------- fx ---------- */
@@ -137,12 +138,16 @@ function damage(e,d,kb){if(e.dead)return;d=Math.round(d);e.hp-=d;e.flash=.14;if(
   ftext(e.x,e.y-e.h-10,d,d>=30?'#ffd27a':'#fff',d>=30);burst(e.x,hy,'#ffd27a',6,500);sparks(e.x,hy,'#fff3c4',9,Math.sign(kb)||1);ring(e.x,hy,'#ffd27a',d>=30?140:90);S.hit();buzz(8);hitStop=d>=30?.06:.035;
   if(e.hp<=0){if(e.isBoss){killBoss();return}
     e.dead=true;G.score+=e.score*(1+Math.min(4,Math.floor((pl?pl.hits:0)/10)));burst(e.x,e.y-e.h/2,'#ff4fd8',30,850);ring(e.x,e.y-e.h/2,'#ff4fd8',180);souls(e.x,e.y-e.h/2);S.die();buzz(14);shake=Math.max(shake,7);
-    if(Math.random()<.2)picks.push({x:e.x,y:e.y-e.h/2,vy:-500,type:'hp'});else if(Math.random()<.25)picks.push({x:e.x,y:e.y-e.h/2,vy:-500,type:'en'});}}
-function hurtPlayer(d,kx){const p=pl;if(p.inv>0||G.state!=='play')return;d=Math.round(d);p.hp-=d;p.inv=.9;p.hurtT=.28;p.vx=kx;p.vy=-420;p.ground=false;p.atk=0;
+    dropFrom(e);}}
+function hurtPlayer(d,kx){const p=pl;if(p.inv>0||p.dead||G.state!=='play')return;
+  if(p.shield>0){p.shield--;p.inv=.6;ring(p.x,p.y-95,'#8fc8ff',170);burst(p.x,p.y-95,'#8fc8ff',14,500);sfx(900,.15,'sine',.06,-400);buzz(15);ftext(p.x,p.y-200,'Blocked','#8fc8ff');return}
+  d=Math.round(d);p.hp-=d;p.inv=.9;p.hurtT=.28;p.vx=kx;p.vy=-420;p.ground=false;p.atk=0;
   shake=14;flashT=.18;S.hurt();buzz(45);p.hits=0;ftext(p.x,p.y-170,d,'#ff3d6e');burst(p.x,p.y-80,'#ff3d6e',12);
-  if(p.hp<=0){p.hp=0;gameOver()}}
+  if(p.hp<=0){p.hp=0;if(G.lives>0){G.lives--;p.dead=1;p.deadT=0;p.vx=0;p.inv=99;G.respawnT=1.8;buzz([60,40,60]);S.die()}else gameOver()}}
 
 function updPlayer(dt){const p=pl,L=LV[G.lv];
+  if(p.dead){p.vy+=3300*dt;p.y=Math.min(GY,p.y+p.vy*dt);if(p.y>=GY)p.vy=0;return}
+  p.fury=Math.max(0,p.fury-dt);if(p.shield>0){p.shieldT-=dt;if(p.shieldT<=0)p.shield=0}
   p.inv=Math.max(0,p.inv-dt);p.atkCD-=dt;p.comboT-=dt;p.hurtT-=dt;p.dashCD-=dt;p.squash=Math.max(0,p.squash-dt*5);p.landT-=dt;
   p.hitsT-=dt;if(p.hitsT<=0)p.hits=0;
   for(const g of p.ghosts)g.life-=dt;p.ghosts=p.ghosts.filter(g=>g.life>0);
@@ -157,7 +162,7 @@ function updPlayer(dt){const p=pl,L=LV[G.lv];
   if(P.dash&&p.dashCD<=0&&p.hurtT<=0){const dir=ax?Math.sign(ax):p.face;p.face=dir;p.dashT=.19;p.dashCD=.75;p.inv=Math.max(p.inv,.26);p.atk=0;
     sfx(520,.16,'sawtooth',.04,-380);buzz(10);dust(p.x,GY);burst(p.x,p.y-80,'#b48cff',10,420)}
   if(p.dashT>0){p.dashT-=dt;p.vx=p.face*1750;p.vy=Math.min(p.vy,0)*.5;p.ghostT-=dt;if(p.ghostT<=0){p.ghostT=.03;p.ghosts.push({x:p.x,y:p.y,face:p.face,life:.22})}}
-  if(P.special&&p.en>=50&&p.hurtT<=0){p.en-=50;shots.push({x:p.x+p.face*70,y:p.y-85,vx:p.face*1600,vy:0,r:70,dmg:48,friend:true,life:.85,pierce:true,hit:new Set(),col:'#5ce1ff',wave:true});
+  if(P.special&&p.en>=50&&p.hurtT<=0){p.en-=50;shots.push({x:p.x+p.face*70,y:p.y-85,vx:p.face*1600,vy:0,r:70,dmg:48*pdm(),friend:true,life:.85,pierce:true,hit:new Set(),col:'#5ce1ff',wave:true});
     S.special();buzz(30);shake=10;burst(p.x+p.face*60,p.y-85,'#5ce1ff',20,700);ring(p.x+p.face*60,p.y-85,'#5ce1ff',220)}
   if(p.dashT<=0)p.vy+=3300*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;
   if(p.y>=GY){if(!p.ground){if(p.vy>700){dust(p.x,GY);p.squash=1}p.landT=.15}p.y=GY;p.vy=0;p.ground=true;p.jumps=0}
@@ -166,7 +171,8 @@ function updPlayer(dt){const p=pl,L=LV[G.lv];
   p.run+=Math.abs(p.vx)*dt*.02;
   if(p.atk>0&&p.atk<.18){const reach=p.combo===3?240:180,box={x:p.face>0?p.x-10:p.x-reach+10,y:p.y-190,w:reach,h:190};
     for(const e of allTargets())if(!p.hitDone.has(e)&&overlap(box,ebox(e))){p.hitDone.add(e);
-      damage(e,(p.combo===3?26:14)*(1+G.lv*.06),p.face*(p.combo===3?750:260));p.en=Math.min(100,p.en+(p.combo===3?9:6))}}
+      damage(e,(p.combo===3?26:14)*(1+G.lv*.06)*pdm(),p.face*(p.combo===3?750:260));p.en=Math.min(100,p.en+(p.combo===3?9:6))}
+    hitBoxesWith(box,p.hitDone)}
 }
 const allTargets=()=>boss&&!boss.dead&&boss.state!=='enter'?en.concat([boss]):en;
 
@@ -184,13 +190,14 @@ function updEnemy(e,dt){const dx=pl.x-e.x,ad=Math.abs(dx);e.flash-=dt;e.t-=dt;
     else if(e.t<=0){e.t=Math.max(1.6,2.8-G.lv*.15);const a0=Math.atan2(pl.y-90-(e.y-120),dx);
       for(let k=-1;k<=1;k++){const a=a0+k*.22;shots.push({x:e.x+e.face*40,y:e.y-120,vx:Math.cos(a)*520,vy:Math.sin(a)*520,r:17,dmg:ETYPES.c.dmg*dm(),life:3,col:'#b48cff'})}S.shot()}
     return}
-  const T=ETYPES[e.type],range=e.type==='b'?200:130;
+  const T=ETYPES[e.type],hv=e.type==='b'||e.type==='B',range=e.type==='B'?240:hv?200:130;
   if(e.state==='walk'){e.face=Math.sign(dx)||1;
-    if(ad>range)e.vx+=(e.face*T.spd*(1+G.lv*.05)-e.vx)*Math.min(1,dt*5);else{e.vx*=Math.pow(.01,dt);if(e.t<=0){e.state='wind';e.t=e.type==='b'?.62:.42}}}
-  else if(e.state==='wind'){e.vx*=Math.pow(.01,dt);if(e.t<=0){e.state='swing';e.t=.2;e.hitP=false;e.vx+=e.face*(e.type==='b'?120:260);if(e.type==='b'){shake=Math.max(shake,8);dust(e.x+e.face*120,GY);S.boom()}}}
-  else if(e.state==='swing'){if(!e.hitP){const reach=e.type==='b'?230:150,box={x:e.face>0?e.x:e.x-reach,y:e.y-e.h,w:reach,h:e.h};
-      if(overlap(box,pbox())){e.hitP=true;hurtPlayer(T.dmg*dm(),e.face*(e.type==='b'?900:450))}}
-    if(e.t<=0){e.state='walk';e.t=(e.type==='b'?1.3:.8)+Math.random()*.7}}
+    if(ad>range)e.vx+=(e.face*T.spd*(1+G.lv*.05)-e.vx)*Math.min(1,dt*5);else{e.vx*=Math.pow(.01,dt);if(e.t<=0){e.state='wind';e.t=e.type==='B'?.75:hv?.62:.42}}}
+  else if(e.state==='wind'){e.vx*=Math.pow(.01,dt);if(e.t<=0){e.state='swing';e.t=.2;e.hitP=false;e.vx+=e.face*(hv?120:260);if(hv){shake=Math.max(shake,8);dust(e.x+e.face*120,GY);S.boom()}
+      if(e.type==='B'){for(const d of[-1,1])hz.push({kind:'quake',x:e.x+d*90,dir:d,v:820,t:0,act:1.5});shake=16}}}
+  else if(e.state==='swing'){if(!e.hitP){const reach=e.type==='B'?270:hv?230:150,box={x:e.face>0?e.x:e.x-reach,y:e.y-e.h,w:reach,h:e.h};
+      if(overlap(box,pbox())){e.hitP=true;hurtPlayer(T.dmg*dm(),e.face*(hv?900:450))}}
+    if(e.t<=0){e.state='walk';e.t=(e.type==='B'?1.6:hv?1.3:.8)+Math.random()*.7}}
   e.x+=e.vx*dt;if(e.state!=='walk')e.vx*=Math.pow(.05,dt);
   /* once on screen during a wave, ground enemies stay out of the strip under the touch buttons */
   if(lock&&touchy){const lim=cam+W-RSAFE+40;if(e.x<lim)e.in=1;if(e.in&&e.x>lim){e.x=lim;if(e.vx>0)e.vx=0}}

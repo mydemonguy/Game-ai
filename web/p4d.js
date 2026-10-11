@@ -80,15 +80,16 @@ const MACH={
 function bakeMachine(kind,P,seed){const r=rng(seed),em=[],c=document.createElement('canvas');c.width=300;c.height=360;const g=c.getContext('2d');
   const sz=MACH[kind](g,P,r,em);const out=document.createElement('canvas');out.width=sz[0];out.height=sz[1];out.getContext('2d').drawImage(c,0,0);return{c:out,w:sz[0],h:sz[1],em}}
 /* a darker wall of machinery behind the play plane */
-function bakeWall(P,seed,tint){const r=rng(seed),w=380+Math.floor(r()*200),h=520+Math.floor(r()*140),c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d'),em=[];
+function bakeWall(P,seed,tint){const r=rng(seed),w=380+Math.floor(r()*200),h=520+Math.floor(r()*140),c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d'),em=[],fans=[];
   const D={light:shade(P.light,-.35),metal:shade(P.metal,-.42),dark:shade(P.dark,-.4)},A={light:shade(P.light,-.45),metal:shade(P.alt,-.4),dark:P.ink};
   plate(g,0,40,w,h-40,P,{c:40,m:D,seams:2},r);
   const cols=2+Math.floor(r()*2);for(let i=0;i<cols;i++){const cw=(w-40)/cols,x=20+i*cw,kind=r();
     if(kind<.35){plate(g,x+10,90,cw-20,h*.42,P,{c:22,m:A,rivets:1},r);glowWin(g,x+cw*.3,120,cw*.4,h*.3,P,em,{c:16,bars:2,a:.35})}
     else if(kind<.7){plate(g,x+10,90,cw-20,h*.28,P,{c:14,m:A},r);vents(g,x+30,110,cw-60,6,P);glowWin(g,x+24,90+h*.2,cw-48,14,P,em,{c:3,a:.3})}
-    else{pipeV(g,x+cw*.3,60,h-60,20,P,A);pipeV(g,x+cw*.7,60,h-60,14,P,A);glowWin(g,x+cw*.3-14,h*.45,28,40,P,em,{c:6,a:.35})}}
+    else if(kind<.85){pipeV(g,x+cw*.3,60,h-60,20,P,A);pipeV(g,x+cw*.7,60,h-60,14,P,A);glowWin(g,x+cw*.3-14,h*.45,28,40,P,em,{c:6,a:.35})}
+    else{const fr=Math.min(cw*.36,80),fx=x+cw/2,fy=90+fr+10;plate(g,fx-fr-14,fy-fr-14,fr*2+28,fr*2+28,P,{c:18,m:A,rivets:1},r);g.fillStyle=P.ink;g.beginPath();g.arc(fx,fy,fr,0,7);g.fill();fans.push({x:fx,y:fy,r:fr-6})}}
   hazard(g,10,h-34,w-20,14);pipeH(g,0,64,w,22,P,A);
   if(tint){g.globalCompositeOperation='source-atop';g.fillStyle=rgba(tint,.5);g.fillRect(0,0,w,h);g.globalCompositeOperation='source-over'}
-  for(const e of em)e.a*=.6;return{c,w,h,em}}
-function drawBaked(b,x,y){X.drawImage(b.c,x,y);for(const e of b.em){const p=e.blink?(Math.sin(lvT*3+x*.01+e.x)>-.3?1:.25):(.8+.2*Math.sin(lvT*2+e.y));glow(x+e.x,y+e.y,e.r,e.col,e.a*p,e.ry)}}
+  for(const e of em)e.a*=.6;return{c,w,h,em,fans,fcol:shade(P.alt,-.55)}}
+function drawBaked(b,x,y){X.drawImage(b.c,x,y);if(b.fans)for(const f of b.fans){X.save();X.translate(x+f.x,y+f.y);X.rotate(lvT*5+f.x);X.fillStyle=b.fcol;for(let i=0;i<4;i++){X.rotate(Math.PI/2);X.beginPath();X.ellipse(f.r*.5,0,f.r*.5,f.r*.17,.3,0,7);X.fill()}X.fillStyle='#000';X.beginPath();X.arc(0,0,f.r*.15,0,7);X.fill();X.restore()}for(const e of b.em){const p=e.blink?(Math.sin(lvT*3+x*.01+e.x)>-.3?1:.25):(.8+.2*Math.sin(lvT*2+e.y));glow(x+e.x,y+e.y,e.r,e.col,e.a*p,e.ry)}}
 </script>
