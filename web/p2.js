@@ -54,17 +54,17 @@ function clearInput(){if(typeof stickEnd==='function'&&stick.id!==null)stickEnd(
 
 /* ---------- world data ---------- */
 const LV=[
- {name:'Ruins of Veyra',ch:'Chapter I',theme:'ruins',len:6200,sky:['#120a26','#3d2152','#b8555a'],planet:'#f2a67a',far:'#24163a',mid:'#2f1c45',gnd:'#170f22',glow:'#ff9a6a',
+ {name:'Hangar Nine',ch:'Chapter I',theme:'hangar',len:6200,sky:['#12151c','#262d3a','#4a566a'],planet:'#ffb070',far:'#20262f',mid:'#2b323d',gnd:'#191d24',glow:'#ff9a2a',
   waves:[['g','g'],['g','d','g'],['g','g','g'],['d','g','d','g']]},
- {name:'Lumen Crystal Wilds',ch:'Chapter II',theme:'crystal',len:6600,sky:['#03121f','#0b3346','#1f7a7a'],planet:'#b9fff2',far:'#0b2a3a',mid:'#0f3a4a',gnd:'#06161f',glow:'#62ffe0',
+ {name:'The Iron Armory',ch:'Chapter II',theme:'armory',len:6600,sky:['#0f1512','#212c26','#43574b'],planet:'#ffd08a',far:'#1c2620',mid:'#26332b',gnd:'#141b17',glow:'#ff8a3a',
   waves:[['g','d','d'],['g','g','b'],['d','d','g','g'],['b','g','d','g']]},
- {name:'Skyharbor Aeris',ch:'Chapter III',theme:'sky',len:7000,sky:['#0d1a3f','#2c4a8a','#e0a07a'],planet:'#ffe2b0',far:'#2a3a6a',mid:'#1d2850',gnd:'#141a33',glow:'#ffd27a',
+ {name:'Orbital Dock Aeris',ch:'Chapter III',theme:'station',len:7000,sky:['#0c1222','#203256','#5a78a6'],planet:'#cfeaff',far:'#2a3856',mid:'#354564',gnd:'#262c38',glow:'#ff9a2a',
   waves:[['d','d','g'],['b','d','d'],['g','g','g','d','d'],['b','b','d']]},
- {name:'The Ashen Forge',ch:'Chapter IV',theme:'forge',len:7000,sky:['#140504','#45120a','#c2401a'],planet:'#ff6a2a',far:'#2a0e0a',mid:'#3a1410',gnd:'#1a0806',glow:'#ff5a1f',
+ {name:'The Amber Foundry',ch:'Chapter IV',theme:'cargo',len:7000,sky:['#18120a','#3a2a16','#86643a'],planet:'#ffd27a',far:'#2a2013',mid:'#382a17',gnd:'#1c160e',glow:'#ffb347',
   waves:[['c','g','g'],['b','c','d'],['g','g','c','c'],['b','b','c','d']]},
- {name:'Gates of the Null Citadel',ch:'Chapter V',theme:'citadel',len:7400,sky:['#05030f','#1c0f3d','#5a2a8a'],planet:'#c9a8ff',far:'#160c30',mid:'#201240',gnd:'#0c0718',glow:'#b48cff',
+ {name:'Gates of the Null Citadel',ch:'Chapter V',theme:'citadel',len:7400,sky:['#07050f','#1c1238','#4e2f7c'],planet:'#c9a8ff',far:'#160c30',mid:'#201240',gnd:'#0c0718',glow:'#b48cff',
   waves:[['c','c','d','d'],['b','b','g','g','c'],['d','d','d','c','c'],['b','b','b','c']]},
- {name:'Throne of the Rift',ch:'Chapter VI',theme:'throne',len:6000,sky:['#020205','#170718','#4a0a2a'],planet:'#ff3d6e',far:'#120612',mid:'#1c0a1c',gnd:'#08040a',glow:'#ff3d6e',
+ {name:'Throne of the Rift',ch:'Chapter VI',theme:'core',len:6000,sky:['#060406','#1a0a0e','#4a140e'],planet:'#ff4a2a',far:'#140b0c',mid:'#1e1113',gnd:'#0d0909',glow:'#ff4a2a',
   waves:[['c','b','d'],['g','g','c','c','b']],boss:true}
 ];
 LV.forEach(L=>{const n=L.waves.length,end=L.boss?L.len-2200:L.len-900;L.trig=L.waves.map((_,i)=>Math.round(900+(end-900)*i/Math.max(1,n-1)))});
@@ -76,18 +76,18 @@ const STORY={
   {ey:'Awakening',h:'The Last Starblade',b:`<p>Thirty years later, in a sealed cryo-vault beneath the ruined temple, <b>Kael Varen</b> opens his eyes. In his hand is the last starblade. Inside it lives <b>Lyra</b>, the blade's star-spirit, and she has been waiting.</p><p><span class="who">LYRA:</span> "Get up, knight. The Rift is still open, and you are all the light this world has left."</p>`}
  ],
  brief:[
-  `<p><span class="who">LYRA:</span> "These ruins were Veyra, the temple city. The Hollowed patrol them now. Their cores are stolen souls wrapped in iron. Free them."</p>`,
-  `<p><span class="who">LYRA:</span> "The Lumen Wilds used to sing. Malakar's drones are draining the crystals to feed the Rift. Can you hear how quiet it is?"</p>`,
-  `<p><span class="who">LYRA:</span> "Skyharbor Aeris. His fleet docks here before every raid. Watch the edge, Kael. It's a long fall to the clouds."</p>`,
-  `<p><span class="who">LYRA:</span> "The Ashen Forge is where the Hollowed are made. Kael, I found records here. Malakar didn't just lead the Order. He forged <i>this</i> blade. He forged <i>me</i>."</p>`,
+  `<p><span class="who">LYRA:</span> "Hangar Nine, under the old temple of Veyra. The Order's last ships rusted here. The Hollowed patrol it now. Their cores are stolen souls wrapped in iron. Free them."</p>`,
+  `<p><span class="who">LYRA:</span> "The Iron Armory. Malakar builds his green war-drones here and fuels them with Aether stolen from the reactors. Shut it down."</p>`,
+  `<p><span class="who">LYRA:</span> "Orbital Dock Aeris. His fleet docks here before every raid. Stay off the hull edges, Kael. It's a long fall to the clouds."</p>`,
+  `<p><span class="who">LYRA:</span> "The Amber Foundry is where the Hollowed are made. Kael, I found records here. Malakar didn't just lead the Order. He forged <i>this</i> blade. He forged <i>me</i>."</p>`,
   `<p><span class="who">LYRA:</span> "The Null Citadel. Its gates were built to keep the Void <i>in</i>. He turned them inside out. Every Hollowed he has left is waiting here."</p>`,
   `<p><span class="who">MALAKAR:</span> "Little star. You came home to your maker."</p><p><span class="who">LYRA:</span> "Don't listen to him. Strike true, Kael. This ends tonight."</p>`
  ],
  clear:[
   'The first souls rise free from their iron shells, glowing for a moment before they fade into the dawn.',
-  'A single crystal begins to hum again. Then another. The forest remembers its song.',
+  'The armory reactors cool and go dark. No more war-drones will launch from Ithra.',
   'Malakar\'s flagship burns on its moorings. The Hollowed fleet will not fly tonight.',
-  'The great anvils go cold. No more Hollowed will be made in Ithra.',
+  'The amber furnaces go cold. No more Hollowed will be made in Ithra.',
   'The Citadel gates crack open. Beyond them, the Rift pulses like a red heart.'
  ],
  ending:[
@@ -176,7 +176,7 @@ function updEnemy(e,dt){const dx=pl.x-e.x,ad=Math.abs(dx);e.flash-=dt;e.t-=dt;
     if(lock){if(pl.x-cam>W-RSAFE-300)tx=pl.x-440;tx=Math.max(cam+140,Math.min(cam+W-RSAFE,tx))}
     e.vx+=(tx-e.x)*dt*2.4;e.vx*=Math.pow(.15,dt);e.x+=e.vx*dt;e.y+=(ty-e.y)*Math.min(1,dt*2);
     if(e.t<=0){e.t=Math.max(1.3,2.3-G.lv*.15);const a=Math.atan2(pl.y-80-(e.y-35),pl.x-e.x),v=560+G.lv*30;
-      shots.push({x:e.x,y:e.y-35,vx:Math.cos(a)*v,vy:Math.sin(a)*v,r:15,dmg:ETYPES.d.dmg*dm(),life:3.2,col:'#ff4fd8'});S.shot()}
+      shots.push({x:e.x,y:e.y-35,vx:Math.cos(a)*v,vy:Math.sin(a)*v,r:15,dmg:ETYPES.d.dmg*dm(),life:3.2,col:'#ff8a3a'});S.shot()}
     return}
   if(e.type==='c'){e.face=Math.sign(dx)||1;e.fade=Math.max(0,(e.fade||0)-dt*2);e.x+=e.vx*dt;e.vx*=Math.pow(.02,dt);
     if(ad<260&&e.t<.8&&!e.tp){e.tp=.35;burst(e.x,e.y-80,'#b48cff',18)}
