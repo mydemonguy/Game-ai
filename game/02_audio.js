@@ -53,7 +53,7 @@ function ok(k,gap){if(!AU||AC.state!=='running')return false;const n=AC.currentT
 /* stereo position and distance falloff for things in the world */
 function sp(x,y){if(x==null||typeof cam!=='number')return{pan:0,g:1};const cx=cam+W/2,dx=x-cx,dy=(y==null?0:y-(camY+H/2));
   const out=Math.max(0,Math.abs(dx)-W/2)+Math.max(0,Math.abs(dy)-H/2);return{pan:Math.max(-.8,Math.min(.8,dx/(W*.6))),g:Math.max(.12,1-out/2200)}}
-const T0=()=>AC.currentTime+.005,R=(a,b)=>a+Math.random()*(b-a);
+const T0=()=>AC.currentTime+.005;
 function sfxJump(n){if(!ok('jump',.05))return;const t=T0(),o=SX();
   if(n===2){tone(t,{f:520,f2:1100,d:.16,v:.12,w:'triangle'},o);tone(t+.04,{f:990,f2:1980,d:.14,v:.06},o);noi(t,{d:.12,v:.05,ft:'highpass',ff:4000},o)}
   else{tone(t,{f:240,f2:520,d:.13,v:.14,w:'triangle'},o);noi(t,{d:.12,v:.06,ft:'bandpass',ff:1000,ff2:3200,q:1.2},o)}}

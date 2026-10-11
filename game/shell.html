@@ -3,7 +3,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
-/* Layout: one 1920x1080 stage scaled to fit, HTML overlays for story and menus, thumb controls pinned to the lower corners */
+/* Layout: one 1080-tall Phaser stage (width follows the screen) scaled to fit, HTML overlays for story and menus, thumb controls pinned to the lower corners */
 :root{
   --void:#07060f; --panel:rgba(12,10,26,.86); --ink:#ece7ff; --dim:#9d97bd;
   --aether:#5ce1ff; --ember:#ff8a4c; --rune:#b48cff; --blood:#ff3d6e;
@@ -15,7 +15,7 @@
 html,body{height:100%;margin:0;background:var(--void);color:var(--ink);overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;font-family:var(--ui)}
 #stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--void)}
 #vig{position:fixed;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse at 50% 46%,rgba(0,0,0,0) 55%,rgba(0,0,0,.42))}
-#c{display:block;background:#000;image-rendering:auto}
+#stage canvas{display:block;background:#000}
 button{font-family:var(--ui);color:var(--ink);cursor:pointer}
 button:focus-visible{outline:2px solid var(--aether);outline-offset:3px}
 
@@ -89,8 +89,7 @@ h2{margin:0;font-family:var(--display);font-weight:700;font-size:clamp(24px,4vw,
 @media (max-height:470px){.card{gap:8px;padding:14px 22px} h1{font-size:clamp(40px,8vw,64px)} h2{font-size:clamp(22px,3.4vw,32px)} .body{font-size:14px;line-height:1.5} .lvgrid{grid-template-columns:repeat(3,1fr);gap:6px} .lvgrid button{padding:6px 10px} .lvgrid button b{font-size:14px} .keys{font-size:13px;gap:4px 12px} .btn{padding:9px 18px}}
 </style>
 
-<div id="stage"><canvas id="c" width="2400" height="1080" aria-label="Aetherfall game screen"></canvas></div>
-<div id="vig"></div>
+<div id="stage" aria-label="Aetherfall game screen"></div>
 
 <div id="pad" hidden>
   <div id="stickZone" aria-label="Move: drag left or right"><div id="stickBase"><i class="lf"></i><i class="rt"></i><div id="stickKnob"></div></div></div>

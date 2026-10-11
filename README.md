@@ -1,7 +1,7 @@
 # Aetherfall – Android project
 
 A 1080p sci-fi fantasy action-explorer: six worlds of connected rooms (Super Metroid-style map), abilities that open new paths, and a final boss fight against Malakar, the Void Sovereign. Synthesised music for every world with a combat layer during lockdowns, plus layered sound effects.
-It runs fully offline, in landscape, with the system bars hidden.
+It runs fully offline, in landscape, with the system bars hidden. Since version 2.0 it runs on the **Phaser 3** game engine (WebGL): Arcade physics, GPU particles for weather and impacts, a real-time light map, bloom and vignette post-processing, and cut-out robot rigs animated as Phaser containers. Settings has a Graphics switch (High / Fast); the game drops to Fast by itself if the frame rate dips.
 
 ## Option A: Build on GitHub (no computer setup needed)
 
@@ -41,12 +41,15 @@ Abilities: Comet Dash (I), Sky Scales double jump (II), Starburst Roar (III), Gr
 
 ## Changing the game
 
-The game's source is in `web/` (p1.html = page + touch controls, p2–p9 = game code, p8a–p8c = rooms and map, p11 = music and sound).
-Run `web/build.sh` to assemble it into `app/src/main/assets/index.html` (fonts embedded for offline play), then push; GitHub builds a new APK and publishes it under **Releases**.
+The game's source is in `game/`: `shell.html` (page, menus and touch controls), `vendor/` (Phaser 3.90, arcade build) and the numbered scripts:
+`01_core` input and data · `02_audio` music and sound · `03_art`/`04_textures` art baked into GPU textures · `05_world`/`06_rooms` room layouts, physics bodies, doors and saves ·
+`07_actors` player, robots, boss, combat · `08_fx` particles, lights, weather, post-processing · `09_view_room`/`10_view_actors` Phaser display objects · `11_hud` HUD scene · `12_flow` screens, game loop and Phaser config.
+Run `game/build.sh` to assemble everything into `app/src/main/assets/index.html` (fonts and Phaser embedded for offline play), then push; GitHub builds a new APK and publishes it under **Releases**.
 
 Builds are signed with `app/aetherfall-debug.keystore`, so each new APK installs as an update over the old one. It is a debug key for this hobby project, not for a Play Store release.
 
 ## Credits
 
-- Dino sprite: the free dino sprite pack supplied by the project owner (frames packed into `web/sprites/dino.webp` by `web/sprites/make_atlas.py`).
-- Fonts: Cinzel and Chakra Petch (SIL Open Font License, see `web/fonts/`).
+- Dino sprite: the free dino sprite pack supplied by the project owner (frames packed into `game/sprites/dino.webp` by `game/sprites/make_atlas.py`).
+- Fonts: Cinzel and Chakra Petch (SIL Open Font License, see `game/fonts/`).
+- Engine: Phaser 3.90 by Phaser Studio (MIT License, see `game/vendor/PHASER-LICENSE.md`).

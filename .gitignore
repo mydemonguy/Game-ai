@@ -3,5 +3,5 @@ build/
 local.properties
 *.iml
 .idea/
-web/aetherfall.html
-web/sprites.gen.js
+game/aetherfall.html
+game/sprites.gen.js

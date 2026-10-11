@@ -1,6 +1,16 @@
 <script>
 "use strict";
-/* ---------- world, part 1: abilities, save data, area layouts and room generation (Super Metroid-style grid of rooms) ---------- */
+/* ---------- world, part 1: pickups, abilities, save data, area layouts and room generation (Super Metroid-style grid of rooms) ---------- */
+const PICK={
+ fruit: {name:'Star Fruit',  col:'#7dffb0',txt:'+25 HP'},
+ med:   {name:'Med-Pack',    col:'#ff6a7a',txt:'+60 HP'},
+ shard: {name:'Aether Shard',col:'#5ce1ff',txt:'+35 Aether'},
+ shield:{name:'Shield Bubble',col:'#8fc8ff',txt:'Shield ×3'},
+ fang:  {name:'Fury Fang',   col:'#ffb347',txt:'Fury: double damage'},
+ coin:  {name:'Stardust',    col:'#ffd27a',txt:'+250'},
+ egg:   {name:'Golden Egg',  col:'#ffe08a',txt:'+1 Life'}};
+const PROPK={hangar:['generator','locker','crate','reactor','console'],armory:['pod','turret','crate','locker','generator'],station:['console','pipes','reactor','locker','turret'],
+  cargo:['tank','crate','tank','pipes','generator'],citadel:['reactor','console','locker','turret'],core:['reactor','generator','pipes','tank']};
 const ABIL=[
  {id:'dash',  name:'Comet Dash',     how:'Tap » to dash. Dash into cracked walls to smash them.',col:'#b48cff',gate:'crack'},
  {id:'double',name:'Sky Scales',     how:'Tap jump again in the air to double jump.',col:'#7fe9ff',gate:'ledge'},
