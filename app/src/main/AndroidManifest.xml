@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- short vibrations when you hit, get hit or press a button -->
+    <uses-permission android:name="android.permission.VIBRATE" />
     <application
         android:label="Aetherfall"
         android:icon="@mipmap/ic_launcher"

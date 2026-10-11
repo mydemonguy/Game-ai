@@ -26,12 +26,16 @@ It runs fully offline, in landscape, with the system bars hidden.
 
 ## Controls
 
-- ◀ ▶ move
+- Thumbstick (touch anywhere on the left side and slide) to move
 - ▲ jump (tap again in the air to double jump)
 - ⚔ strike (tap 3× for a combo; slash enemy orbs to reflect them)
-- ✦ Starburst (uses half the Aether bar)
+- ✦ Starburst (uses half the Aether bar; the ring around the button shows it)
+- » Dash (you can't be hit while dashing)
 - II pause
 
 ## Changing the game
 
-The whole game is in `app/src/main/assets/index.html`. Edit it, then rebuild.
+The game's source is in `web/` (p1.html = page + touch controls, p2–p5 = game code).
+Run `web/build.sh` to assemble it into `app/src/main/assets/index.html` (fonts embedded for offline play), then push; GitHub builds a new APK and publishes it under **Releases**.
+
+Builds are signed with `app/aetherfall-debug.keystore`, so each new APK installs as an update over the old one. It is a debug key for this hobby project, not for a Play Store release.
