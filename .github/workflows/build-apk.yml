@@ -1,7 +1,10 @@
 name: Build Aetherfall APK
 on:
   push:
+    branches: [main]
   workflow_dispatch:
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -31,3 +34,17 @@ jobs:
         with:
           name: Aetherfall-apk
           path: app/build/outputs/apk/debug/app-debug.apk
+      - name: Save APK to the apk branch and publish a release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk Aetherfall.apk
+          TAG="build-${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" Aetherfall.apk --title "Aetherfall (build ${GITHUB_RUN_NUMBER})" --notes "Tap Aetherfall.apk below to download, then open it to install." --latest
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan apk
+          git rm -rfq --cached .
+          git add -f Aetherfall.apk
+          git commit -qm "APK from build ${GITHUB_RUN_NUMBER}"
+          git push -f origin apk
