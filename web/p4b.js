@@ -4,7 +4,7 @@
 function limb(x,y,len,wid,ang,col){X.save();X.translate(x,y);X.rotate(ang);X.fillStyle=col;X.fillRect(-wid/2,0,wid,len);X.restore()}
 function leg(hx,hy,a1,a2,c1,c2,l1,l2,w){X.save();X.translate(hx,hy);X.rotate(a1);X.fillStyle=c1;X.fillRect(-w/2,0,w,l1+2);X.translate(0,l1);X.rotate(a2);
   X.fillStyle=c2;X.fillRect(-w/2+1,0,w-2,l2);X.fillRect(-w/2+1,l2-8,w+8,9);X.restore()}
-function shadow(x,w){X.fillStyle='rgba(0,0,0,.4)';X.beginPath();X.ellipse(x,GY+4,w,12,0,0,7);X.fill()}
+function shadow(x,w,y){X.fillStyle='rgba(0,0,0,.4)';X.beginPath();X.ellipse(x,(y||GY)+4,w,12,0,0,7);X.fill()}
 function bar(e,y){if(e.hp>=e.max)return;const w=Math.max(70,e.w+20),x=e.x-w/2,f=Math.max(0,e.hp/e.max);
   X.fillStyle='rgba(5,4,12,.75)';X.fillRect(x-2,y-2,w+4,12);X.fillStyle='#ff3d6e';X.fillRect(x,y,w*f,8);X.fillStyle='rgba(255,255,255,.35)';X.fillRect(x,y,w*f,2)}
 function hitFlash(e,cx,cy,r){if(e.flash>0)glow(cx,cy,r,'#ffffff',e.flash*5)}
@@ -26,7 +26,7 @@ function dinoDraw(img,k,x,y,face,sx,sy){const M=DINO,fx=(k%M.cols)*M.fw,fy=Math.
 const CLAW=[[-1.25,1.0],[1.05,-1.2],[-1.6,1.4]];
 function drawKnight(p){if(!DIMG.complete||!DIMG.naturalWidth)return;
   for(const g of p.ghosts){X.globalAlpha=g.life/.22*.45;dinoDraw(DGHOST||DIMG,DINO.anims.run[2],g.x,g.y,g.face,1,1)}X.globalAlpha=1;
-  shadow(p.x,60*(1-Math.min(.5,(GY-p.y)/600)));
+  const supY=p.sup||GY;shadow(p.x,60*(1-Math.min(.5,(supY-p.y)/600)),supY);
   if(p.en>=50&&!p.dead)glow(p.x+p.face*10,p.y-100,110,'#5ce1ff',.18+.08*Math.sin(lvT*5));
   const lunge=p.atk>0?1+.06*Math.sin((1-p.atk/.22)*Math.PI):1,sx=(1+p.squash*.1)*lunge,sy=1-p.squash*.1;
   if(p.inv>0&&p.dashT<=0&&!p.dead&&Math.floor(p.inv*22)%2)X.globalAlpha=.45;

@@ -10,7 +10,7 @@ const PICK={
  coin:  {name:'Stardust',    col:'#ffd27a',txt:'+250'},
  egg:   {name:'Golden Egg',  col:'#ffe08a',txt:'+1 Life'}};
 let boxes=[],supplyB=null;
-const pdm=()=>pl&&pl.fury>0?2:1;
+const pdm=()=>(pl&&pl.fury>0?2:1)*(typeof hasAb==='function'&&hasAb('plasma')?1.3:1);
 function rollDrop(r){const v=r();return v<.3?'fruit':v<.54?'shard':v<.7?'coin':v<.8?'fang':v<.9?'shield':'med'}
 function populateLevel(L){boxes=[];const r=rng(L.len*17+3),ex=L.boss?L.len-W-200:L.len-320;supplyB=null;
   for(let x=760;x<ex;x+=820+r()*620){if(r()<.55)boxes.push({x,hp:2,flash:0,drop:rollDrop(r),drop2:r()<.35?rollDrop(r):null});
@@ -25,9 +25,10 @@ function dropFrom(e){const r=Math.random,big=e.type==='b'||e.type==='B';
 function applyPick(k){const p=pl,P=PICK[k.type];S.pick();buzz(12);
   if(k.type==='fruit')p.hp=Math.min(p.max,p.hp+25);else if(k.type==='med')p.hp=Math.min(p.max,p.hp+60);
   else if(k.type==='shard')p.en=Math.min(100,p.en+35);else if(k.type==='shield'){p.shield=3;p.shieldT=14}else if(k.type==='fang')p.fury=10;
-  else if(k.type==='coin')G.score+=250;else if(k.type==='egg'){G.lives=Math.min(5,G.lives+1);sfx(520,.5,'triangle',.07,520)}
-  ftext(p.x,p.y-200,P.txt,P.col,k.type==='egg');ring(k.x,k.y,P.col,90);burst(k.x,k.y,P.col,10,380)}
+  else if(k.type==='coin')G.score+=250;else if(k.type==='tank'){META.tanks[k.id]=1;saveMeta();p.max=maxHP();p.hp=p.max;sfx(392,.6,'triangle',.07,392);buzz([30,30,60])}else if(k.type==='egg'){G.lives=Math.min(5,G.lives+1);sfx(520,.5,'triangle',.07,520)}
+  ftext(p.x,p.y-200,P.txt,P.col,k.type==='egg'||k.type==='tank');ring(k.x,k.y,P.col,90);burst(k.x,k.y,P.col,10,380)}
 function updPicks(dt){for(const k of picks){if(!k.float){k.vy+=1800*dt;k.x+=(k.vx||0)*dt;k.vx=(k.vx||0)*Math.pow(.2,dt);k.y+=k.vy*dt;if(k.y>GY-26){k.y=GY-26;k.vy=0}k.life-=dt}
+    if(k.cage&&!k.cage.broken)continue;
     if(pl&&!pl.dead&&Math.abs(pl.x-k.x)<72&&Math.abs(pl.y-90-k.y)<125){k.life=0;k.got=1;applyPick(k)}}
   picks=picks.filter(k=>k.float?!k.got:k.life>0)}
 function boxRect(b){return{x:b.x-56,y:GY-98,w:112,h:98}}
@@ -56,6 +57,8 @@ function drawPickIcon(k){const P=PICK[k.type],x=k.x,y=k.y+(k.float?Math.sin(lvT*
   case'fang':X.fillStyle='#fff3e0';X.beginPath();X.moveTo(-12,-18);X.quadraticCurveTo(14,-14,10,22);X.quadraticCurveTo(0,0,-12,-18);X.fill();X.strokeStyle='#ffb347';X.lineWidth=3;X.stroke();break;
   case'coin':{const sx=Math.abs(Math.cos(lvT*4+k.x));X.scale(Math.max(.15,sx),1);X.fillStyle='#e8a92e';X.beginPath();X.arc(0,0,16,0,7);X.fill();X.fillStyle='#ffd27a';X.beginPath();X.arc(0,0,12,0,7);X.fill();
     X.fillStyle='#b8741a';X.beginPath();for(let i=0;i<10;i++){const a=i*Math.PI/5-Math.PI/2,r=i%2?3.5:8;X.lineTo(Math.cos(a)*r,Math.sin(a)*r)}X.fill()}break;
+  case'tank':{plate(X,-20,-26,40,52,PAL.citadel,{c:8});const tg=X.createLinearGradient(0,-18,0,18);tg.addColorStop(0,'#ffd0f4');tg.addColorStop(1,'#ff5ad8');X.fillStyle=tg;X.fillRect(-11,-17,22,34);
+    X.fillStyle='#ffffff';X.fillRect(-3,-11,6,22);X.fillRect(-9,-3,18,6)}break;
   case'egg':{const eg=X.createLinearGradient(-20,-28,20,28);eg.addColorStop(0,'#fff6c8');eg.addColorStop(.5,'#ffd24a');eg.addColorStop(1,'#c88a1a');X.fillStyle=eg;X.beginPath();X.ellipse(0,0,22,29,0,0,7);X.fill();
     X.fillStyle='rgba(120,70,10,.35)';X.beginPath();X.arc(-7,6,4,0,7);X.arc(8,-4,3,0,7);X.arc(4,14,3,0,7);X.fill();glow(-8,-12,14,'#ffffff',.6+.4*Math.sin(lvT*5))}break}
   X.restore()}

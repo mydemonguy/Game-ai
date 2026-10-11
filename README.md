@@ -30,7 +30,10 @@ It runs fully offline, in landscape, with the system bars hidden.
 - ▲ jump (tap again in the air to double jump)
 - ⚔ strike (tap 3× for a combo; slash enemy orbs to reflect them)
 - ✦ Starburst (uses half the Aether bar; the ring around the button shows it)
-- » Dash (you can't be hit while dashing)
+- » Dash (you can't be hit while dashing), unlocked in Chapter I
+- Pull the stick down to drop through catwalks; down + strike in the air is the Ground Slam (Chapter IV)
+
+Abilities: Comet Dash (I), Sky Scales double jump (II), Starburst Roar (III), Ground Slam (IV), Plasma Claws (V). Each chapter hides 2 Energy Tanks; some need abilities from later chapters, so replay earlier chapters to find them all.
 - II pause
 
 ## Changing the game

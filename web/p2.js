@@ -24,8 +24,8 @@ const S={hit:()=>sfx(240,.09,'square',.06,-150),swing:()=>sfx(700,.08,'sawtooth'
   pick:()=>sfx(660,.18,'sine',.08,600),shot:()=>sfx(880,.09,'sine',.025,-500),boom:()=>sfx(60,.6,'sawtooth',.12,-20),warn:()=>sfx(420,.25,'triangle',.05,-100)};
 
 /* ---------- input ---------- */
-const K={left:0,right:0,jump:0,attack:0,special:0,dash:0},P={};
-const KEYMAP={ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',ArrowUp:'jump',KeyW:'jump',Space:'jump',KeyJ:'attack',KeyX:'attack',KeyK:'special',KeyC:'special',KeyL:'dash',ShiftLeft:'dash',ShiftRight:'dash'};
+const K={left:0,right:0,jump:0,attack:0,special:0,dash:0,down:0},P={};
+const KEYMAP={ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',ArrowUp:'jump',KeyW:'jump',Space:'jump',KeyJ:'attack',KeyX:'attack',KeyK:'special',KeyC:'special',KeyL:'dash',ShiftLeft:'dash',ShiftRight:'dash',ArrowDown:'down',KeyS:'down'};
 addEventListener('keydown',e=>{const k=KEYMAP[e.code];if(k&&G.state==='play'){if(!K[k])P[k]=1;K[k]=1;e.preventDefault()}
   if((e.code==='Escape'||e.code==='KeyP')&&!e.repeat)togglePause();});
 addEventListener('keyup',e=>{const k=KEYMAP[e.code];if(k)K[k]=0});
@@ -40,14 +40,14 @@ document.querySelectorAll('[data-k]').forEach(b=>{const k=b.dataset.k,ids=new Se
 /* floating thumbstick: touch anywhere in the left zone, the stick centres under the thumb */
 const SZ=document.getElementById('stickZone'),SB=document.getElementById('stickBase'),SK=document.getElementById('stickKnob');
 const stick={id:null,ox:0,oy:0,x:0};
-function stickSet(dx){const r=SB.offsetWidth*.42||60,n=Math.max(-1,Math.min(1,dx/r));stick.x=n;
-  SK.style.transform=`translate(calc(-50% + ${n*r}px),-50%)`;K.left=n<-.28?1:0;K.right=n>.28?1:0}
-function stickEnd(){stick.id=null;stick.x=0;K.left=K.right=0;SB.classList.remove('live');SB.style.left='';SB.style.bottom='';SB.style.top='';SK.style.transform=''}
+function stickSet(dx,dy){dy=dy||0;const r=SB.offsetWidth*.42||60,n=Math.max(-1,Math.min(1,dx/r)),m=Math.max(-1,Math.min(1,dy/r));stick.x=n;
+  SK.style.transform=`translate(calc(-50% + ${n*r}px),calc(-50% + ${m*r*.7}px))`;K.left=n<-.28?1:0;K.right=n>.28?1:0;const dn=m>.55?1:0;if(dn&&!K.down)P.down=1;K.down=dn}
+function stickEnd(){stick.id=null;stick.x=0;K.left=K.right=K.down=0;SB.classList.remove('live');SB.style.left='';SB.style.bottom='';SB.style.top='';SK.style.transform=''}
 SZ.addEventListener('pointerdown',e=>{e.preventDefault();initAudio();if(stick.id!==null)return;stick.id=e.pointerId;try{SZ.setPointerCapture(e.pointerId)}catch(_){}
   const zr=SZ.getBoundingClientRect(),half=SB.offsetWidth/2;
   const x=Math.max(zr.left+half,Math.min(zr.right-half,e.clientX)),y=Math.max(zr.top+half,Math.min(zr.bottom-half,e.clientY));
-  stick.ox=x;SB.style.left=(x-zr.left)+'px';SB.style.top=(y-zr.top-half)+'px';SB.style.bottom='auto';SB.classList.add('live');stickSet(e.clientX-x)});
-SZ.addEventListener('pointermove',e=>{if(e.pointerId!==stick.id)return;e.preventDefault();stickSet(e.clientX-stick.ox)});
+  stick.ox=x;stick.oy=y;SB.style.left=(x-zr.left)+'px';SB.style.top=(y-zr.top-half)+'px';SB.style.bottom='auto';SB.classList.add('live');stickSet(e.clientX-x,e.clientY-y)});
+SZ.addEventListener('pointermove',e=>{if(e.pointerId!==stick.id)return;e.preventDefault();stickSet(e.clientX-stick.ox,e.clientY-stick.oy)});
 ['pointerup','pointercancel','lostpointercapture'].forEach(t=>SZ.addEventListener(t,e=>{if(e.pointerId===stick.id)stickEnd()}));
 function buzz(p){try{if(touchy&&navigator.vibrate)navigator.vibrate(p)}catch(e){}}
 function clearInput(){if(typeof stickEnd==='function'&&stick.id!==null)stickEnd();for(const k in K)K[k]=0;for(const k in P)delete P[k];document.querySelectorAll('[data-k]').forEach(b=>{b.classList.remove('on');if(b._clear)b._clear()})}
@@ -76,7 +76,7 @@ const STORY={
   {ey:'Hatching',h:'The Last Starblood',b:`<p>Thirty years later, in a frozen stasis pod deep inside Hangar Nine, one egg cracks. Out tumbles <b>Tyko</b>: small, green, and very hungry.</p><p>Wrapped around the shell is a glowing collar, and inside it lives <b>Lyra</b>, the star-spirit who kept the egg warm all those years.</p><p><span class="who">LYRA:</span> "Hello, little one. I'm sorry you woke up in the dark. Let's go and turn the lights back on."</p>`}
  ],
  brief:[
-  `<p><span class="who">LYRA:</span> "This is Hangar Nine, where your clan's ships used to launch. The Hollowed patrol it now. Their cores are stolen souls wrapped in iron, and your claws can set them free."</p><p><span class="who">LYRA:</span> "Smash the supply crates. Your clan hid food and Aether in them."</p>`,
+  `<p><span class="who">LYRA:</span> "This is Hangar Nine, where your clan's ships used to launch. The Hollowed patrol it now. Their cores are stolen souls wrapped in iron, and your claws can set them free."</p><p><span class="who">LYRA:</span> "Smash the supply crates. Your clan hid food and Aether in them. And look for the old Starblood shrines. Each one wakes a power you were born with."</p>`,
   `<p><span class="who">LYRA:</span> "The Iron Armory. Malakar builds his green war-drones here and fuels them with Aether stolen from your clan's reactors. Jump to reach them, and grab every Star Fruit you see. You're still growing."</p>`,
   `<p><span class="who">LYRA:</span> "Orbital Dock Aeris. His fleet docks here before every raid, and an <b>Iron Warden</b> guards the gate. When it slams the deck, jump over the shockwave."</p>`,
   `<p><span class="who">LYRA:</span> "The Amber Foundry is where the Hollowed are made. Tyko... I found the clan records. Malakar wasn't just the Egg-Keeper. He kept <i>your</i> egg. He's the one who froze it."</p>`,
@@ -108,7 +108,7 @@ const overlap=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
 const ebox=e=>({x:e.x-e.w/2,y:e.y-e.h,w:e.w,h:e.h});
 const pbox=()=>({x:pl.x-42,y:pl.y-168,w:84,h:168});
 
-function newPlayer(){return{x:300,y:GY,vx:0,vy:0,face:1,hp:100,max:100,en:30,ground:true,jumps:0,atk:0,atkCD:0,combo:0,comboT:0,inv:0,hurtT:0,hitDone:new Set(),run:0,dashT:0,dashCD:0,squash:0,landT:0,dead:0,deadT:0,shield:0,shieldT:0,fury:0,hits:0,hitsT:0,ghostT:0,ghosts:[]}}
+function newPlayer(){const mh=maxHP();return{x:300,y:GY,vx:0,vy:0,face:1,hp:mh,max:mh,slam:0,dropT:0,sup:GY,maxX:0,en:30,ground:true,jumps:0,atk:0,atkCD:0,combo:0,comboT:0,inv:0,hurtT:0,hitDone:new Set(),run:0,dashT:0,dashCD:0,squash:0,landT:0,dead:0,deadT:0,shield:0,shieldT:0,fury:0,hits:0,hitsT:0,ghostT:0,ghosts:[]}}
 
 const ETYPES={
  g:{w:80,h:165,hp:42,spd:260,dmg:10,score:100},
@@ -155,24 +155,28 @@ function updPlayer(dt){const p=pl,L=LV[G.lv];
   if(p.atk>0){p.atk-=dt;ax*=.25}
   if(ax&&p.atk<=0)p.face=Math.sign(ax);
   if(p.hurtT<=0){const tgt=ax*640;p.vx+=(tgt-p.vx)*Math.min(1,dt*(p.ground?14:7))}
-  if(P.jump&&p.hurtT<=0){if(p.ground){p.vy=-1300;p.ground=false;p.jumps=1;S.jump();dust(p.x,GY)}
-    else if(p.jumps<2){p.vy=-1100;p.jumps=2;S.jump();burst(p.x,p.y-40,'#5ce1ff',12,350)}}
+  p.dropT-=dt;if(P.down&&p.ground&&onPlatform(p)){p.dropT=.28;p.ground=false;p.y+=3}
+  if(P.attack&&!p.ground&&K.down&&hasAb('slam')&&!p.slam&&p.hurtT<=0){p.slam=1;p.vy=2600;p.vx*=.3;p.atk=0;delete P.attack;sfx(300,.3,'sawtooth',.06,-200);ring(p.x,p.y-90,'#ffb347',120)}
+  if(P.jump&&p.hurtT<=0){if(p.ground){p.vy=-1300;p.ground=false;p.jumps=1;S.jump();dust(p.x,p.y)}
+    else if(p.jumps<2&&hasAb('double')){p.vy=-1100;p.jumps=2;S.jump();burst(p.x,p.y-40,'#5ce1ff',12,350)}}
   if(P.attack&&p.atkCD<=0&&p.hurtT<=0){p.combo=p.comboT>0?(p.combo%3)+1:1;p.comboT=.6;p.atk=.22;p.atkCD=p.combo===3?.36:.17;p.hitDone=new Set();S.swing();
     p.vx+=p.face*(p.combo===3?420:160);if(!p.ground)p.vy=Math.min(p.vy,-180)}
-  if(P.dash&&p.dashCD<=0&&p.hurtT<=0){const dir=ax?Math.sign(ax):p.face;p.face=dir;p.dashT=.19;p.dashCD=.75;p.inv=Math.max(p.inv,.26);p.atk=0;
+  if(P.dash&&hasAb('dash')&&p.dashCD<=0&&p.hurtT<=0){const dir=ax?Math.sign(ax):p.face;p.face=dir;p.dashT=.19;p.dashCD=.75;p.inv=Math.max(p.inv,.26);p.atk=0;
     sfx(520,.16,'sawtooth',.04,-380);buzz(10);dust(p.x,GY);burst(p.x,p.y-80,'#b48cff',10,420)}
   if(p.dashT>0){p.dashT-=dt;p.vx=p.face*1750;p.vy=Math.min(p.vy,0)*.5;p.ghostT-=dt;if(p.ghostT<=0){p.ghostT=.03;p.ghosts.push({x:p.x,y:p.y,face:p.face,life:.22})}}
-  if(P.special&&p.en>=50&&p.hurtT<=0){p.en-=50;shots.push({x:p.x+p.face*70,y:p.y-85,vx:p.face*1600,vy:0,r:70,dmg:48*pdm(),friend:true,life:.85,pierce:true,hit:new Set(),col:'#5ce1ff',wave:true});
+  if(P.special&&hasAb('roar')&&p.en>=50&&p.hurtT<=0){p.en-=50;shots.push({x:p.x+p.face*70,y:p.y-85,vx:p.face*1600,vy:0,r:70,dmg:48*pdm(),friend:true,life:.85,pierce:true,hit:new Set(),col:'#5ce1ff',wave:true});
     S.special();buzz(30);shake=10;burst(p.x+p.face*60,p.y-85,'#5ce1ff',20,700);ring(p.x+p.face*60,p.y-85,'#5ce1ff',220)}
-  if(p.dashT<=0)p.vy+=3300*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;
-  if(p.y>=GY){if(!p.ground){if(p.vy>700){dust(p.x,GY);p.squash=1}p.landT=.15}p.y=GY;p.vy=0;p.ground=true;p.jumps=0}
+  const x0=p.x,y0=p.y;if(p.dashT<=0)p.vy+=3300*dt;p.x+=p.vx*dt;geoPushX(p,x0);p.y+=p.vy*dt;
+  const sup=geoLand(p,y0);
+  if(sup!=null){if(!p.ground){if(p.vy>700){dust(p.x,sup);p.squash=1}p.landT=.15;if(p.slam)slamLand(p,sup)}p.y=sup;p.vy=0;p.ground=true;p.jumps=0}else p.ground=false;
+  p.sup=surfaceBelow(p.x,p.y);
   let mn=60,mx=L.len;if(lock){mn=cam+60;mx=cam+W-(touchy?RSAFE-40:60)}
   p.x=Math.max(mn,Math.min(mx,p.x));
   p.run+=Math.abs(p.vx)*dt*.02;
   if(p.atk>0&&p.atk<.18){const reach=p.combo===3?240:180,box={x:p.face>0?p.x-10:p.x-reach+10,y:p.y-190,w:reach,h:190};
     for(const e of allTargets())if(!p.hitDone.has(e)&&overlap(box,ebox(e))){p.hitDone.add(e);
       damage(e,(p.combo===3?26:14)*(1+G.lv*.06)*pdm(),p.face*(p.combo===3?750:260));p.en=Math.min(100,p.en+(p.combo===3?9:6))}
-    hitBoxesWith(box,p.hitDone)}
+    hitBoxesWith(box,p.hitDone);if(!p.hitDone.has('geo')){p.hitDone.add('geo');clawGeo(box)}}
 }
 const allTargets=()=>boss&&!boss.dead&&boss.state!=='enter'?en.concat([boss]):en;
 

@@ -69,7 +69,7 @@ function update(dt){updParts(dt);if(banner){banner.life-=dt;if(banner.life<=0)ba
   for(const e of en)updEnemy(e,dt);en=en.filter(e=>!e.dead);
   for(let i=0;i<en.length;i++)for(let j=i+1;j<en.length;j++){const a=en[i],b=en[j];if(a.fly!==b.fly)continue;const d=b.x-a.x,m=(a.w+b.w)*.45;if(Math.abs(d)<m){const push=(m-Math.abs(d))*.5*(d<0?-1:1);a.x-=push;b.x+=push}}
   if(boss&&!boss.dead)updBoss(boss,dt);
-  updShots(dt);updHz(dt);updPicks(dt);updBoxes(dt);updAtmos(dt);
+  updShots(dt);updHz(dt);updPicks(dt);updBoxes(dt);updAtmos(dt);updGeo(dt);
   if(pl.dead&&G.respawnT>0){G.respawnT-=dt;pl.deadT+=dt;if(G.respawnT<=0){pl.dead=0;pl.hp=pl.max;pl.inv=2.5;pl.en=Math.max(pl.en,50);pl.hits=0;
     showBanner('Back on your feet','Lives left: '+G.lives,1.6);ring(pl.x,pl.y-90,'#ffe08a',220);burst(pl.x,pl.y-90,'#ffe08a',30,700);sfx(440,.5,'triangle',.07,440)}}
   if(!lock&&waveI<L.waves.length&&pl.x>L.trig[waveI]){lock=true;spawnWave(L.waves[waveI]);showBanner('Hostiles','Wave '+(waveI+1)+' of '+L.waves.length,1.4);S.warn()}
@@ -94,8 +94,8 @@ function story(pages,i,done){const p=pages[i];showCard({ey:p.ey,h:p.h,b:p.b,btns
 function toTitle(){G.state='menu';G.paused=false;padShow(false);menuBG();
   showCard({ey:'A Starblood Saga · Six Chapters',h:'Aetherfall',big:1,tag:'One small dino. One stolen sky. One very big Rift.',
     b:G.best?`<p>Best score ${G.best.toLocaleString()}</p>`:'',
-    btns:[['Begin the Saga',()=>{goFull();G.score=0;G.lives=3;story(STORY.intro,0,()=>briefing(0))}],['Chapters',chapters,1],['Controls',controls,1]]})}
-function chapters(){const g=LV.map((L,i)=>`<button data-i="${i}" ${i>=unlocked?'disabled':''}><span>${L.ch}</span><b>${L.name}</b></button>`).join('');
+    btns:[['Begin the Saga',()=>{goFull();G.score=0;G.lives=3;G.ck=null;META={ab:{},tanks:{}};saveMeta();story(STORY.intro,0,()=>briefing(0))}],['Chapters',chapters,1],['Controls',controls,1]]})}
+function chapters(){const g=LV.map((L,i)=>`<button data-i="${i}" ${i>=unlocked?'disabled':''}><span>${L.ch} · Tanks ${[0,1].filter(k=>META.tanks[i+'-'+k]).length}/2</span><b>${L.name}</b></button>`).join('');
   showCard({ey:'Choose a chapter',h:'The Road to the Rift',extra:`<div class="lvgrid">${g}</div>`,btns:[['Back',toTitle,1]]});
   card.querySelectorAll('.lvgrid button').forEach(b=>b.addEventListener('click',()=>{initAudio();goFull();G.score=0;G.lives=3;briefing(+b.dataset.i)}))}
 function controls(){showCard({ey:'How to fight',h:'Controls',extra:`<div class="keys">
@@ -105,16 +105,16 @@ function controls(){showCard({ey:'How to fight',h:'Controls',extra:`<div class="
   <kbd>» / L / Shift</kbd><span>Dash. You can't be hit while dashing, so dash through attacks</span>
   <kbd>II / Esc / P</kbd><span>Pause</span></div>`,b:`<p>Clear each wave to move on. Reach the gate at the end of each chapter. In Chapter VI, Malakar's beams come high or low: jump the low ones, stay grounded under the high ones.</p>`,btns:[['Back',toTitle]]})}
 function briefing(i){G.state='card';padShow(false);showCard({ey:LV[i].ch,h:LV[i].name,b:STORY.brief[i],btns:[['Fight',()=>startLevel(i)]]})}
-function startLevel(i){G.lv=i;G.chapterStart=G.score;pl=newPlayer();en=[];rings=[];shots=[];parts=[];picks=[];texts=[];hz=[];spawnQ=[];cam=0;lock=false;waveI=0;boss=null;bossDone=false;lvT=0;doneT=0;hitStop=0;shake=0;
-  G.respawnT=0;bg=buildBG(LV[i]);populateLevel(LV[i]);G.state='play';G.paused=false;hideCard();padShow(true);clearInput();showBanner(LV[i].ch,LV[i].name,2.6)}
+function startLevel(i){G.lv=i;G.ck=G.ck&&G.ck.lv===i?G.ck:null;G.chapterStart=G.score;pl=newPlayer();en=[];rings=[];shots=[];parts=[];picks=[];texts=[];hz=[];spawnQ=[];cam=0;lock=false;waveI=0;boss=null;bossDone=false;lvT=0;doneT=0;hitStop=0;shake=0;
+  G.respawnT=0;grantUpTo(i);bg=buildBG(LV[i]);populateLevel(LV[i]);platB=null;GEO=buildGeo(LV[i],i);pl.max=maxHP();pl.hp=pl.max;padAbilities();G.state='play';G.paused=false;hideCard();padShow(true);clearInput();showBanner(LV[i].ch,LV[i].name,2.6)}
 function levelComplete(){G.state='card';G.score+=Math.round(pl.hp*20);G.best=Math.max(G.best,G.score);unlocked=Math.max(unlocked,G.lv+2);saveProg();padShow(false);clearInput();
   showCard({ey:LV[G.lv].ch+' complete',h:LV[G.lv].name,b:`<p>${STORY.clear[G.lv]}</p><p>Score ${G.score.toLocaleString()}</p>`,btns:[['Continue',()=>briefing(G.lv+1)],['Title',toTitle,1]]})}
 function gameOver(){G.state='over';if(pl){pl.dead=1;pl.deadT=0;pl.vx=0}G.best=Math.max(G.best,G.score);saveProg();padShow(false);clearInput();setTimeout(()=>showCard({ey:'Tyko is down',h:'The Light Fades',
-  b:`<p><span class="who">LYRA:</span> "Not yet, little one. Get up. I won't let the dark have you."</p>`,btns:[['Retry chapter',()=>{G.score=G.chapterStart;G.lives=3;startLevel(G.lv)}],['Title',toTitle,1]]}),900)}
+  b:`<p><span class="who">LYRA:</span> "Not yet, little one. Get up. I won't let the dark have you."</p>`,btns:[...(G.ck&&G.ck.lv===G.lv?[['Continue from save station',restoreCk]]:[]),['Retry chapter',()=>{G.score=G.chapterStart;G.lives=3;G.ck=null;startLevel(G.lv)},1],['Title',toTitle,1]]}),900)}
 function victory(){G.state='card';padShow(false);clearInput();G.score+=Math.round(pl.hp*50);unlocked=6;saveProg();G.best=Math.max(G.best,G.score);
   story(STORY.ending,0,()=>showCard({ey:'The saga is complete',h:'Ithra Is Free',big:0,b:`<p>Final score <b>${G.score.toLocaleString()}</b></p><p>Thank you for playing Aetherfall.</p>`,btns:[['Play again',()=>{G.score=0;G.lives=3;briefing(0)}],['Title',toTitle,1]]}))}
 function togglePause(){if(G.state!=='play')return;G.paused=!G.paused;clearInput();
-  if(G.paused){padShow(false);showCard({ey:LV[G.lv].ch,h:'Paused',btns:[['Resume',togglePause],['Restart chapter',()=>{G.score=G.chapterStart;startLevel(G.lv)},1],['Quit to title',toTitle,1]]})}
+  if(G.paused){padShow(false);showCard({ey:LV[G.lv].ch,h:'Paused',extra:abilitiesHTML(),btns:[['Resume',togglePause],['Restart chapter',()=>{G.score=G.chapterStart;startLevel(G.lv)},1],['Quit to title',toTitle,1]]})}
   else{hideCard();padShow(true)}}
 document.getElementById('pauseBtn').addEventListener('pointerdown',e=>{e.preventDefault();togglePause()});
 function goFull(){try{const d=document.documentElement;if(touchy&&!document.fullscreenElement&&d.requestFullscreen)d.requestFullscreen().then(()=>{try{screen.orientation.lock('landscape').catch(()=>{})}catch(_){}}).catch(()=>{})}catch(e){}}
