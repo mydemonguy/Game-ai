@@ -59,7 +59,7 @@ function bakeSky(B){const L=B.L,c=document.createElement('canvas');c.width=W+340
       if(L.theme==='station'||L.theme==='citadel'||L.theme==='hangar'||L.theme==='armory'){X.strokeStyle=rgba(L.planet,.55);X.lineWidth=7;X.beginPath();X.ellipse(0,0,310,48,-.25,Math.PI*.03,Math.PI*.97,true);X.stroke();
         X.strokeStyle=rgba(L.planet,.25);X.lineWidth=16;X.beginPath();X.ellipse(0,0,280,40,-.25,Math.PI*.03,Math.PI*.97,true);X.stroke()}X.restore()}}
   finally{X=o}B.skyC=c;B.skyW=W}
-function menuBG(){const L=LV[Math.min(unlocked,6)-1];bg=buildBG(L);G.lv=LV.indexOf(L);pl=null;en=[];shots=[];hz=[];picks=[];boss=null;texts=[];rings=[];banner=null;cam=0;shake=0}
+function menuBG(){const L=LV[Math.min(unlocked,6)-1];bg=buildBG(L);G.lv=LV.indexOf(L);pl=null;en=[];shots=[];hz=[];picks=[];boss=null;texts=[];rings=[];banner=null;cam=0;shake=0;ROOM=null;camY=0;FY=GY;RW=CW;boxes=[];lock=false;lockPlugs=[]}
 
 function shape(o,ox,base,col,glo,depth){const x=o.x-ox,w=o.w,h=o.h;if(x>W+80||x+w<-80)return;X.fillStyle=col;X.beginPath();
   const lit=depth===0?.75:depth===1?.4:.2;
@@ -120,7 +120,7 @@ function drawBG(){const B=bg,L=B.L;if(B.skyW!==W)bakeSky(B);if(AMB[L.theme].heat
   for(const o of B.mid)shape(o,cam*.35,GY-6,L.mid,L.glow,1);
   for(const o of B.walls){const x=o.x-cam*.62;if(x>W+20||x+o.b.w<-20)continue;drawBaked(o.b,x,GY+34-o.b.h)}
   drawSigns();
-  const off=-(((cam%512)+512)%512);for(let x=off;x<W;x+=512)X.drawImage(B.tile,x,GY);drawConveyor();
+  if(ROOM)return;const off=-(((cam%512)+512)%512);for(let x=off;x<W;x+=512)X.drawImage(B.tile,x,GY);drawConveyor(GY,0,cam);
   X.save();X.globalCompositeOperation='lighter';X.fillStyle=rgba(L.glow,.5);X.fillRect(-60,GY-1,W+120,3);X.restore();
   X.strokeStyle=rgba(L.glow,.1);X.lineWidth=2;const o2=-(cam%240);
   for(let x=o2-240;x<W+240;x+=240){X.beginPath();X.moveTo(x,GY);X.lineTo(x+(x-W/2)*.55,H);X.stroke()}}

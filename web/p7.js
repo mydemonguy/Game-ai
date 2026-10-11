@@ -12,7 +12,7 @@ let LIGHTS=[];
 const LM=document.createElement('canvas'),LG=LM.getContext('2d'),LS=4;
 const HOLE=(()=>{const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d'),r=g.createRadialGradient(32,32,0,32,32,32);
   r.addColorStop(0,'rgba(0,0,0,1)');r.addColorStop(.45,'rgba(0,0,0,.7)');r.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=r;g.fillRect(0,0,64,64);return c})();
-const lightW=(x,y,r,a)=>{const sx=x-cam;if(sx+r<0||sx-r>W)return;LIGHTS.push(sx,y,r,a)};
+const lightW=(x,y,r,a)=>{const sx=x-cam,sy=y-camY;if(sx+r<0||sx-r>W||sy+r<0||sy-r>H)return;LIGHTS.push(sx,sy,r,a)};
 const lightS=(x,y,r,a)=>LIGHTS.push(x,y,r,a);
 const ATM={flash:0,lt:6,bolt:null,thunder:0};
 
@@ -48,10 +48,10 @@ function drawSigns(){const B=bg,L=B.L,P=PAL[L.theme];X.textAlign='center';X.font
 
 /* ---- world: ceiling lamps with cones and floor pools, steam vents, conveyor ---- */
 function drawLamps(){const B=bg,L=B.L,P=PAL[L.theme],ink=P.ink;
-  for(const l of B.lamps){if(l.x<cam-300||l.x>cam+W+300)continue;let on=1,col=P.acc2;
+  for(const l of(ROOM?ROOM.lamps:B.lamps)){if(l.x<cam-300||l.x>cam+W+300)continue;const GY=l.fy||880,y0=l.y0||0;if(GY<camY-50||y0>camY+H+50)continue;let on=1,col=P.acc2;
     if(l.k==='broken'){on=Math.sin(lvT*23+l.s*40)*Math.sin(lvT*7.3+l.s*9)>-.15?1:.08;if(on<.5&&Math.random()<.25)parts.push({x:l.x+(Math.random()-.5)*30,y:l.y+26,vx:(Math.random()-.5)*260,vy:Math.random()*120,life:.5,max:.5,col:'#ffd27a',sz:3,g:1500,streak:1})}
     if(l.k==='alarm'){col='#ff3d2a';on=lock?1:.0}
-    X.strokeStyle=ink;X.lineWidth=4;X.beginPath();X.moveTo(l.x,0);X.lineTo(l.x,l.y);X.stroke();
+    X.strokeStyle=ink;X.lineWidth=4;X.beginPath();X.moveTo(l.x,y0);X.lineTo(l.x,l.y);X.stroke();
     X.fillStyle=ink;X.fillRect(l.x-38,l.y,76,26);X.fillStyle=shade(P.metal,-.3);X.fillRect(l.x-34,l.y+3,68,8);
     if(l.k==='alarm'){X.fillStyle=lock?'#ff5a3a':'#5a1a14';X.beginPath();X.arc(l.x,l.y+30,12,0,7);X.fill();
       if(lock){const a=lvT*5+l.s*6,dx=Math.cos(a);X.save();X.globalCompositeOperation='lighter';const g=X.createLinearGradient(l.x,l.y+30,l.x+dx*420,GY);g.addColorStop(0,'rgba(255,60,40,.35)');g.addColorStop(1,'rgba(255,60,40,0)');
@@ -63,29 +63,26 @@ function drawLamps(){const B=bg,L=B.L,P=PAL[L.theme],ink=P.ink;
     glow(l.x,l.y+30,70,col,.8);glow(l.x,GY+6,210,col,.35,26);
     if(AMB[L.theme].weather==='rain')glow(l.x,GY+60,40,col,.25,120);
     lightW(l.x,l.y+40,300,.9);lightW(l.x,GY-40,330,.75)}}
-function drawVents(){const B=bg,P=PAL[B.L.theme];for(const v of B.vents){if(v.x<cam-100||v.x>cam+W+100)continue;X.fillStyle=P.ink;X.fillRect(v.x-40,GY-6,80,8);
+function drawVents(){const B=bg,P=PAL[B.L.theme];for(const v of(ROOM?ROOM.vents:B.vents)){if(v.x<cam-100||v.x>cam+W+100)continue;const GY=v.fy||880;X.fillStyle=P.ink;X.fillRect(v.x-40,GY-6,80,8);
   for(let i=0;i<6;i++){X.fillStyle='rgba(255,255,255,.12)';X.fillRect(v.x-34+i*12,GY-5,6,5)}if(v.on>0)lightW(v.x,GY-80,160,.25)}}
-function drawConveyor(){const L=bg.L;if(!AMB[L.theme].conveyor)return;const off=((lvT*120-cam)%48+48)%48;X.save();X.beginPath();X.rect(-60,GY,W+120,12);X.clip();X.fillStyle='#1b1a16';X.fillRect(-60,GY,W+120,12);
-  X.fillStyle='#e8b23a';for(let x=-96+off;x<W+96;x+=48){X.beginPath();X.moveTo(x,GY+12);X.lineTo(x+14,GY+12);X.lineTo(x+26,GY);X.lineTo(x+12,GY);X.fill()}X.restore()}
+function drawConveyor(GY,x0,sh){const L=bg.L;if(!AMB[L.theme].conveyor)return;const off=((lvT*120-sh)%48+48)%48,xs=Math.floor(x0/48)*48;X.save();X.beginPath();X.rect(x0-60,GY,W+120,12);X.clip();X.fillStyle='#1b1a16';X.fillRect(x0-60,GY,W+120,12);
+  X.fillStyle='#e8b23a';for(let x=xs-96+off;x<x0+W+96;x+=48){X.beginPath();X.moveTo(x,GY+12);X.lineTo(x+14,GY+12);X.lineTo(x+26,GY);X.lineTo(x+12,GY);X.fill()}X.restore()}
 
 /* ---- update: vents, lightning ---- */
 function updAtmos(dt){const B=bg;if(!B||!B.vents)return;const A=AMB[B.L.theme];
-  for(const v of B.vents){v.t-=dt;if(v.on>0){v.on-=dt;if(Math.random()<.7)parts.push({x:v.x+(Math.random()-.5)*50,y:GY-8,vx:(Math.random()-.5)*60,vy:-260-Math.random()*160,life:1,max:1,col:'rgba(200,215,235,.22)',sz:22+Math.random()*20,g:-60})}
-    else if(v.t<=0){v.on=.8;v.t=3+Math.random()*4;if(Math.abs(v.x-pl.x)<900)sfx(180,.5,'sawtooth',.012,-120)}}
+  for(const v of(ROOM?ROOM.vents:B.vents)){v.t-=dt;if(v.on>0){v.on-=dt;if(Math.random()<.7)parts.push({x:v.x+(Math.random()-.5)*50,y:(v.fy||GY)-8,vx:(Math.random()-.5)*60,vy:-260-Math.random()*160,life:1,max:1,col:'rgba(200,215,235,.22)',sz:22+Math.random()*20,g:-60})}
+    else if(v.t<=0){v.on=.8;v.t=3+Math.random()*4;if(pl&&Math.abs(v.x-pl.x)<1100)sfxVent(v.x)}}
   ATM.flash*=Math.pow(.015,dt);if(ATM.bolt)ATM.bolt.t-=dt;
   if(A.lightning){ATM.lt-=dt;if(ATM.lt<=0){ATM.lt=6+Math.random()*9;ATM.flash=1;const pts=[];let x=W*(.15+Math.random()*.7),y=-20;
       while(y<GY*.7){pts.push([x,y]);x+=(Math.random()-.5)*90;y+=40+Math.random()*50}ATM.bolt={pts,t:.22};ATM.thunder=.35+Math.random()*.4}}
   if(ATM.thunder>0){ATM.thunder-=dt;if(ATM.thunder<=0)thunder()}}
-function thunder(){if(!AC)return;try{const n=AC.currentTime,len=AC.sampleRate*1.6,buf=AC.createBuffer(1,len,AC.sampleRate),d=buf.getChannelData(0);
-  for(let i=0;i<len;i++){const t=i/len;d[i]=(Math.random()*2-1)*Math.pow(1-t,2.2)*(t<.05?t/.05:1)}
-  const s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();s.buffer=buf;f.type='lowpass';f.frequency.value=380;g.gain.value=.5;s.connect(f);f.connect(g);g.connect(AC.destination);s.start(n)}catch(e){}buzz(30)}
-
+function thunder(){sfxThunder();buzz(30)}
 /* ---- weather, drawn in front of everything but the HUD ---- */
 function drawWeather(){const B=bg;if(!B||!B.wx)return;const A=AMB[B.L.theme],w=A.weather,span=W+240;
   if(w==='rain'){const n=A.heavy?230:120,wind=A.heavy?-260:-120;X.strokeStyle=A.heavy?'rgba(190,210,255,.32)':'rgba(190,220,210,.24)';X.lineWidth=2;X.beginPath();
     for(let i=0;i<n;i++){const p=B.wx[i],x=((p.x-cam*p.d+lvT*wind*p.d)%span+span)%span-120,y=((p.y+lvT*1500*p.d)%(H+200)+H+200)%(H+200)-100,ln=34*p.d;X.moveTo(x,y);X.lineTo(x+wind*.03*p.d,y+ln)}X.stroke();
     X.strokeStyle='rgba(200,220,255,.35)';X.lineWidth=2;for(let j=0;j<(A.heavy?26:12);j++){const ph=(lvT*2.4+j*.618)%1,seed=Math.floor(lvT*2.4+j*.618)*97+j*13,sx=((seed*7919)%W+W)%W;
-      X.globalAlpha=1-ph;X.beginPath();X.ellipse(sx,GY+4+(j%3)*30,6+ph*26,2+ph*6,0,0,7);X.stroke()}X.globalAlpha=1}
+      X.globalAlpha=1-ph;X.beginPath();X.ellipse(sx,FY-camY+4+(j%3)*30,6+ph*26,2+ph*6,0,0,7);X.stroke()}X.globalAlpha=1}
   else if(w==='snow'||w==='ash'||w==='ash2'){const n=w==='snow'?200:140,col=w==='snow'?'rgba(230,220,255,.75)':w==='ash'?'rgba(120,110,100,.7)':'rgba(90,60,60,.75)',gust=w==='snow'?(-160-Math.max(0,Math.sin(lvT*.4))*360):-40;
     X.fillStyle=col;for(let i=0;i<n;i++){const p=B.wx[i],x=((p.x-cam*p.d+lvT*gust*p.d+Math.sin(lvT*1.3+p.s*9)*30)%span+span)%span-120,y=((p.y+lvT*(w==='snow'?150:90)*p.d)%(H+200)+H+200)%(H+200)-100,sz=(w==='snow'?5:4)*p.d;X.fillRect(x,y,sz,sz)}
     if(w!=='snow'){X.save();X.globalCompositeOperation='lighter';X.fillStyle=w==='ash'?'#ff9a3a':'#ff4a2a';for(let i=0;i<40;i++){const p=B.wx[200+i%60],x=((p.x*1.3-cam*p.d+Math.sin(lvT+p.s*7)*40)%span+span)%span-120,
@@ -97,16 +94,15 @@ function drawWeather(){const B=bg;if(!B||!B.wx)return;const A=AMB[B.L.theme],w=A
 
 /* ---- light map: darkness with soft holes at every light source ---- */
 function gatherLights(){const B=bg;
-  for(const o of B.props){const b=o.b,x=o.x-b.w/2,y=GY-b.h+4;if(x>cam+W+200||x+b.w<cam-200)continue;for(const e of b.em)lightW(x+e.x,y+e.y,e.r*2.4+40,Math.min(1,e.a*1.3))}
+  for(const o of(ROOM?ROOM.props:B.props)){const b=o.b||(o.b=getMach(o.k,o.v)),x=o.x-b.w/2,y=(o.fy||GY)-b.h+4;if(x>cam+W+200||x+b.w<cam-200)continue;for(const e of b.em)lightW(x+e.x,y+e.y,e.r*2.4+40,Math.min(1,e.a*1.3))}
   if(pl&&!pl.dead)lightW(pl.x,pl.y-100,280,.7);
   for(const e of en)lightW(e.x,e.y-e.h*.6,e.fly?170:130,.55);
   if(boss&&!boss.dead)lightW(boss.x,boss.y+boss.dy-240,420,.95);
   for(const s of shots)lightW(s.x,s.y,s.wave?340:150,.9);
   for(const k of picks)lightW(k.x,k.y,110,.55);
-  for(const b of boxes)lightW(b.x,GY-60,110,.35);
+  for(const b of boxes)lightW(b.x,FY-60,110,.35);
   for(const r of rings)lightW(r.x,r.y,r.r*2.6,r.life/r.max);
   for(const h of hz){if(h.kind==='quake')lightW(h.x,GY-20,180,.8);else if(h.kind==='pillar'&&h.t<=0)lightW(h.x,GY-300,420,1);else if(h.kind==='beam'&&h.t<=0)for(let x=0;x<W;x+=300)lightS(x+150,h.y,260,.8)}
-  if(!B.L.boss&&waveI>=B.L.waves.length)lightW(B.L.len-150,GY-190,380,.85);
   for(const o of B.walls){const x=o.x-cam*.62;if(x>W+100||x+o.b.w<-100)continue;const y=GY+34-o.b.h;for(const e of o.b.em)lightS(x+e.x,y+e.y,e.r*1.8,e.a)}}
 function applyLighting(){const B=bg,A=AMB[B.L.theme];gatherLights();const lw=Math.ceil(W/LS),lh=Math.ceil(H/LS);if(LM.width!==lw||LM.height!==lh){LM.width=lw;LM.height=lh}
   const alarm=lock?.5+.5*Math.sin(lvT*6):0,a=A.a*(1-Math.min(.92,ATM.flash));

@@ -11,17 +11,19 @@ function addLayers(B){const L=B.L,P=PAL[L.theme],r=rng(L.len*13+5),ks=PROPK[L.th
   x=-200;while(x<L.len*1.35+2900){B.fgTop.push({x,w:200+r()*300,h:90+r()*150,s:r()});x+=420+r()*620}
   x=1800;while(x<L.len*1.5+2900){B.fgBig.push({x,w:70+r()*36,s:r()});x+=3000+r()*1800}
   return B}
-function drawProps(){const B=bg;for(const o of B.props){const b=o.b,x=o.x-b.w/2;if(x>cam+W+40||x+b.w<cam-40)continue;drawBaked(b,x,GY-b.h+4)}}
+function drawProps(){if(!ROOM){for(const o of bg.props){const b=o.b,x=o.x-b.w/2;if(x>cam+W+40||x+b.w<cam-40)continue;drawBaked(b,x,GY-b.h+4)}return}
+  for(const o of ROOM.props){const b=o.b||(o.b=getMach(o.k,o.v)),x=o.x-b.w/2;if(x>cam+W+40||x+b.w<cam-40||o.fy<camY-20||o.fy-b.h>camY+H)continue;drawBaked(b,x,o.fy-b.h+4)}}
 
 function truss(x,y,w,h,col){X.fillStyle=col;X.fillRect(x,y,w,8);X.fillRect(x,y+h-8,w,8);X.strokeStyle=col;X.lineWidth=6;X.beginPath();
   for(let i=0;i<w;i+=h){X.moveTo(x+i,y+4);X.lineTo(x+Math.min(w,i+h),y+h-4);X.moveTo(x+Math.min(w,i+h),y+4);X.lineTo(x+i,y+h-4)}X.stroke()}
 function drawFG(){const B=bg,L=B.L,P=PAL[L.theme],col=shade(L.gnd,-.62),rim=rgba(L.glow,.28),k=FGK[L.theme],tk=TOPK[L.theme];
-  X.fillStyle=col;
+  const dyB=ROOM?(Math.max(0,RH-H)-camY)*1.3:0,dyT=ROOM?-camY*1.35:0;X.fillStyle=col;X.save();X.translate(0,dyB);
   for(const o of B.fg){const x=o.x-cam*1.3,w=o.w*1.2,h=o.h*1.5;if(x>W+60||x+w<-60)continue;X.fillStyle=col;X.beginPath();
     if(k==='rail'){X.fillRect(x,H-h,w,10);for(let i=0;i<=4;i++)X.fillRect(x+i*w/4-5,H-h,10,h);X.fillRect(x,H-h*.5,w,6);glow(x+w/2,H-h,18,L.glow,.4)}
     else if(k==='pipes'){X.fillRect(x,H-h*.6,w,30);X.fillRect(x,H-h*.6+40,w*.7,18);X.fillRect(x+w*.7,H-h-60,30,h+60);X.fillStyle=rim;X.fillRect(x+w*.7+24,H-h-60,4,h+60);
       glow(x+w*.7+15,H-h-60,22,L.glow,.5+Math.sin(lvT*5+o.s*9)*.3)}
     else{for(let i=0;i<6;i++){const sx=x+i*w/6;X.moveTo(sx,H);X.lineTo(sx+w/12,H-h*(.5+((o.s*7+i)%1)));X.lineTo(sx+w/6,H)}X.fill()}}
+  X.restore();X.save();X.translate(0,dyT);
   for(const o of B.fgTop){const x=o.x-cam*1.35,w=o.w,h=o.h,sw=Math.sin(lvT*.9+o.s*6)*10;if(x>W+80||x+w<-80)continue;X.fillStyle=col;X.strokeStyle=col;
     if(tk==='beams'){truss(x-60,0,w+120,46,col);const lx=x+w*.5,lh=40+h*.4;X.lineWidth=4;X.beginPath();X.moveTo(lx,46);X.lineTo(lx+sw*.3,lh);X.stroke();
       X.fillRect(lx-26+sw*.3,lh,52,16);X.fillStyle=P.acc2;X.fillRect(lx-20+sw*.3,lh+16,40,5);glow(lx+sw*.3,lh+24,70,L.glow,.35)}
@@ -29,6 +31,7 @@ function drawFG(){const B=bg,L=B.L,P=PAL[L.theme],col=shade(L.gnd,-.62),rim=rgba
       for(let i=1;i<4;i++){const t=i/4,cx=(1-t)*(1-t)*(x-40)+2*t*(1-t)*(x+w/2)+t*t*(x+w+40),cy=2*t*(1-t)*(h+sw);glow(cx,cy+8,16,L.glow,.7);X.fillRect(cx-5,cy,10,12)}}
     else{X.lineWidth=9;X.setLineDash([20,9]);for(let i=0;i<2;i++){const cx=x+i*w*.6,ch=h*(1+i*.3);X.beginPath();X.moveTo(cx,0);X.lineTo(cx+sw,ch);X.stroke()}X.setLineDash([]);
       X.lineWidth=7;X.beginPath();X.arc(x+sw,h+14,14,.3,Math.PI*1.4);X.stroke();X.fillRect(x+w*.6+sw-22,h*1.3,44,30);glow(x+w*.6+sw,h*1.3+15,26,L.glow,.4)}}
+  X.restore();
   /* braced steel columns that sweep past in front; they turn see-through when a character is behind them */
   const xs=[];if(pl)xs.push(pl.x-cam);for(const e of en)xs.push(e.x-cam);if(boss&&!boss.dead)xs.push(boss.x-cam);
   for(const o of B.fgBig){const x=o.x-cam*1.55,w=o.w;if(x>W+40||x+w<-40)continue;const near=xs.some(sx=>Math.abs(x+w/2-sx)<w/2+110);

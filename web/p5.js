@@ -2,13 +2,6 @@
 "use strict";
 /* ---------- world + HUD rendering ---------- */
 const FD='"Cinzel", Georgia, serif',FU='"Chakra Petch", "Segoe UI", sans-serif';
-function drawGate(L){const gx=L.len-150,open=waveI>=L.waves.length;X.save();X.translate(gx,GY);
-  X.fillStyle=L.mid;X.fillRect(-120,-380,40,380);X.fillRect(80,-380,40,380);X.fillRect(-140,-410,280,40);
-  X.globalCompositeOperation='lighter';X.strokeStyle=L.glow;X.lineWidth=10;X.globalAlpha=open?.85:.2;
-  X.beginPath();X.ellipse(0,-190,70,170,0,0,7);X.stroke();
-  if(open){for(let i=0;i<3;i++){X.globalAlpha=.25;X.beginPath();X.ellipse(0,-190,70-i*18,170-i*40,Math.sin(lvT*2+i)*.2,0,7);X.stroke()}
-    X.globalAlpha=.6;X.fillStyle=L.glow;X.font=`700 30px ${FU}`;X.textAlign='center';X.fillText('GATE',0,-430)}
-  X.restore();X.globalAlpha=1;if(open)glow(gx,GY-190,170,L.glow,.45+.15*Math.sin(lvT*3),230)}
 function drawHz(){for(const h of hz){if(h.kind==='quake'){drawQuake(h);continue}if(h.kind==='pillar'){if(h.t>0){X.fillStyle='#ff3d6e';X.globalAlpha=.25+.25*Math.sin(lvT*30);X.beginPath();X.ellipse(h.x,GY+6,h.w/2,18,0,0,7);X.fill();X.globalAlpha=1}
       else{X.save();X.globalCompositeOperation='lighter';const a=Math.min(1,h.act/.2);X.globalAlpha=a;const g=X.createLinearGradient(h.x-h.w/2,0,h.x+h.w/2,0);
         g.addColorStop(0,'rgba(255,61,110,0)');g.addColorStop(.5,'#ffd0dc');g.addColorStop(1,'rgba(255,61,110,0)');X.fillStyle=g;X.fillRect(h.x-h.w/2,0,h.w,GY);X.restore()}}
@@ -24,7 +17,7 @@ function drawParts(){X.save();X.globalCompositeOperation='lighter';
   for(const q of parts){X.globalAlpha=Math.max(0,q.life/q.max);if(q.streak){X.strokeStyle=q.col;X.lineWidth=3;X.beginPath();X.moveTo(q.x,q.y);X.lineTo(q.x-q.vx*.035,q.y-q.vy*.035);X.stroke()}
     else{X.fillStyle=q.col;X.fillRect(q.x-q.sz/2,q.y-q.sz/2,q.sz,q.sz)}}X.restore();X.globalAlpha=1}
 function drawTexts(){X.textAlign='center';for(const t of texts){X.globalAlpha=Math.min(1,t.life*2);X.font=`700 ${t.big?52:typeof t.s==='number'?38:30}px ${FU}`;X.lineWidth=6;X.strokeStyle='rgba(0,0,0,.7)';X.strokeText(t.s,t.x,t.y);X.fillStyle=t.col;X.fillText(t.s,t.x,t.y)}X.globalAlpha=1}
-function drawWorld(){const L=bg.L;drawProps();drawVents();drawLamps();drawGeo();if(!L.boss)drawGate(L);drawBoxes();drawHz();drawPicks();
+function drawWorld(){if(ROOM){drawRoomBack();drawProps();drawVents();drawLamps();drawSolids();drawConveyor(FY,cam,0)}else{drawProps();drawVents();drawLamps()}drawGeo();drawBoxes();drawHz();drawPicks();
   for(const e of en)if(!e.fly)e.type==='c'?drawCaster(e):drawHollow(e);
   if(boss&&!boss.dead)drawBoss(boss);
   if(pl){drawKnight(pl);drawShieldBubble(pl)}
@@ -46,9 +39,9 @@ function drawHUD(){const L=bg.L,p=pl;if(!p)return;X.textBaseline='alphabetic';
     if(m>1){X.fillStyle='#5ce1ff';X.fillText('×'+m+' SCORE',W-60,392)}X.globalAlpha=1}
   if(boss&&!boss.dead&&boss.state!=='enter'){const bw=900,bx=W/2-bw/2;X.textAlign='center';X.font=`700 30px ${FD}`;X.fillStyle='#ffd0dc';X.fillText('MALAKAR, THE VOID SOVEREIGN',W/2,150);
     hudBar(bx,164,bw,20,boss.hp/boss.max,'#7a0a2a','#ff3d6e');[.55,.25].forEach(m=>{X.fillStyle='rgba(255,255,255,.6)';X.fillRect(bx+bw*m-1,161,2,26)})}
-  if(G.state==='play'&&!lock&&!banner&&!bossDone&&(waveI<L.waves.length||!L.boss)&&Math.floor(lvT*2)%2){X.textAlign='right';X.font=`700 46px ${FD}`;X.fillStyle=L.glow;X.fillText('GO ▶',W-60,480)}
-  if(G.lv===0&&lvT<10&&touchy){X.textAlign='center';X.font=`600 26px ${FU}`;X.fillStyle='rgba(236,231,255,.85)';X.fillText(['Slide on the left side to move','▲ jump','⚔ strike','pull down to drop from catwalks'].concat(hasAb('dash')?['» dash']:[]).join('   ·   '),W/2,H-36)}
-  if(G.lv===0&&lvT<9&&!touchy){X.textAlign='center';X.font=`600 24px ${FU}`;X.fillStyle='rgba(236,231,255,.8)';X.fillText('A / D move   ·   W jump (twice to double jump)   ·   J strike   ·   K starburst   ·   Esc pause',W/2,H-50)}
+  if(lock&&ROOM&&ROOM.arena&&!boss&&Math.floor(lvT*2)%2){X.textAlign='center';X.font=`700 26px ${FU}`;X.fillStyle='#ff6a5a';X.fillText('◆ HATCHES SEALED ◆',W/2,H-60)}
+  if(G.lv===0&&lvT<10&&touchy){X.textAlign='center';X.font=`600 26px ${FU}`;X.fillStyle='rgba(236,231,255,.85)';X.fillText(['Slide on the left side to move','▲ jump','⚔ strike','walk into hatches to explore','II map'].join('   ·   '),W/2,H-36)}
+  if(G.lv===0&&lvT<9&&!touchy){X.textAlign='center';X.font=`600 24px ${FU}`;X.fillStyle='rgba(236,231,255,.8)';X.fillText('A / D move   ·   W jump   ·   J strike   ·   S drop   ·   walk into hatches to explore   ·   Esc map',W/2,H-50)}
   if(banner){const a=Math.min(1,banner.life*2,(banner.max-banner.life)*4);X.globalAlpha=a;X.textAlign='center';X.fillStyle='rgba(5,4,12,.45)';X.fillRect(0,H/2-130,W,banner.sub?190:150);
     X.font=`900 96px ${FD}`;X.fillStyle='#ece7ff';glowOn(L.glow,30);X.fillText(banner.t.toUpperCase(),W/2,H/2-30);glowOff();
     if(banner.sub){X.font=`600 34px ${FU}`;X.fillStyle=L.glow;X.fillText(banner.sub.toUpperCase(),W/2,H/2+30)}X.globalAlpha=1}
@@ -56,8 +49,9 @@ function drawHUD(){const L=bg.L,p=pl;if(!p)return;X.textBaseline='alphabetic';
   if(p.hp<30){const v=X.createRadialGradient(W/2,H/2,H*.4,W/2,H/2,H);v.addColorStop(0,'rgba(255,0,60,0)');v.addColorStop(1,`rgba(255,0,60,${.25+Math.sin(lvT*5)*.1})`);X.fillStyle=v;X.fillRect(0,0,W,H)}
   if(G.state==='over'){X.fillStyle='rgba(5,4,12,.5)';X.fillRect(0,0,W,H)}}
 function render(){if(!bg)return;X.save();const sx=shake?(Math.random()-.5)*shake*2:0,sy=shake?(Math.random()-.5)*shake*2:0;X.translate(sx,sy);
-  drawBG();X.save();X.translate(-Math.round(cam),0);drawWorld();X.restore();applyLighting();drawFG();drawWeather();drawAmbient();X.restore();
-  if(G.state!=='menu')drawHUD()}
+  drawBG();X.save();X.translate(-Math.round(cam),-Math.round(camY));drawWorld();X.restore();applyLighting();drawFG();drawWeather();drawAmbient();X.restore();
+  if(G.state!=='menu')drawHUD();
+  if(TRANS.on){const d=TRANS.act&&TRANS.act.lift?.7:.22,a=TRANS.phase===0?Math.min(1,TRANS.t/d):Math.max(0,1-TRANS.t/.25);X.fillStyle=`rgba(0,0,0,${a})`;X.fillRect(0,0,W,H)}}
 
 /* ---------- loop ---------- */
 let last=performance.now();C._dirty=1;
@@ -69,9 +63,10 @@ function frame(now){const dt=Math.min(.033,Math.max(0,(now-last)/1000));last=now
   try{if(G.state==='play'&&!G.paused)update(dt);
     else if(G.state==='over'){updParts(dt);lvT+=dt;shake*=.9;if(pl)pl.deadT=(pl.deadT||0)+dt}
     else if(G.state==='menu'){lvT+=dt;cam+=dt*70;if(cam>bg.L.len-W)cam=0}
+    musicTick();
     if(G.state==='play'&&!G.paused||G.state==='over'||G.state==='menu'||C._dirty){C._dirty=0;render()}syncPad()}catch(err){console.error(err)}
   requestAnimationFrame(frame)}
-toTitle();
+toTitle();initAudio();document.addEventListener('pointerdown',()=>initAudio(),true);addEventListener('keydown',()=>initAudio(),true);
 if(document.fonts&&document.fonts.load){Promise.all([document.fonts.load(`900 40px ${FD}`),document.fonts.load(`700 20px ${FU}`)]).catch(()=>{})}
 requestAnimationFrame(frame);
 </script>

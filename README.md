@@ -1,6 +1,6 @@
 # Aetherfall – Android project
 
-A 1080p sci-fi fantasy side-scrolling brawler: 6 chapters and a final boss fight against Malakar, the Void Sovereign.
+A 1080p sci-fi fantasy action-explorer: six worlds of connected rooms (Super Metroid-style map), abilities that open new paths, and a final boss fight against Malakar, the Void Sovereign. Synthesised music for every world with a combat layer during lockdowns, plus layered sound effects.
 It runs fully offline, in landscape, with the system bars hidden.
 
 ## Option A: Build on GitHub (no computer setup needed)
@@ -33,12 +33,15 @@ It runs fully offline, in landscape, with the system bars hidden.
 - » Dash (you can't be hit while dashing), unlocked in Chapter I
 - Pull the stick down to drop through catwalks; down + strike in the air is the Ground Slam (Chapter IV)
 
-Abilities: Comet Dash (I), Sky Scales double jump (II), Starburst Roar (III), Ground Slam (IV), Plasma Claws (V). Each chapter hides 2 Energy Tanks; some need abilities from later chapters, so replay earlier chapters to find them all.
-- II pause
+- II pause and map (also has Sound settings)
+
+Walk into the blue hatches at a room's edge to move to the next room; red hatches stay sealed until the room's lockdown waves are beaten. Green stations save the game. Elevators link the worlds both ways.
+
+Abilities: Comet Dash (I), Sky Scales double jump (II), Starburst Roar (III), Ground Slam (IV), Plasma Claws (V), each found at a shrine. Each world hides 2 Energy Tanks; some need abilities from later worlds, so ride the elevators back to find them all.
 
 ## Changing the game
 
-The game's source is in `web/` (p1.html = page + touch controls, p2–p5 = game code).
+The game's source is in `web/` (p1.html = page + touch controls, p2–p9 = game code, p8a–p8c = rooms and map, p11 = music and sound).
 Run `web/build.sh` to assemble it into `app/src/main/assets/index.html` (fonts embedded for offline play), then push; GitHub builds a new APK and publishes it under **Releases**.
 
 Builds are signed with `app/aetherfall-debug.keystore`, so each new APK installs as an update over the old one. It is a debug key for this hobby project, not for a Play Store release.

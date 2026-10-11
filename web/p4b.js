@@ -4,7 +4,7 @@
 function limb(x,y,len,wid,ang,col){X.save();X.translate(x,y);X.rotate(ang);X.fillStyle=col;X.fillRect(-wid/2,0,wid,len);X.restore()}
 function leg(hx,hy,a1,a2,c1,c2,l1,l2,w){X.save();X.translate(hx,hy);X.rotate(a1);X.fillStyle=c1;X.fillRect(-w/2,0,w,l1+2);X.translate(0,l1);X.rotate(a2);
   X.fillStyle=c2;X.fillRect(-w/2+1,0,w-2,l2);X.fillRect(-w/2+1,l2-8,w+8,9);X.restore()}
-function shadow(x,w,y){X.fillStyle='rgba(0,0,0,.4)';X.beginPath();X.ellipse(x,(y||GY)+4,w,12,0,0,7);X.fill()}
+function shadow(x,w,y){if(y==null)y=FY;X.fillStyle='rgba(0,0,0,.4)';X.beginPath();X.ellipse(x,y+4,w,12,0,0,7);X.fill()}
 function bar(e,y){if(e.hp>=e.max)return;const w=Math.max(70,e.w+20),x=e.x-w/2,f=Math.max(0,e.hp/e.max);
   X.fillStyle='rgba(5,4,12,.75)';X.fillRect(x-2,y-2,w+4,12);X.fillStyle='#ff3d6e';X.fillRect(x,y,w*f,8);X.fillStyle='rgba(255,255,255,.35)';X.fillRect(x,y,w*f,2)}
 function hitFlash(e,cx,cy,r){if(e.flash>0)glow(cx,cy,r,'#ffffff',e.flash*5)}
