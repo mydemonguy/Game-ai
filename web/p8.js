@@ -28,7 +28,7 @@ function buildGeo(L,i){const r=rng(L.len*41+i*7+3),g={plats:[],gates:[],cages:[]
   let x=760;while(x<L.len-600){if(clear(x)){const tiers=1+Math.floor(r()*3);let px=x;
       for(let t=0;t<tiers;t++){const w=240+Math.floor(r()*3)*80;g.plats.push({x:Math.round(px),y:GY-190-t*170,w});px+=(r()<.5?-1:1)*(130+r()*70)}}
     x+=700+r()*600}
-  if(i<5){g.shrine={x:sx,ab:ABIL[i].id};g.gates.push(mkGate(ABIL[i].gate,gx))}
+  if(i<5){g.shrine={x:sx,ab:ABIL[i].id};g.gates.push(mkGate(ABIL[i].gate,gx));if(ABIL[i].gate==='laser')picks.push({x:gx-320,y:GY-80,type:'shard',float:1},{x:gx-420,y:GY-80,type:'shard',float:1})}
   TD.forEach((kind,k)=>{const id=i+'-'+k,t=tx[k];if(META.tanks[id])return;
     if(kind==='high'){const py=GY-410;g.plats.push({x:t-130,y:py,w:260,iso:1});picks.push({x:t,y:py-70,type:'tank',id,float:1})}
     else{const c={x:t,kind,hp:kind==='plasma'?3:1,broken:0};g.cages.push(c);picks.push({x:t,y:GY-80,type:'tank',id,float:1,cage:c})}});
@@ -55,8 +55,8 @@ function updGeo(dt){const p=pl;hintT-=dt;if(!p||p.dead)return;p.maxX=Math.max(p.
   if(p.dashT>0){const b={x:p.x-80,y:p.y-170,w:160,h:170};for(const g of GEO.gates)if(!g.broken&&g.kind==='crack'&&overlap(b,{x:g.x-g.w/2,y:g.top,w:g.w,h:GY-g.top}))breakGate(g);
     for(const c of GEO.cages)if(!c.broken&&c.kind==='crack'&&Math.abs(c.x-p.x)<110&&p.y>GY-200)breakCage(c)}
   for(const s of shots)if(s.friend&&s.wave){for(const g of GEO.gates)if(!g.broken&&g.kind==='laser'&&Math.abs(s.x-g.x)<s.r+40)breakGate(g);for(const c of GEO.cages)if(!c.broken&&c.kind==='laser'&&Math.abs(s.x-c.x)<s.r+60)breakCage(c)}
-  const sh=GEO.shrine;if(sh&&!hasAb(sh.ab)&&Math.abs(p.x-sh.x)<80&&p.y>GY-200)grantAbility(sh.ab);
-  for(const st of GEO.stations){st.t-=dt;if(st.t<=0&&Math.abs(p.x-st.x)<70&&p.ground&&p.y>GY-4)useStation(st)}}
+  const sh=GEO.shrine;if(sh&&!hasAb(sh.ab)&&Math.abs(p.x-sh.x)<90)grantAbility(sh.ab);
+  for(const st of GEO.stations){st.t-=dt;if(!lock&&st.t<=0&&Math.abs(p.x-st.x)<70&&p.ground&&p.y>GY-4)useStation(st)}}
 function clawGeo(box){for(const g of GEO.gates)if(!g.broken&&g.kind==='crystal'&&overlap(box,{x:g.x-g.w/2,y:0,w:g.w,h:GY})){if(hasAb('plasma')){g.hp--;burst(g.x,box.y+80,'#ff5ad8',10,500);S.hit();if(g.hp<=0)breakGate(g)}else if(hintT<=0){hintT=2.5;ftext(g.x,GY-300,GATEHINT.crystal,'#ffd27a')}}
   for(const c of GEO.cages)if(!c.broken&&c.kind==='plasma'&&overlap(box,{x:c.x-70,y:GY-170,w:140,h:170})){if(hasAb('plasma')){c.hp--;S.hit();burst(c.x,GY-90,'#ff5ad8',8,400);if(c.hp<=0)breakCage(c)}else if(hintT<=0){hintT=2.5;ftext(c.x,GY-230,'Void crystal. Claws bounce off it.','#ffd27a')}}}
 function slamAt(x){for(const g of GEO.gates)if(!g.broken&&g.kind==='blast'&&Math.abs(x-g.plate)<170)breakGate(g);for(const c of GEO.cages)if(!c.broken&&c.kind==='slam'&&Math.abs(x-c.x)<220)breakCage(c)}
@@ -67,9 +67,9 @@ function slamLand(p,y){p.slam=0;shake=Math.max(shake,14);S.boom();buzz(35);ring(
 function grantAbility(id){const A=ABIL.find(a=>a.id===id);META.ab[id]=1;saveMeta();hitStop=.45;shake=10;buzz([40,30,80]);
   [523,659,784,1047].forEach((f,i)=>setTimeout(()=>sfx(f,.35,'triangle',.07,0),i*120));
   for(let i=0;i<3;i++)ring(pl.x,pl.y-100,A.col,180+i*90);burst(pl.x,pl.y-100,A.col,40,900);showBanner(A.name+' acquired',A.how,4.2);padAbilities()}
-function useStation(st){st.t=6;const p=pl;p.hp=p.max;p.en=Math.max(p.en,50);G.ck={lv:G.lv,x:st.x,waveI,score:G.score,broken:GEO.gates.map(g=>g.broken),cages:GEO.cages.map(c=>c.broken)};
+function useStation(st){st.t=6;const p=pl;p.hp=p.max;p.en=Math.max(p.en,50);G.ck={lv:G.lv,x:st.x,waveI,score:G.score,cs:G.chapterStart,broken:GEO.gates.map(g=>g.broken),cages:GEO.cages.map(c=>c.broken)};
   sfx(660,.3,'sine',.06,330);setTimeout(()=>sfx(990,.3,'sine',.06,0),150);ring(st.x,GY-110,'#7dffb0',200);showBanner('Progress saved','Health restored',1.6)}
-function restoreCk(){const ck=G.ck;G.lives=3;startLevel(ck.lv);G.score=ck.score;waveI=ck.waveI;pl.x=ck.x+80;pl.maxX=ck.x;
+function restoreCk(){const ck=G.ck;G.lives=3;startLevel(ck.lv);G.score=ck.score;G.chapterStart=ck.cs!=null?ck.cs:G.chapterStart;waveI=ck.waveI;pl.x=ck.x+80;pl.maxX=ck.x;
   GEO.gates.forEach((g,i)=>g.broken=ck.broken[i]||g.broken);GEO.cages.forEach((c,i)=>c.broken=ck.cages[i]||c.broken);
   cam=Math.max(0,Math.min(arenaCam(),pl.x-W*.38));showBanner('Save station',LV[ck.lv].name,1.8)}
 function padAbilities(){const d=document.querySelector('.act.dsh'),s=document.querySelector('.act.sp');if(d)d.hidden=!hasAb('dash');if(s)s.hidden=!hasAb('roar')}

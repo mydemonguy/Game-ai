@@ -59,13 +59,13 @@ const LV=[
  {name:'The Iron Armory',ch:'Chapter II',theme:'armory',len:7800,sky:['#0f1512','#212c26','#43574b'],planet:'#ffd08a',far:'#1c2620',mid:'#26332b',gnd:'#141b17',glow:'#ff8a3a',
   waves:[['g','d','d'],['h','h','b'],['d','d','g','g'],['b','g','d','g'],['b','b','d','d']]},
  {name:'Orbital Dock Aeris',ch:'Chapter III',theme:'station',len:8400,sky:['#0c1222','#203256','#5a78a6'],planet:'#cfeaff',far:'#2a3856',mid:'#354564',gnd:'#262c38',glow:'#ff9a2a',
-  waves:[['d','d','g'],['b','d','d'],['g','h','g','d','d'],['b','b','d'],['B','d','d']]},
+  waves:[['d','g','g'],['b','d','g'],['g','h','h','d'],['b','b','d'],['B','g','d']]},
  {name:'The Amber Foundry',ch:'Chapter IV',theme:'cargo',len:8400,sky:['#18120a','#3a2a16','#86643a'],planet:'#ffd27a',far:'#2a2013',mid:'#382a17',gnd:'#1c160e',glow:'#ffb347',
-  waves:[['c','g','g'],['b','c','d'],['g','g','c','c'],['b','b','c','d'],['c','c','h','h','b']]},
+  waves:[['c','g','g'],['b','c','d'],['g','h','h','c','c'],['b','b','c','d'],['c','c','h','h','B']]},
  {name:'Gates of the Null Citadel',ch:'Chapter V',theme:'citadel',len:8800,sky:['#07050f','#1c1238','#4e2f7c'],planet:'#c9a8ff',far:'#160c30',mid:'#201240',gnd:'#0c0718',glow:'#b48cff',
-  waves:[['c','c','d','d'],['b','b','h','h','c'],['d','d','d','c','c'],['b','b','b','c'],['B','c','c']]},
+  waves:[['c','c','d','d'],['b','h','h','h','c'],['d','d','d','c','c'],['b','b','b','c'],['B','c','c']]},
  {name:'Throne of the Rift',ch:'Chapter VI',theme:'core',len:7200,sky:['#060406','#1a0a0e','#4a140e'],planet:'#ff4a2a',far:'#140b0c',mid:'#1e1113',gnd:'#0d0909',glow:'#ff4a2a',
-  waves:[['c','b','d'],['h','h','c','c','b'],['B','d','d']],boss:true}
+  waves:[['c','b','d'],['h','h','c','c','b'],['B','h','h','d']],boss:true}
 ];
 LV.forEach(L=>{const n=L.waves.length,end=L.boss?L.len-2200:L.len-900;L.trig=L.waves.map((_,i)=>Math.round(900+(end-900)*i/Math.max(1,n-1)))});
 
@@ -116,11 +116,13 @@ const ETYPES={
  d:{w:70,h:70,hp:28,spd:0,dmg:8,score:150,fly:true},
  c:{w:80,h:160,hp:55,spd:0,dmg:9,score:250},
  B:{w:170,h:320,hp:420,spd:125,dmg:24,score:1500,heavy:true},
- h:{w:130,h:100,hp:30,spd:520,dmg:9,score:120}
+ h:{w:130,h:100,hp:45,spd:520,dmg:12,score:120}
 };
-function spawnEnemy(type,side){const T=ETYPES[type],x=side<0?cam-120:cam+W+120;
+function spawnEnemy(type,side){const T=ETYPES[type];let x=side<0?cam-120:cam+W+120;
+  for(const s of solidRects()){const gx=s.x+s.w/2;if(Math.sign(x-gx)!==Math.sign(pl.x-gx))x=gx+Math.sign(pl.x-gx)*(s.w/2+90)}
   const e={type,x,y:T.fly?520+Math.random()*130:GY,w:T.w,h:T.h,hp:T.hp*dm(),max:T.hp*dm(),vx:0,vy:0,face:-side,state:'walk',t:.6+Math.random()*.8,flash:0,seed:Math.random()*10,heavy:T.heavy,fly:T.fly,hy:0,score:T.score};
-  e.hy=e.y;if(type==='c'){e.x=side<0?cam+260:cam+W-RSAFE-60;e.y=GY;e.fade=1;e.t=1.2}
+  e.hy=e.y;if(type==='c'){e.x=side<0?cam+260:cam+W-RSAFE-60;e.y=GY;e.fade=1;e.t=1.2;
+    for(const g of solidRects()){const gx=g.x+g.w/2;if(Math.sign(e.x-gx)!==Math.sign(pl.x-gx))e.x=pl.x+(pl.x<gx?-1:1)*Math.max(200,Math.min(520,Math.abs(pl.x-gx)-80))}}
   en.push(e);burst(e.x,e.y-e.h/2,'#ff4fd8',14);if(type==='B'){showBanner('Iron Warden','Elite · jump its shockwaves',1.8);S.boom();shake=12}}
 function spawnWave(list){list.forEach((t,i)=>spawnQ.push({t:i*.55,type:t,side:i%2?-1:1}))}
 
@@ -171,7 +173,7 @@ function updPlayer(dt){const p=pl,L=LV[G.lv];
   const sup=geoLand(p,y0);
   if(sup!=null){if(!p.ground){if(p.vy>700){dust(p.x,sup);p.squash=1}p.landT=.15;if(p.slam)slamLand(p,sup)}p.y=sup;p.vy=0;p.ground=true;p.jumps=0}else p.ground=false;
   p.sup=surfaceBelow(p.x,p.y);
-  let mn=60,mx=L.len;if(lock){mn=cam+60;mx=cam+W-(touchy?RSAFE-40:60)}
+  let mn=60,mx=L.len;if(lock){mn=cam+60;mx=cam+W-(touchy?RSAFE+80:60)}
   p.x=Math.max(mn,Math.min(mx,p.x));
   p.run+=Math.abs(p.vx)*dt*.02;
   if(p.atk>0&&p.atk<.18){const reach=p.combo===3?240:180,box={x:p.face>0?p.x-10:p.x-reach+10,y:p.y-190,w:reach,h:190};
@@ -181,25 +183,26 @@ function updPlayer(dt){const p=pl,L=LV[G.lv];
 }
 const allTargets=()=>boss&&!boss.dead&&boss.state!=='enter'?en.concat([boss]):en;
 
+function gateClamp(e){for(const s of solidRects()){if(e.y<=s.y+4&&s.y>0)continue;const l=s.x-e.w/2,r=s.x+s.w+e.w/2;if(e.x>l&&e.x<r){e.x=e.x<s.x+s.w/2?l:r;e.vx=0}}}
 function updEnemy(e,dt){const dx=pl.x-e.x,ad=Math.abs(dx);e.flash-=dt;e.t-=dt;
   if(e.type==='d'){e.face=Math.sign(dx)||1;
     let tx=pl.x-e.face*440+Math.sin(lvT*1.3+e.seed)*90;const ty=e.hy+Math.sin(lvT*2.2+e.seed)*45;
     if(lock){if(pl.x-cam>W-RSAFE-300)tx=pl.x-440;tx=Math.max(cam+140,Math.min(cam+W-RSAFE,tx))}
-    e.vx+=(tx-e.x)*dt*2.4;e.vx*=Math.pow(.15,dt);e.x+=e.vx*dt;e.y+=(ty-e.y)*Math.min(1,dt*2);
-    if(e.t<=0){e.t=Math.max(1.3,2.3-G.lv*.15);const a=Math.atan2(pl.y-80-(e.y-35),pl.x-e.x),v=560+G.lv*30;
+    e.vx+=(tx-e.x)*dt*2.4;e.vx*=Math.pow(.15,dt);e.x+=e.vx*dt;gateClamp(e);e.y+=(ty-e.y)*Math.min(1,dt*2);
+    if(e.t<=0){e.t=Math.max(1.4,2.8-G.lv*.25);const a=Math.atan2(pl.y-80-(e.y-35),pl.x-e.x),v=560+G.lv*30;
       shots.push({x:e.x,y:e.y-35,vx:Math.cos(a)*v,vy:Math.sin(a)*v,r:15,dmg:ETYPES.d.dmg*dm(),life:3.2,col:'#ff8a3a'});S.shot()}
     return}
-  if(e.type==='c'){e.face=Math.sign(dx)||1;e.fade=Math.max(0,(e.fade||0)-dt*2);e.x+=e.vx*dt;e.vx*=Math.pow(.02,dt);
+  if(e.type==='c'){e.face=Math.sign(dx)||1;e.fade=Math.max(0,(e.fade||0)-dt*2);e.x+=e.vx*dt;gateClamp(e);e.vx*=Math.pow(.02,dt);
     if(ad<260&&e.t<.8&&!e.tp){e.tp=.35;burst(e.x,e.y-80,'#b48cff',18)}
-    if(e.tp){e.tp-=dt;if(e.tp<=0){e.tp=0;const side=pl.x-cam>W/2?-1:1;e.x=pl.x+side*(520+Math.random()*200);e.x=Math.max(cam+160,Math.min(cam+W-RSAFE-40,e.x));e.fade=1;e.t=1}}
+    if(e.tp){e.tp-=dt;if(e.tp<=0){e.tp=0;const side=pl.x-cam>W/2?-1:1;e.x=pl.x+side*(520+Math.random()*200);e.x=Math.max(cam+160,Math.min(cam+W-RSAFE-40,e.x));for(const g of solidRects()){const gx=g.x+g.w/2;if(Math.sign(e.x-gx)!==Math.sign(pl.x-gx))e.x=pl.x+(pl.x<gx?-1:1)*Math.min(520,Math.abs(pl.x-gx)-60);}gateClamp(e);e.fade=1;e.t=1}}
     else if(e.t<=0){e.t=Math.max(1.6,2.8-G.lv*.15);const a0=Math.atan2(pl.y-90-(e.y-120),dx);
       for(let k=-1;k<=1;k++){const a=a0+k*.22;shots.push({x:e.x+e.face*40,y:e.y-120,vx:Math.cos(a)*520,vy:Math.sin(a)*520,r:17,dmg:ETYPES.c.dmg*dm(),life:3,col:'#b48cff'})}S.shot()}
     return}
   if(e.type==='h'){if(e.state!=='leap')e.face=Math.sign(dx)||1;
-    if(e.state==='walk'){if(ad>280)e.vx+=(e.face*520*(1+G.lv*.04)-e.vx)*Math.min(1,dt*6);else{e.vx*=Math.pow(.02,dt);if(e.t<=0){e.state='wind';e.t=.34}}}
+    if(e.state==='walk'){if(ad>280)e.vx+=(e.face*520*(1+G.lv*.04)-e.vx)*Math.min(1,dt*6);else{e.vx*=Math.pow(.02,dt);if(e.t<=0){e.state='wind';e.t=.26+Math.random()*.16}}}
     else if(e.state==='wind'){e.vx*=Math.pow(.01,dt);if(e.t<=0){e.state='leap';e.t=.36;e.vx=e.face*1150;e.hitP=false;sfx(420,.18,'sawtooth',.04,300)}}
-    else if(e.state==='leap'){if(!e.hitP&&overlap(ebox(e),pbox())){e.hitP=true;hurtPlayer(ETYPES.h.dmg*dm(),e.face*520)}e.vx*=Math.pow(.25,dt);if(e.t<=0){e.state='walk';e.t=.8+Math.random()*.7}}
-    e.x+=e.vx*dt;if(lock&&touchy){const lim=cam+W-RSAFE+40;if(e.x<lim)e.in=1;if(e.in&&e.x>lim){e.x=lim;if(e.vx>0)e.vx=0}}return}
+    else if(e.state==='leap'){if(!e.hitP&&overlap(ebox(e),pbox())){e.hitP=true;hurtPlayer(ETYPES.h.dmg*dm(),e.face*520)}e.vx*=Math.pow(.25,dt);if(e.t<=0){e.state='walk';e.t=.5+Math.random()*.4}}
+    e.x+=e.vx*dt;gateClamp(e);if(lock&&touchy){const lim=cam+W-RSAFE+40;if(e.x<lim)e.in=1;if(e.in&&e.x>lim){e.x=lim;if(e.vx>0)e.vx=0}}return}
   const T=ETYPES[e.type],hv=e.type==='b'||e.type==='B',range=e.type==='B'?240:hv?200:130;
   if(e.state==='walk'){e.face=Math.sign(dx)||1;
     if(ad>range)e.vx+=(e.face*T.spd*(1+G.lv*.05)-e.vx)*Math.min(1,dt*5);else{e.vx*=Math.pow(.01,dt);if(e.t<=0){e.state='wind';e.t=e.type==='B'?.75:hv?.62:.42}}}
@@ -208,7 +211,7 @@ function updEnemy(e,dt){const dx=pl.x-e.x,ad=Math.abs(dx);e.flash-=dt;e.t-=dt;
   else if(e.state==='swing'){if(!e.hitP){const reach=e.type==='B'?270:hv?230:150,box={x:e.face>0?e.x:e.x-reach,y:e.y-e.h,w:reach,h:e.h};
       if(overlap(box,pbox())){e.hitP=true;hurtPlayer(T.dmg*dm(),e.face*(hv?900:450))}}
     if(e.t<=0){e.state='walk';e.t=(e.type==='B'?1.6:hv?1.3:.8)+Math.random()*.7}}
-  e.x+=e.vx*dt;if(e.state!=='walk')e.vx*=Math.pow(.05,dt);
+  e.x+=e.vx*dt;if(e.state!=='walk')e.vx*=Math.pow(.05,dt);gateClamp(e);
   /* once on screen during a wave, ground enemies stay out of the strip under the touch buttons */
   if(lock&&touchy){const lim=cam+W-RSAFE+40;if(e.x<lim)e.in=1;if(e.in&&e.x>lim){e.x=lim;if(e.vx>0)e.vx=0}}
 }

@@ -30,10 +30,10 @@ function drawClaw(e){const sc=.74;shadow(e.x,50);X.save();X.translate(e.x,e.y);X
   hitFlash(e,e.x,e.y-110,100);bar(e,e.y-262)}
 function drawGorilla(e){const sc=.72;shadow(e.x,84);X.save();X.translate(e.x,e.y);X.scale(e.face*sc,sc);
   const mv=e.state==='walk'?Math.min(1,Math.abs(e.vx)/120):0,sw=Math.sin(lvT*6+e.seed)*.45*mv,hip=-134+(e.state==='wind'?12:e.state==='swing'?18:0),lean=e.state==='wind'?.05:.32;
-  let ua=.12+sw*.5,fa=.2;if(e.state==='wind'){ua=2.9;fa=.3}else if(e.state==='swing'){ua=-.55;fa=-.45}
+  let ua=.12+sw*.5,fa=.2;if(e.state==='wind'){ua=3.05;fa=.15}else if(e.state==='swing'){ua=-.55;fa=-.45}
   const leg=(a1,a2,d)=>{X.save();X.translate(d?-26:26,hip);X.rotate(a1);rp('go_thigh',0,0,0,d);X.translate(0,52);X.rotate(a2);rp('go_shin',0,0,0,d);X.translate(0,58);X.rotate(-(a1+a2));rp('go_foot',0,0,0,d);X.restore()};
   const arm=(d,u,f)=>{X.save();X.translate(0,hip);X.rotate(lean);X.translate(d?-34:54,-124);X.rotate(u-lean);rp('go_uarm',0,0,0,d);X.translate(0,78);X.rotate(f);rp('go_farm',0,0,0,d);X.restore()};
-  arm(1,e.state==='walk'?.12-sw*.5:ua,fa);leg(-sw,.2+Math.max(0,sw)*.8,1);
+  arm(1,e.state==='walk'?.12-sw*.5:e.state==='wind'?2.55:ua,e.state==='wind'?.55:fa);leg(-sw,.2+Math.max(0,sw)*.8,1);
   X.save();X.translate(0,hip);X.rotate(lean);rp('go_torso',0,0,0,0);rp('go_head',46,-150,0,0);X.restore();
   leg(sw,.2+Math.max(0,-sw)*.8,0);arm(0,ua,fa);X.restore();
   glow(e.x+e.face*70,e.y-262,26,'#ff3a2a',.7);if(e.state==='wind'){glow(e.x,e.y-300,90,'#ff3a2a',.4+.3*Math.sin(lvT*30));warnMark(e,e.y-330)}

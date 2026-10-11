@@ -3,12 +3,12 @@
 /* ---------- boss: Malakar, the Void Sovereign ---------- */
 const arenaCam=()=>LV[G.lv].len-W+120;
 function startBoss(){lock=true;S.boom();shake=16;const ac=arenaCam();
-  boss={isBoss:true,x:ac+W-RSAFE-60,y:GY,w:190,h:330,hp:2400,max:2400,face:-1,state:'enter',t:2.6,flash:0,vx:0,phase:1,dy:-800,hov:0,last:'',fire:0,left:0};
+  boss={isBoss:true,x:ac+W-RSAFE-160,y:GY,w:190,h:330,hp:3600,max:3600,face:-1,state:'enter',t:2.6,flash:0,vx:0,phase:1,dy:-800,hov:0,last:'',fire:0,left:0};
   showBanner('Malakar','The Void Sovereign',2.6)}
-function bclamp(x){return Math.max(cam+220,Math.min(cam+W-RSAFE-20,x))}
+function bclamp(x){return Math.max(cam+220,Math.min(cam+W-RSAFE-110,x))}
 function chooseAttack(b){let o=['dash','barrage','rift'];if(b.phase>=2)o.push('beam','beam','summon');
   o=o.filter(a=>a!==b.last);let a=o[Math.floor(Math.random()*o.length)];if(a==='summon'&&en.length>=2)a='barrage';b.last=a;
-  const k=b.phase===3?.7:1;
+  const k=b.phase===3?.6:.85;
   if(a==='dash'){b.state='dashWind';b.t=.7*k;b.dash2=false;S.warn()}
   else if(a==='barrage'){b.state='barrage';b.left=b.phase>1?16:10;b.fire=0;b.spin=Math.random()*6}
   else if(a==='rift'){b.state='cast';b.t=.6;const xs=[pl.x,pl.x-300,pl.x+300];if(b.phase===3)xs.push(pl.x-600,pl.x+600);
@@ -22,18 +22,18 @@ function updBoss(b,dt){b.flash-=dt;b.t-=dt;
   if(b.state==='enter'){b.dy+=(0-b.dy)*Math.min(1,dt*2.2);if(b.t<=0){b.state='idle';b.t=1;b.dy=0}return}
   b.hov=Math.sin(lvT*2)*16;
   if(b.state!=='dash')b.face=Math.sign(pl.x-b.x)||-1;
-  const k=b.phase===3?.7:1;
+  const k=b.phase===3?.6:.85;
   if(b.state==='idle'){let side=b.x>pl.x?1:-1,tx=bclamp(pl.x+side*520);if(Math.abs(tx-pl.x)<320)tx=bclamp(pl.x-side*520);b.x+=(tx-b.x)*Math.min(1,dt*1.3);if(b.t<=0)chooseAttack(b)}
   else if(b.state==='dashWind'){if(Math.random()<.5)burst(b.x,b.y-160,'#ff3d6e',2,300);if(b.t<=0){b.state='dash';b.t=.95;b.vx=b.face*2000;S.boom();b.hitP=false}}
   else if(b.state==='dash'){b.x+=b.vx*dt;parts.push({x:b.x,y:b.y-150+(Math.random()-.5)*200,vx:-b.vx*.1,vy:0,life:.3,max:.3,col:'#ff3d6e',sz:10,g:0});
-    if(!b.hitP&&overlap(ebox(b),pbox())){b.hitP=true;hurtPlayer(22,b.face*1000)}
-    if(b.t<=0||b.x<cam+180||b.x>cam+W-180){b.x=bclamp(b.x);shake=10;
+    if(!b.hitP&&overlap(ebox(b),pbox())){b.hitP=true;hurtPlayer(28,b.face*1000)}
+    if(b.t<=0||b.x<cam+180||b.x>cam+W-RSAFE-110){b.x=bclamp(b.x);shake=10;
       if(b.phase===3&&!b.dash2){b.dash2=true;b.face*=-1;b.state='dashWind';b.t=.35}else{b.state='idle';b.t=1.1*k}}}
   else if(b.state==='barrage'){b.fire-=dt;if(b.fire<=0){b.fire=.1;b.left--;const a0=Math.atan2(pl.y-90-(b.y-260),pl.x-b.x);
-      const a=a0+Math.sin(b.spin+b.left*.7)*.55;shots.push({x:b.x+b.face*60,y:b.y-260+b.hov,vx:Math.cos(a)*620,vy:Math.sin(a)*620,r:20,dmg:11,life:3.5,col:'#ff3d6e'});S.shot();
+      const a=a0+Math.sin(b.spin+b.left*.7)*.55;shots.push({x:b.x+b.face*60,y:b.y-260+b.hov,vx:Math.cos(a)*620,vy:Math.sin(a)*620,r:20,dmg:14,life:3.5,col:'#ff3d6e'});S.shot();
       if(b.left<=0){b.state='idle';b.t=1.2*k}}}
   else if(b.state==='cast'){if(b.t<=0){b.state='idle';b.t=1*k}}
-  if(b.state!=='dash'&&b.state!=='idle'&&overlap(ebox(b),pbox()))hurtPlayer(8,(pl.x<b.x?-1:1)*800);
+  if(b.state!=='dash'&&b.state!=='idle'&&overlap(ebox(b),pbox()))hurtPlayer(5,(pl.x<b.x?-1:1)*800);
 }
 function killBoss(){const b=boss;b.dead=true;bossDone=true;G.score+=10000;shake=30;S.boom();hz=[];shots=shots.filter(s=>s.friend);
   en.forEach(e=>{e.dead=true;burst(e.x,e.y-e.h/2,'#ff4fd8',20)});en=[];spawnQ=[];
@@ -54,8 +54,8 @@ function updShots(dt){const ab=atkBox();
   shots=shots.filter(s=>s.life>0)}
 function updHz(dt){for(const h of hz){if(h.kind==='quake'){updQuake(h,dt);continue}if(h.t>0){h.t-=dt;if(h.t<=0){S.boom();shake=Math.max(shake,h.kind==='beam'?14:9);if(h.kind==='pillar')burst(h.x,GY,'#ff3d6e',24,900)}continue}
     h.act-=dt;if(h.hitP)continue;const pb=pbox();
-    if(h.kind==='pillar'&&Math.abs(pl.x-h.x)<h.w/2+30){h.hitP=true;hurtPlayer(18,(pl.x<h.x?-1:1)*600)}
-    if(h.kind==='beam'&&pb.y<h.y+38&&pb.y+pb.h>h.y-38){h.hitP=true;hurtPlayer(20,(pl.x<cam+W/2?-1:1)*500)}}
+    if(h.kind==='pillar'&&Math.abs(pl.x-h.x)<h.w/2+30){h.hitP=true;hurtPlayer(22,(pl.x<h.x?-1:1)*600)}
+    if(h.kind==='beam'&&pb.y<h.y+38&&pb.y+pb.h>h.y-38){h.hitP=true;hurtPlayer(26,(pl.x<cam+W/2?-1:1)*500)}}
   hz=hz.filter(h=>h.t>0||h.act>0)}
 function updParts(dt){for(const r of rings)r.life-=dt;rings=rings.filter(r=>r.life>0);for(const q of parts){q.life-=dt;q.vy+=q.g*dt;q.x+=q.vx*dt;q.y+=q.vy*dt;q.vx*=Math.pow(.3,dt)}parts=parts.filter(q=>q.life>0);if(parts.length>600)parts.splice(0,parts.length-600);
   for(const t of texts){t.life-=dt;t.y-=90*dt}texts=texts.filter(t=>t.life>0)}
@@ -112,9 +112,9 @@ function levelComplete(){G.state='card';G.score+=Math.round(pl.hp*20);G.best=Mat
 function gameOver(){G.state='over';if(pl){pl.dead=1;pl.deadT=0;pl.vx=0}G.best=Math.max(G.best,G.score);saveProg();padShow(false);clearInput();setTimeout(()=>showCard({ey:'Tyko is down',h:'The Light Fades',
   b:`<p><span class="who">LYRA:</span> "Not yet, little one. Get up. I won't let the dark have you."</p>`,btns:[...(G.ck&&G.ck.lv===G.lv?[['Continue from save station',restoreCk]]:[]),['Retry chapter',()=>{G.score=G.chapterStart;G.lives=3;G.ck=null;startLevel(G.lv)},1],['Title',toTitle,1]]}),900)}
 function victory(){G.state='card';padShow(false);clearInput();G.score+=Math.round(pl.hp*50);unlocked=6;saveProg();G.best=Math.max(G.best,G.score);
-  story(STORY.ending,0,()=>showCard({ey:'The saga is complete',h:'Ithra Is Free',big:0,b:`<p>Final score <b>${G.score.toLocaleString()}</b></p><p>Thank you for playing Aetherfall.</p>`,btns:[['Play again',()=>{G.score=0;G.lives=3;briefing(0)}],['Title',toTitle,1]]}))}
+  story(STORY.ending,0,()=>showCard({ey:'The saga is complete',h:'Ithra Is Free',big:0,b:`<p>Final score <b>${G.score.toLocaleString()}</b></p><p>Thank you for playing Aetherfall.</p>`,btns:[['Play again',()=>{G.score=0;G.lives=3;G.ck=null;META={ab:{},tanks:{}};saveMeta();briefing(0)}],['Title',toTitle,1]]}))}
 function togglePause(){if(G.state!=='play')return;G.paused=!G.paused;clearInput();
-  if(G.paused){padShow(false);showCard({ey:LV[G.lv].ch,h:'Paused',extra:abilitiesHTML(),btns:[['Resume',togglePause],['Restart chapter',()=>{G.score=G.chapterStart;startLevel(G.lv)},1],['Quit to title',toTitle,1]]})}
+  if(G.paused){padShow(false);showCard({ey:LV[G.lv].ch,h:'Paused',extra:abilitiesHTML(),btns:[['Resume',togglePause],['Restart chapter',()=>{G.score=G.chapterStart;G.lives=3;G.ck=null;startLevel(G.lv)},1],['Quit to title',toTitle,1]]})}
   else{hideCard();padShow(true)}}
 document.getElementById('pauseBtn').addEventListener('pointerdown',e=>{e.preventDefault();togglePause()});
 function goFull(){try{const d=document.documentElement;if(touchy&&!document.fullscreenElement&&d.requestFullscreen)d.requestFullscreen().then(()=>{try{screen.orientation.lock('landscape').catch(()=>{})}catch(_){}}).catch(()=>{})}catch(e){}}
