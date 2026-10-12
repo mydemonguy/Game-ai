@@ -63,7 +63,10 @@ function updCaster(e,v){const fl=Math.sin(lvT*2.5+e.seed)*10,y=e.y-60+fl,al=e.tp
   const aim=clamp(Math.atan2((pl?pl.y-100:y)-(y-60),Math.abs((pl?pl.x:e.x)-e.x)+1),-.7,.5);for(const j of v.jets)j.setAlpha(.7*al*(.7+Math.random()*.3));
   for(const l of v.legs)l.rotation=Math.sin(lvT*3+l.o+e.seed)*.15+.12;v.head.rotation=aim*.3;v.rifle.rotation=aim;v.mz.setPosition(16+170*Math.cos(aim),-52+170*Math.sin(aim)).setDisplaySize(e.t<.5?140:46,e.t<.5?140:46).setAlpha(e.t<.5?1:.5);
   const tv=e.t<.7&&!e.tp;v.tele.setVisible(tv).setPosition(e.x,e.y);if(tv)v.tele.setAlpha(Math.min(1,(.7-e.t)*1.4));return{bar:y-e.h-20,sh:36,ly:y}}
-const RIG={g:[mkClaw,updClaw],b:[mkGorilla,updGorilla],B:[mkWalker,updWalker],h:[mkHound,updHound],d:[mkDrone,updDrone],c:[mkCaster,updCaster]};
+function mkTurret(){const base=SC.add.image(-38,0,'tur_base').setOrigin(0,.5),gun=SC.add.image(22,0,'tur_gun').setOrigin(34/132,34/68),eye=gI(22,0,90,'#ff3a2a',.4);
+  const root=Cn(0,0,[base,gun,eye]).setDepth(D.enemies);return{root,gun,eye,sc:1,objs:[root]}}
+function updTurret_v(e,v){const y=e.y-45;v.root.y=y;v.gun.rotation=e.la||0;const aim=e.t<.7||e.n>0;v.eye.setPosition(22+Math.cos(e.la||0)*10,Math.sin(e.la||0)*10).setAlpha(aim?.7+.3*Math.sin(lvT*30):.3);return{bar:y-70,ly:y}}
+const RIG={t:[mkTurret,updTurret_v],g:[mkClaw,updClaw],b:[mkGorilla,updGorilla],B:[mkWalker,updWalker],h:[mkHound,updHound],d:[mkDrone,updDrone],c:[mkCaster,updCaster]};
 function mkEnemyView(e){const[mk]=RIG[e.type],v=mk();v.imgs=imgsOf(v.root);v.sh=e.fly?null:shadowObj();if(v.sh)v.objs.push(v.sh);return v}
 function updEnemyView(e,v){const r=RIG[e.type][1](e,v);v.root.x=e.x;if(!e.fly&&e.type!=='c')v.root.y=e.y;v.root.setScale(e.face*v.sc,v.sc);flashRig(v,e.flash);
   if(v.sh)setShadow(v.sh,e.x,r.sh||50,surfaceBelow(e.x,e.y-4));
@@ -121,9 +124,10 @@ function mkShotView(s){if(s.wave){const c=SC.add.image(0,0,'crescent').setOrigin
   const g=gI(0,0,s.r*6.4,s.col,.9).setDepth(D.shots),core=SC.add.circle(0,0,s.r*.6,0xffffff).setDepth(D.shots+.5);return{g,core,col:s.col,objs:[g,core]}}
 function updShotView(s,v){if(s.wave){const a=Math.min(1,s.life*2);v.c.setPosition(s.x-Math.sign(s.vx)*40,s.y).setScale(Math.sign(s.vx)*(s.r+30)/100,(s.r+30)/100).setAlpha(a);v.g.setPosition(s.x,s.y).setAlpha(a*.6);lightW(s.x,s.y,340,.9);return}
   if(v.col!==s.col){v.col=s.col;v.g.setTint(hexC(s.col))}v.g.setPosition(s.x,s.y);v.core.setPosition(s.x,s.y);lightW(s.x,s.y,150,.9)}
-function mkPickView(k){const i=SC.add.image(0,0,'pk_'+k.type).setDepth(D.picks);let ring=null;if(k.type!=='coin'&&k.float){ring=SC.add.circle(0,0,34).setStrokeStyle(2.5,0xffffff,.55).setDepth(D.picks)}return{i,ring,objs:ring?[i,ring]:[i]}}
+function mkPickView(k){const big=k.type==='sfang'||k.type==='lore',i=SC.add.image(0,0,'pk_'+k.type).setDepth(D.picks).setScale(big?1.5:1);let ring=null;if(k.type!=='coin'&&k.float){ring=SC.add.circle(0,0,34).setStrokeStyle(2.5,0xffffff,.55).setDepth(D.picks).setScale(big?1.5:1)}
+  const objs=ring?[i,ring]:[i];if(big)objs.push(gI(k.x,k.y,240,PICK[k.type].col,.35).setDepth(D.picks-.1));return{i,ring,big,objs}}
 function updPickView(k,v){const y=k.y+(k.float?Math.sin(lvT*3+k.x*.01)*8:0),blink=!k.float&&k.life<3&&Math.floor(k.life*8)%2;v.i.setPosition(k.x,y).setVisible(!blink);
-  if(k.type==='coin')v.i.setScale(Math.max(.15,Math.abs(Math.cos(lvT*4+k.x))),1);if(v.ring)v.ring.setPosition(k.x,y).setRadius(34+Math.sin(lvT*4+k.x)*4);lightW(k.x,k.y,110,.55)}
+  if(k.type==='coin')v.i.setScale(Math.max(.15,Math.abs(Math.cos(lvT*4+k.x))),1);if(v.ring)v.ring.setPosition(k.x,y).setRadius(34+Math.sin(lvT*4+k.x)*4);if(v.big)v.objs[2].setPosition(k.x,y).setAlpha(.3+.1*Math.sin(lvT*3));lightW(k.x,k.y,110,.55)}
 function mkBoxView(b){const t=LV[G.lv].theme,i=SC.add.image(b.x,FY+2,'crate_'+t).setOrigin(.5,1).setDepth(D.crates),g=gI(b.x,FY-62,60,'#5ce1ff',.5).setDepth(D.crates+.5),cr=SC.add.graphics().setDepth(D.crates);return{i,g,cr,hp:2,objs:[i,g,cr]}}
 function updBoxView(b,v){v.g.setAlpha(.45+.2*Math.sin(lvT*3+b.x));if(b.flash>0)v.i.setTintFill(0xffffff);else v.i.clearTint();
   if(b.hp<2&&v.hp===2){v.hp=1;v.cr.lineStyle(3,0x000000,.6);v.cr.beginPath();v.cr.moveTo(b.x-30,FY-90);v.cr.lineTo(b.x-6,FY-60);v.cr.lineTo(b.x-20,FY-30);v.cr.strokePath()}lightW(b.x,FY-60,110,.35)}

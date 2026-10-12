@@ -90,7 +90,7 @@ const G={state:'menu',lv:0,score:0,paused:false,best:0,lives:3,respawnT:0};
 let unlocked=1;try{unlocked=Math.max(1,Math.min(6,+localStorage.getItem('aetherfall_unlock')||1));G.best=+localStorage.getItem('aetherfall_best')||0}catch(e){}
 function saveProg(){try{localStorage.setItem('aetherfall_unlock',unlocked);localStorage.setItem('aetherfall_best',Math.max(G.best,G.score))}catch(e){}}
 let pl=null,en=[],shots=[],picks=[],hz=[],spawnQ=[],cam=0,camY=0,lock=false,shake=0,boss=null,bossDone=false,lvT=0,hitStop=0,banner=null,flashT=0,doneT=0;
-const dm=()=>1+G.lv*.12;
+const dm=()=>(1+G.lv*.12)*(META.hard?1.45:1);   /* enemy damage; Rift Mode hits much harder */
 
 function rng(s){return()=>{s=(s*16807)%2147483647;return(s-1)/2147483646}}
 const overlap=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;

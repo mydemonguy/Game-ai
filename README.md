@@ -39,11 +39,13 @@ Walk into the blue hatches at a room's edge to move to the next room; red hatche
 
 Abilities: Comet Dash (I), Sky Scales double jump (II), Starburst Roar (III), Ground Slam (IV), Plasma Claws (V), each found at a shrine. Every shrine is guarded by a boss: Foreman Krell, Bulwark, Alpha Hound, Crucible and the Null Seraph. Beating one wakes the shrine and drops an Aether Core (your hits charge the Aether bar faster). The first save at each world's station downloads its whole map. Pause shows your item completion %. Each world hides 2 Energy Tanks; some need abilities from later worlds, so ride the elevators back to find them all.
 
+Secrets (2.3): every world's climbing shaft has a plate that sounds hollow. Claw it, dash into it or roar at it to open a Starblood Vault holding a Starblood Fang (claws +10% damage each) and a data tablet with a page of clan history (re-read them under Pause → Archive). Wall turrets in the shafts paint you with a laser sight before firing a three-shot burst; swipe the shots back at them. Pausing at a save station you can Fast Travel to any other station you've visited. Beating Malakar unlocks **Rift Mode**, a harder new game: robots hit 45% harder and take more punishment, and the guardians and Malakar have much more health.
+
 ## Changing the game
 
 The game's source is in `game/`: `shell.html` (page, menus and touch controls), `vendor/` (Phaser 3.90, arcade build) and the numbered scripts:
 `01_core` input and data · `02_audio` music and sound · `03_art`/`04_textures` art baked into GPU textures · `05_world`/`06_rooms` room layouts, physics bodies, doors and saves ·
-`07_actors` player, robots, boss, combat · `08_fx` particles, lights, weather, post-processing · `09_view_room`/`10_view_actors` Phaser display objects · `11_hud` HUD scene · `12_flow` screens, game loop and Phaser config.
+`07_actors` player, robots, boss, combat · `08_fx` particles, lights, weather, post-processing · `09_view_room`/`10_view_actors` Phaser display objects · `11_hud` HUD scene · `13_guardians` shrine bosses · `12_flow` screens, game loop and Phaser config.
 Run `game/build.sh` to assemble everything into `app/src/main/assets/index.html` (fonts and Phaser embedded for offline play), then push; GitHub builds a new APK and publishes it under **Releases**.
 
 Builds are signed with `app/aetherfall-debug.keystore`, so each new APK installs as an update over the old one. It is a debug key for this hobby project, not for a Play Store release.

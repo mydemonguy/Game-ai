@@ -269,6 +269,10 @@ function drawPickIcon(k){const P=PICK[k.type],x=k.x,y=k.y+(k.float?Math.sin(lvT*
   case'tank':{plate(X,-20,-26,40,52,PAL.citadel,{c:8});const tg=X.createLinearGradient(0,-18,0,18);tg.addColorStop(0,'#ffd0f4');tg.addColorStop(1,'#ff5ad8');X.fillStyle=tg;X.fillRect(-11,-17,22,34);
     X.fillStyle='#ffffff';X.fillRect(-3,-11,6,22);X.fillRect(-9,-3,18,6)}break;
   case'egg':{const eg=X.createLinearGradient(-20,-28,20,28);eg.addColorStop(0,'#fff6c8');eg.addColorStop(.5,'#ffd24a');eg.addColorStop(1,'#c88a1a');X.fillStyle=eg;X.beginPath();X.ellipse(0,0,22,29,0,0,7);X.fill();
-    X.fillStyle='rgba(120,70,10,.35)';X.beginPath();X.arc(-7,6,4,0,7);X.arc(8,-4,3,0,7);X.arc(4,14,3,0,7);X.fill();glow(-8,-12,14,'#ffffff',.6+.4*Math.sin(lvT*5))}break}
+    X.fillStyle='rgba(120,70,10,.35)';X.beginPath();X.arc(-7,6,4,0,7);X.arc(8,-4,3,0,7);X.arc(4,14,3,0,7);X.fill();glow(-8,-12,14,'#ffffff',.6+.4*Math.sin(lvT*5))}break;
+  case'sfang':{const fg=X.createLinearGradient(-14,-30,14,30);fg.addColorStop(0,'#fff6ea');fg.addColorStop(.6,'#ffc0a0');fg.addColorStop(1,'#ff5a3a');X.fillStyle=fg;
+    X.beginPath();X.moveTo(-16,-28);X.quadraticCurveTo(20,-26,14,30);X.quadraticCurveTo(2,2,-16,-28);X.closePath();X.fill();X.strokeStyle=INK;X.lineWidth=3;X.stroke();
+    X.fillStyle='#ffffff';X.beginPath();for(let i=0;i<10;i++){const a=i*Math.PI/5-Math.PI/2,r=i%2?3:7;X.lineTo(4+Math.cos(a)*r,-8+Math.sin(a)*r)}X.closePath();X.fill();glow(4,-8,14,'#ffe0c8',.8)}break;
+  case'lore':{plate(X,-22,-28,44,56,PAL.citadel,{c:6});X.fillStyle='#1a1430';X.fillRect(-16,-21,32,40);X.fillStyle='#ffe08a';for(let i=0;i<5;i++)X.fillRect(-12,-16+i*8,i%2?18:24,3);glow(0,-2,22,'#ffe08a',.35)}break}
   X.restore()}
 </script>

@@ -48,6 +48,12 @@ function bakeCommon(){
   /* claw slash arcs: small and heavy */
   for(const[k,r0,lw]of[['slash',96,7],['slash3',120,9]]){const sz=(r0+60)*2,[c,g]=mkC(sz,sz);g.translate(sz/2,sz/2);g.lineCap='round';g.globalAlpha=.25;g.strokeStyle='#fff';g.lineWidth=lw*8;g.beginPath();g.arc(0,0,r0+24,-1.6,1.4);g.stroke();
     g.globalAlpha=.9;for(let i=0;i<3;i++){g.lineWidth=lw;g.beginPath();g.arc(0,0,r0+i*(r0>100?22:17),-1.6,1.4);g.stroke()}addTex(k,c)}
+  /* wall turret: bracket (mounted on a left wall; mirrored for the right) and swivel gun */
+  {const P=PAL.station,[c,g]=mkC(70,150);plate(g,2,6,34,138,P,{c:6});g.fillStyle=P.ink;g.fillRect(34,58,30,34);g.fillStyle='#3a4458';g.fillRect(36,62,26,26);hazard(g,6,14,26,8);hazard(g,6,128,26,8);addTex('tur_base',c)}
+  {const P=PAL.station,[c,g]=mkC(132,68);g.fillStyle=INK;g.fillRect(46,22,82,24);g.fillStyle='#55607a';g.fillRect(48,25,78,18);g.fillStyle='#8a94ae';g.fillRect(48,26,78,5);
+    g.fillStyle=INK;g.fillRect(112,18,18,32);g.fillStyle='#2c3346';g.fillRect(114,21,14,26);
+    g.fillStyle=INK;g.beginPath();g.arc(34,34,31,0,7);g.fill();const dg=g.createRadialGradient(26,24,4,34,34,30);dg.addColorStop(0,'#c8d2e8');dg.addColorStop(1,'#4a5470');g.fillStyle=dg;g.beginPath();g.arc(34,34,27,0,7);g.fill();
+    g.fillStyle='#ff3a2a';g.beginPath();g.arc(44,30,7,0,7);g.fill();g.fillStyle='#ffd0c8';g.beginPath();g.arc(42,28,2.5,0,7);g.fill();addTex('tur_gun',c)}
   /* map hatch light */
   {const[c,g]=mkC(36,320);g.fillStyle='#fff';g.beginPath();g.ellipse(18,160,16,150,0,0,7);g.fill();g.strokeStyle=INK;g.lineWidth=4;g.stroke();g.fillStyle='rgba(255,255,255,.5)';g.fillRect(9,20,5,280);addTex('hatch',c)}
 }

@@ -50,7 +50,7 @@ function buildWeather(a){const s=SC,L=LV[a],t=L.theme,A=AMB[t],w=A.weather,add=o
 /* ---- the room itself ---- */
 function emissive(x,y,e,sf,depth){const g=SC.add.image(x,y,'glow').setBlendMode('ADD').setTint(hexN(e.col)).setDepth(depth+(sf===1?0:.5));g.setDisplaySize(e.r*2,(e.ry||e.r)*2);g.e=e;g.bx=x;g.by=y;g.sf=sf;
   if(sf!==1)g.setScrollFactor(sf,.05);V.rm.push(g);(sf===1?V.ems:V.wems).push(g);return g}
-V.room=function(o){vKill(V.rm);V.lamps=[];V.ems=[];V.wems=[];V.doors=[];V.fans=[];V.signs=[];V.cols=[];V.gateV=[];V.cageV=[];V.lift=null;V.shrine=null;V.station=null;V.conv=null;
+V.room=function(o){vKill(V.rm);V.lamps=[];V.ems=[];V.wems=[];V.doors=[];V.fans=[];V.signs=[];V.cols=[];V.gateV=[];V.cageV=[];V.lift=null;V.shrine=null;V.station=null;V.conv=null;V.vault=null;
   if(V.bgA!==o.a||V.bgW!==W)buildBG(o.a);
   const s=SC,L=LV[o.a],t=L.theme,T=THEMED[t],P=PAL[t],A=AMB[t],add=x=>{V.rm.push(x);return x},r=rng(hstr(o.id)+5),ink=hexN(P.ink),gl=hexN(L.glow);
   /* machinery walls and holo signs behind the play plane */
@@ -90,8 +90,9 @@ V.room=function(o){vKill(V.rm);V.lamps=[];V.ems=[];V.wems=[];V.doors=[];V.fans=[
   for(const p of o.plats){const top=Math.floor(p.y/H)*H;sg.lineBetween(p.x+20,p.y,p.x+20,top);sg.lineBetween(p.x+p.w-20,p.y,p.x+p.w-20,top);
     tiles(p.x,p.y-2,p.w,46,'pl_'+t,160,46,D.plats);if(p.iso)glowImg(p.x+p.w/2,p.y+10,p.w*1.2,40,'#ff5ad8',.25,D.plats)}
   /* hatches */
-  for(const d of o.doors){const dx=d.side==='L'?0:RW,y=d.row*H+GY,bx=d.side==='L'?dx+4:dx-30;add(s.add.image(d.side==='L'?dx+29:dx-23,y-313,'dframe_'+t).setDepth(D.doors));
-    const h=add(s.add.image(bx+13,y-300,'hatch').setOrigin(.5,0).setDepth(D.doors).setDisplaySize(32,300));const g=glowImg(bx+13,y-150,180,300,'#3d8bff',.45,D.doors);V.doors.push({d,h,g,bx,y,op:0})}
+  for(const d of o.doors){const dx=d.side==='L'?0:RW,y=d.row*H+GY,bx=d.side==='L'?dx+4:dx-30,f=add(s.add.image(d.side==='L'?dx+29:dx-23,y-313,'dframe_'+t).setDepth(D.doors));
+    const h=add(s.add.image(bx+13,y-300,'hatch').setOrigin(.5,0).setDepth(D.doors).setDisplaySize(32,300));const g=glowImg(bx+13,y-150,180,300,'#3d8bff',.45,D.doors);
+    const sg=ROOMS[d.to].kind==='secret'?o.gates.find(q=>q.kind==='secret'):null;V.doors.push({d,h,g,f,bx,y,op:0,sg})}
   /* elevator */
   if(o.lift){const l=o.lift,x=l.x;add(s.add.image(x,FY+4,'lift_'+t).setOrigin(.5,1).setDepth(D.fixtures));
     add(s.add.image(x,FY-26,'vgrad').setOrigin(.5,1).setDisplaySize(180,394).setBlendMode('ADD').setTint(0x7fd8ff).setAlpha(.35).setDepth(D.fixtures+.5));glowImg(x,FY-20,280,60,'#7fd8ff',.5,D.fixtures);
@@ -105,6 +106,9 @@ V.room=function(o){vKill(V.rm);V.lamps=[];V.ems=[];V.wems=[];V.doors=[];V.fans=[
   const st=o.station;if(st){add(s.add.image(st.x,GY,'station_'+t).setOrigin(.5,1).setDepth(D.fixtures));
     V.station={col:add(s.add.image(st.x,GY-26,'vgrad').setOrigin(.5,1).setDisplaySize(88,188).setBlendMode('ADD').setTint(0x7dffb0).setDepth(D.fixtures+.5)),
       gl:glowImg(st.x,GY-30,180,40,'#7dffb0',.4,D.fixtures)};add(s.add.text(st.x,GY-244,'SAVE',{fontFamily:FU,fontStyle:'700',fontSize:'20px',color:'#7dffb0'}).setOrigin(.5,1).setDepth(D.light+1))}
+  /* the hidden Starblood vault */
+  if(o.kind==='secret'){const cx=RW*.5;glowImg(cx,GY-430,1000,760,'#ffe08a',.14,D.back);add(s.add.text(cx,GY-600,'✦',{fontFamily:FD,fontSize:'280px',color:'#ffe08a'}).setOrigin(.5).setAlpha(.16).setDepth(D.back+.5));
+    add(s.add.text(cx,GY-330,'STARBLOOD VAULT',{fontFamily:FD,fontStyle:'700',fontSize:'34px',color:'#ffe08a'}).setOrigin(.5).setAlpha(.5).setDepth(D.back+.5));V.vault={x:cx}}
   /* ability gates */
   o.gates.forEach(g=>{if(g.broken)return;const x0=g.x-g.w/2,list=[],a2=q=>{list.push(q);return q};
     if(g.kind==='crack'){a2(s.add.image(x0,g.top,'g_crack_'+t).setOrigin(0).setDepth(D.fixtures));for(let y=g.top+120;y<GY;y+=210)a2(glowImg(x0+g.w*.45,y+40,60,60,'#ffd27a',.35,D.fixtures,list))}
@@ -115,6 +119,9 @@ V.room=function(o){vKill(V.rm);V.lamps=[];V.ems=[];V.wems=[];V.doors=[];V.fans=[
       for(const ey of[0,GY-90])a2(s.add.image(x0-24,ey,'g_lcap_'+t).setOrigin(0).setDepth(D.fixtures));a2(glowImg(g.x,GY/2,360,GY*.84,'#ff3d3d',.45,D.fixtures,list))}
     else if(g.kind==='blast'){a2(s.add.image(x0,0,'g_blast_'+t).setOrigin(0).setDepth(D.fixtures));g.lamps=[];for(let y=120;y<GY;y+=160)g.lamps.push(a2(glowImg(g.x,y+8,52,52,'#ff3d2a',.7,D.fixtures,list)));
       a2(s.add.image(g.plate,GY,'g_plate_'+t).setOrigin(.5,1).setDepth(D.fixtures));g.pg=a2(glowImg(g.plate,GY-8,140,32,'#ffb347',.5,D.fixtures,list))}
+    else if(g.kind==='secret'){const hh=g.bot-g.top;g.img=a2(s.add.image(x0,g.top,'wp_'+t).setOrigin(0).setCrop(0,0,g.w,hh).setDepth(D.doors+.8));a2(s.add.rectangle(x0,g.top,g.w,hh,0,.35).setOrigin(0).setDepth(D.doors+.8));
+      const cr=a2(s.add.graphics().setDepth(D.doors+.8));cr.lineStyle(3,0x000000,.55);cr.beginPath();cr.moveTo(x0+g.w*.7,g.top+40);cr.lineTo(x0+g.w*.5,g.top+110);cr.lineTo(x0+g.w*.62,g.top+160);cr.lineTo(x0+g.w*.42,g.top+240);cr.strokePath();
+      cr.lineStyle(2,0xffffff,.1);cr.lineBetween(x0+g.w*.5,g.top+112,x0+g.w*.3,g.top+140);a2(s.add.rectangle(x0+g.w-3,g.top,3,hh,gl,.35).setOrigin(0).setDepth(D.doors+.8))}
     else{g.img=a2(s.add.image(x0-20,0,'g_crystal_'+t).setOrigin(0).setDepth(D.fixtures));g.cg=a2(glowImg(g.x,GY/2,280,GY*.9,'#ff5ad8',.35,D.fixtures,list))}
     for(const q of list)if(V.rm.indexOf(q)<0)V.rm.push(q);V.gateV.push({g,list})});
   o.cages.forEach(c=>{if(c.broken)return;const x0=c.x-70,y0=GY-170,list=[],a2=q=>{list.push(q);V.rm.push(q);return q};
@@ -152,14 +159,16 @@ function roomUpdate(dt){if(!ROOM)return;const o=ROOM,P=PAL[LV[G.lv].theme];cullR
     if(l.k==='alarm'){const v=lock;q.beam.setVisible(v);q.gl.setVisible(v);q.bulb.fillColor=v?0xff5a3a:0x5a1a14;if(v){const dx=Math.cos(lvT*5+l.s*6);q.beam.setRotation(-Math.atan2(dx*420,l.fy-l.y));lightW(l.x+dx*300,l.fy-120,320,.7);lightW(l.x,l.y+30,160,.8)}continue}
     let on=1;if(l.k==='broken'){on=Math.sin(lvT*23+l.s*40)*Math.sin(lvT*7.3+l.s*9)>-.15?1:0;if(!on&&Math.random()<.25)part(l.x+(Math.random()-.5)*30,l.y+26,(Math.random()-.5)*260,Math.random()*120,.5,'#ffd27a',4,1500)}
     q.cone.setVisible(!!on);q.pool.setVisible(!!on);q.gl.setVisible(!!on);if(q.wet)q.wet.setVisible(!!on);q.bulb.fillColor=on?0xfff6dc:0x4a4436;if(on){lightW(l.x,l.y+40,300,.9);lightW(l.x,l.fy-40,330,.75)}}
-  for(const q of V.doors){const d=q.d,x=d.side==='L'?0:RW,near=pl&&Math.abs(pl.x-x)<420&&Math.abs(pl.y-q.y)<200,open=!lock&&near;q.op+=((open?1:0)-q.op)*Math.min(1,dt*12);
+  for(const q of V.doors){if(q.sg){const hid=!q.sg.broken;if(q.hid!==hid){q.hid=hid;for(const k of[q.h,q.g,q.f])k.setVisible(!hid)}if(hid)continue}const d=q.d,x=d.side==='L'?0:RW,near=pl&&Math.abs(pl.x-x)<420&&Math.abs(pl.y-q.y)<200,open=!lock&&near;q.op+=((open?1:0)-q.op)*Math.min(1,dt*12);
     q.h.setDisplaySize(32,Math.max(8,300*(1-q.op*.92)));const col=lock?0xff3d3d:0x3d8bff;q.h.setTint(col);q.g.setTint(col);lightW(q.bx+13,q.y-150,220,.6)}
   if(o.lift&&V.lift){lightW(o.lift.x,FY-160,320,.8);V.lift.bar.setVisible((o.lift.hold||0)>0).setScale(Math.min(1,(o.lift.hold||0)/1.1),1)}
   if(V.shrine){const q=V.shrine,got=hasAb(q.ab)||!gDone(ROOM.a),y=GY-150+Math.sin(lvT*2.5)*10;for(const k of[q.orb,q.core,...q.arcs])k.setVisible(!got).setY(y);q.arcs.forEach((a,i)=>a.setRotation(lvT*2+i));if(!got)lightW(q.x,y,320,.9)}
+  if(V.vault)lightW(V.vault.x,GY-420,760,.65);
   if(V.station){const st=o.station,on=st.t>0;V.station.col.setAlpha(on?.55:.3);V.station.gl.setAlpha(on?.7:.4);lightW(st.x,GY-120,260,.7)}
   for(const q of V.gateV){const g=q.g;if(g.broken){if(q.list.length)vKill(q.list);continue}
     if(g.kind==='laser'){g.beams.forEach((b,i)=>b.setAlpha(.45+.35*Math.sin(lvT*22+i*1.7)));g.scan.y=90+((lvT*700)%(GY-180));lightW(g.x,GY/2,340,.95)}
     else if(g.kind==='blast'){g.lamps.forEach((b,i)=>b.setAlpha(Math.sin(lvT*4+i)>0?.8:.3));g.pg.setAlpha(.4+.2*Math.sin(lvT*4))}
+    else if(g.kind==='secret'){g.flash=(g.flash||0)-dt;if(g.flash>0)g.img.setTintFill(0xffffff);else if(g.img.isTinted)g.img.clearTint()}
     else if(g.kind==='crystal'){g.cg.setAlpha(.3+.1*Math.sin(lvT*3));g.flash=(g.flash||0)-dt;if(g.img){if(g.flash>0)g.img.setTintFill(0xffffff);else g.img.clearTint()}lightW(g.x,GY/2,220,.6)}}
   for(const q of V.cageV){const c=q.c;if(c.broken){if(q.list.length)vKill(q.list);continue}if(c.kind==='laser')c.beams.forEach((b,i)=>b.setAlpha(.35+.2*Math.sin(lvT*18+i)))}
   const xs=[];if(pl)xs.push(pl.x-cam);for(const e of en)xs.push(e.x-cam);if(boss&&!boss.dead)xs.push(boss.x-cam);

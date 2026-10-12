@@ -18,7 +18,7 @@ const ABIL=[
  {id:'slam',  name:'Ground Slam',    how:'In the air, pull the stick down and strike. Slam the plate to open blast doors.',col:'#ffb347',gate:'blast'},
  {id:'plasma',name:'Plasma Claws',   how:'Your claws burn hotter. Claw void-crystal walls to break them.',col:'#ff5ad8',gate:'crystal'}];
 const GATEHINT={crack:'Cracked wall. A dash could smash it.',ledge:'Too high to climb. Maybe with a double jump?',laser:'Laser gate. Only a Starburst roar melts it.',
-  blast:'Blast door. The plate needs a Ground Slam.',crystal:'Void crystal. Claws bounce off it.'};
+  blast:'Blast door. The plate needs a Ground Slam.',crystal:'Void crystal. Claws bounce off it.',secret:'This plating sounds hollow…'};
 const freshMeta=()=>({ab:{},tanks:{},items:{},gates:{},cleared:{},map:{},areas:{},save:null,boss:0,guards:{},mapped:{}});
 let META=freshMeta();try{const m=JSON.parse(localStorage.getItem('aetherfall_world')||'null');if(m&&m.ab&&m.map)META=Object.assign(freshMeta(),m)}catch(e){}
 function saveMeta(){try{localStorage.setItem('aetherfall_world',JSON.stringify(META))}catch(e){}}
@@ -27,10 +27,22 @@ const tankCount=()=>Object.keys(META.tanks).length;
 const maxHP=()=>100+15*tankCount();
 PICK.tank={name:'Energy Tank',col:'#ff5ad8',txt:'Energy Tank: +15 max HP'};
 PICK.core={name:'Aether Core',col:'#7fe9ff',txt:'Aether Core: hits charge Aether faster'};
+PICK.sfang={name:'Starblood Fang',col:'#ff7a5a',txt:'Starblood Fang: claws +10% damage'};
+PICK.lore={name:'Data Tablet',col:'#ffe08a',txt:'Data tablet recovered'};
 const coreCount=()=>[0,1,2,3,4].filter(a=>META.items['core'+a]).length;
+const fangCount=()=>[0,1,2,3,4,5].filter(a=>META.items['sfang'+a]).length;
+const loreCount=()=>[0,1,2,3,4,5].filter(a=>META.items['lore'+a]).length;
 const AG=()=>1+.2*coreCount();
-/* completion: 12 energy tanks, 6 golden eggs, 5 abilities, 5 guardians, 5 Aether cores */
-function completion(){const n=tankCount()+[0,1,2,3,4,5].filter(a=>META.items['egg'+a]).length+Object.keys(META.ab).length+[0,1,2,3,4].filter(a=>META.guards&&META.guards[a]).length+coreCount();return Math.round(n/33*100)}
+/* completion: 12 energy tanks, 6 golden eggs, 5 abilities, 5 guardians, 5 Aether cores, 6 Starblood fangs */
+function completion(){const n=tankCount()+[0,1,2,3,4,5].filter(a=>META.items['egg'+a]).length+Object.keys(META.ab).length+[0,1,2,3,4].filter(a=>META.guards&&META.guards[a]).length+coreCount()+fangCount();return Math.round(n/39*100)}
+/* data tablets hidden in the secret rooms: the clan's history, one page per world */
+const LORE=[
+ {h:'Launch Log, Hangar Nine',b:`<p><i>"Day 4,112 of the Long Watch. Twelve sky-ships out, twelve home. The young ones raced the comet again and lost again. The Egg-Keeper came down to count the eggs in stasis. He counted them twice. He has started doing that."</i></p><p><span class="who">LYRA:</span> "The Starblood flew these ships for joy, Tyko. Not for war. Remember that."</p>`},
+ {h:'The Oath of Claws',b:`<p><i>"We forge no blades. Our claws hold the light of the stars, and what the light touches it does not destroy. It sets free. This is the first oath of the Starblood, older than Ithra itself."</i></p><p><span class="who">LYRA:</span> "Every weapon in this armory was built after the Fall. Your clan never needed one."</p>`},
+ {h:'A Letter from Aeris',b:`<p><i>"Mira, the Egg-Keeper inspected the reactor rings today. He asked how long the Aether would last if the clan kept growing. The engineers laughed and said forever. He didn't laugh. I keep thinking about his face."</i></p><p><span class="who">LYRA:</span> "Nobody listened to his fear. I wonder if that would have changed anything."</p>`},
+ {h:"The Egg-Keeper's Journal",b:`<p><i>"They spend the light like water. One day it will run dry, and every egg I have kept will hatch into a dark world. I will not allow it. If I must take the light from them to keep it safe, so be it. I will keep it as I kept the eggs."</i></p><p><span class="who">LYRA:</span> "He wasn't a monster at the start, Tyko. He was afraid. That is how it begins."</p>`},
+ {h:'Inscription on the Void Gate',b:`<p><i>"Here the first Starblood sealed the Void beneath the world, and paid for it with their light. Let no keeper open what we closed. What is kept too tightly becomes a cage."</i></p><p><span class="who">LYRA:</span> "Your ancestors gave everything to close this place. He opened it in a single night."</p>`},
+ {h:"Lyra's Memory",b:`<p><i>A recording, very old. A voice you know, younger and afraid: "The Hollowed are at the hangar doors. There is one egg left in stasis. I can't carry it out... but I can stay with it. If I pour my light into the collar, I can keep it warm. However long it takes."</i></p><p><span class="who">LYRA:</span> "...I was a Star-Singer of your clan, Tyko. I chose to wait for you. I would choose it again."</p>`}];
 
 const CW=2560;           /* one map cell = 2560 x 1080 world units; rooms are whole numbers of cells */
 const TANKS=[['high','laser'],['crack','slam'],['high','plasma'],['laser','high'],['slam','plasma'],['crack','high']];
@@ -39,7 +51,7 @@ function hstr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i)
 function buildArea(a){const hs=3+(a===2||a===4?1:0),bot=hs-1,id=k=>a+'-'+k,R=[];
   const room=(k,gx,gy,w,h,kind,doors)=>R.push({id:id(k),a,k,gx,gy,w,h,kind,doors:doors.map(([side,row,to])=>({side,row,to:id(to)}))});
   room(0,0,0,2,1,a===0?'start':'liftUp',[['R',0,1]]);
-  room(1,2,0,1,hs,'shaft',[['L',0,0],['R',0,2],['R',1,3],['L',bot,4],['R',bot,5]]);
+  room(1,2,0,1,hs,'shaft',[['L',0,0],['R',0,2],['R',1,3],['L',1,9],['L',bot,4],['R',bot,5]]);
   room(2,3,0,1,1,'save',[['L',0,1]]);
   room(3,3,1,1,1,'item',[['L',0,1]]);
   room(4,0,bot,2,1,'shrine',[['R',0,1]]);
@@ -47,6 +59,7 @@ function buildArea(a){const hs=3+(a===2||a===4?1:0),bot=hs-1,id=k=>a+'-'+k,R=[];
   room(6,4,bot,3,1,'gate',[['L',0,5],['R',0,7]]);
   room(7,7,bot,1,1,'arena',[['L',0,6],['R',0,8]]);
   room(8,8,bot,1,1,a<5?'liftDown':'boss',[['L',0,7]]);
+  room(9,1,1,1,1,'secret',[['R',0,1]]);
   return R}
 const AREAS=LV.map((L,a)=>buildArea(a));
 const ROOMS={};AREAS.forEach(r=>r.forEach(o=>ROOMS[o.id]=o));
@@ -66,7 +79,11 @@ function genRoom(o){if(o.gen)return o;const L=LV[o.a],a=o.a,r=rng(hstr(o.id)),RW
   const free=x=>zones.every(z=>x<z[0]-60||x>z[1]+60);
   if(o.kind==='shaft'){const cols=[.26,.5,.74,.5];let k=0;for(let y=FY-205;y>GY+60;y-=205,k++){const cx=cols[k%4]*RW;plats.push({x:Math.round(cx-220),y,w:440})}
     for(const d of o.doors)if(d.row<o.h-1){const y=d.row*H+GY+205;plats.push({x:d.side==='L'?380:RW-800,y,w:420})}
-    for(let row=0;row<o.h;row++)o.spawns.push({t:'d',x:RW*(.3+r()*.4),y:row*H+GY-330});o.spawns.push({t:'g',x:RW*.5,y:FY})}
+    for(let row=0;row<o.h;row++)o.spawns.push({t:'d',x:RW*(.3+r()*.4),y:row*H+GY-330});o.spawns.push({t:'g',x:RW*.5,y:FY});
+    /* wall turrets: one per row below the top, alternating walls (just one in the first world) */
+    for(let row=a===0?o.h-1:1,k=a;row<o.h;row++,k++)o.spawns.push({t:'t',x:k%2?RW-78:78,y:row*H+470});
+    /* the hollow-sounding plate in front of the hidden hatch */
+    const sd=o.doors.find(d=>ROOMS[d.to].kind==='secret');if(sd)o.gates.push({kind:'secret',x:85,w:150,top:sd.row*H+GY-300,bot:sd.row*H+GY,hp:2,broken:0})}
   else{let x=700;while(x<RW-700){if(free(x)&&r()<.75){const tiers=1+Math.floor(r()*(o.kind==='arena'?2:3));let px=x;
         for(let t=0;t<tiers;t++){const w=240+Math.floor(r()*3)*80;plats.push({x:Math.round(px),y:FY-190-t*170,w});px+=(r()<.5?-1:1)*(130+r()*70)}}x+=760+r()*620}}
   /* props, lamps and vents along the bottom floor */
@@ -92,6 +109,7 @@ function genRoom(o){if(o.gen)return o;const L=LV[o.a],a=o.a,r=rng(hstr(o.id)),RW
     sp('g',RW*.25);sp('c',RW*.36);sp('d',RW*.3);if(a>=1){sp('h',RW*.62);sp('h',RW*.66)}sp('g',RW*.7);o.crates.push(RW*.18,RW*.58);o.coins.push(RW*.52)}
   else if(o.kind==='liftDown'){o.lift={x:RW*.5,dir:1,to:(a+1)+'-0'};o.plats.length=0}
   else if(o.kind==='boss'){o.plats.length=0}
+  else if(o.kind==='secret'){o.plats.length=0;o.props.length=0;o.items.push({type:'lore',id:'lore'+a,x:RW*.36,y:GY-150},{type:'sfang',id:'sfang'+a,x:RW*.64,y:GY-170});o.coins.push(RW*.5)}
   if(o.kind==='shaft')o.coins.push(RW*.5);
   o.gen=1;return o}
 function mkGate(kind,x){const g={kind,x,broken:0};if(kind==='crack'){g.w=80;g.top=0}else if(kind==='ledge'){g.w=150;g.top=GY-330}else if(kind==='laser'){g.w=46;g.top=0}

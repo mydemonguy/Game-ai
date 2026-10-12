@@ -8,9 +8,10 @@ const ETYPES={
  d:{w:70,h:70,hp:28,spd:0,dmg:8,score:150,fly:true},
  c:{w:80,h:160,hp:55,spd:0,dmg:9,score:250},
  B:{w:170,h:320,hp:420,spd:125,dmg:24,score:1500,heavy:true},
- h:{w:130,h:100,hp:45,spd:520,dmg:12,score:120}
+ h:{w:130,h:100,hp:45,spd:520,dmg:12,score:120},
+ t:{w:90,h:90,hp:40,spd:0,dmg:9,score:200,fly:true}
 };
-const pdm=()=>(pl&&pl.fury>0?2:1)*(hasAb('plasma')?1.3:1);
+const pdm=()=>(pl&&pl.fury>0?2:1)*(hasAb('plasma')?1.3:1)*(1+.1*fangCount());
 function spawnEnemy(type,side,quiet){const T=ETYPES[type];let x=side<0?cam-120:cam+W+120;
   for(const s of solidRects()){const gx=s.x+s.w/2;if(Math.sign(x-gx)!==Math.sign(pl.x-gx))x=gx+Math.sign(pl.x-gx)*(s.w/2+90)}
   x=clamp(x,80,RW-80);
@@ -73,6 +74,7 @@ function updPlayerPost(dt){const p=pl;
 const allTargets=()=>boss&&!boss.dead&&boss.state!=='enter'?en.concat([boss]):en;
 
 function updEnemy(e,dt){const dx=pl.x-e.x,ad=Math.abs(dx);e.flash-=dt;e.t-=dt;
+  if(e.type==='t')return updTurret(e,dt);
   if(e.type==='d'){e.face=Math.sign(dx)||1;
     let tx=pl.x-e.face*440+Math.sin(lvT*1.3+e.seed)*90;const ty=e.hy+Math.sin(lvT*2.2+e.seed)*45;
     if(lock){if(pl.x-cam>W-RSAFE-300)tx=pl.x-440;tx=Math.max(cam+140,Math.min(cam+W-RSAFE,tx))}
@@ -101,6 +103,16 @@ function updEnemy(e,dt){const dx=pl.x-e.x,ad=Math.abs(dx);e.flash-=dt;e.t-=dt;
       if(overlap(box,pbox())){e.hitP=true;hurtPlayer(T.dmg*dm(),e.face*(hv?900:450))}}
     if(e.t<=0){e.state='walk';e.t=(e.type==='B'?1.6:hv?1.3:.8)+Math.random()*.7}}
   if(e.state!=='walk')e.vx*=Math.pow(.05,dt)}
+/* wall turret: swivels toward Tyko, paints him with a laser sight, then fires a three-shot burst. Swipe the shots back at it */
+function updTurret(e,dt){if(!e.wall){e.wall=e.x<RW/2?1:-1;e.t=1.4}e.face=e.wall;e.x=e.wall>0?78:RW-78;e.y=e.hy;e.vx=0;
+  const px=e.x+e.wall*22,py=e.y-45,tx=pl.x,ty=pl.y-90,ldx=(tx-px)*e.wall,seen=!pl.dead&&ldx>60&&ldx<1800&&Math.abs(ty-py)<760;
+  const want=seen?clamp(Math.atan2(ty-py,ldx),-1.25,1.25):.35+Math.sin(lvT*.8+e.seed)*.3;e.la=e.la==null?want:e.la+clamp(want-e.la,-2.6*dt,2.6*dt);
+  const wa=e.wall>0?e.la:Math.PI-e.la,c=Math.cos(wa),s=Math.sin(wa),mx=px+c*62,my=py+s*62;
+  if(e.n>0){e.fire-=dt;if(e.fire<=0){e.fire=.15;e.n--;const v=640+G.lv*30;shots.push({x:mx,y:my,vx:c*v,vy:s*v,r:13,dmg:ETYPES.t.dmg*dm(),life:3,col:'#ff5a3a'});sfxEnemy('shot',e);muzzle(mx,my,'#ff5a3a');if(e.n<=0)e.t=2.6}return}
+  if(!seen){e.t=Math.max(e.t,.9);return}
+  if(e.t<.7){if(!e.beep){e.beep=1;sfxEnemy('lock',e)}}else e.beep=0;
+  if(e.t<.7)OV.lines.push([mx,my,mx+c*1700,my+s*1700,e.t<.25?.85:.35]);
+  if(e.t<=0){e.n=3;e.fire=0}}
 /* body robots: hand velocity to physics, read position back */
 function ePush(e){if(e.body)e.body.velocity.x=e.vx}
 function ePull(e){if(!e.body)return;const b=e.body;e.x=b.x+e.w/2;e.y=b.y+e.h;e.vx=b.velocity.x;
@@ -110,7 +122,7 @@ function ePull(e){if(!e.body)return;const b=e.body;e.x=b.x+e.w/2;e.y=b.y+e.h;e.v
 /* ---------- boss: Malakar, the Void Sovereign ---------- */
 const arenaCam=()=>Math.max(0,RW-W);
 function startBoss(){lock=true;S.boom();sfxBossRoar();shake=16;const ac=arenaCam();
-  boss={isBoss:true,x:ac+W-RSAFE-160,y:GY,w:190,h:330,hp:3600,max:3600,face:-1,state:'enter',t:2.6,flash:0,vx:0,phase:1,dy:-800,hov:0,last:'',fire:0,left:0};
+  boss={isBoss:true,x:ac+W-RSAFE-160,y:GY,w:190,h:330,hp:META.hard?5000:3600,max:META.hard?5000:3600,face:-1,state:'enter',t:2.6,flash:0,vx:0,phase:1,dy:-800,hov:0,last:'',fire:0,left:0};
   showBanner('Malakar','The Void Sovereign',2.6);musicFor()}
 function bclamp(x){return Math.max(cam+220,Math.min(cam+W-RSAFE-110,x))}
 function chooseAttack(b){let o=['dash','barrage','rift'];if(b.phase>=2)o.push('beam','beam','summon');
@@ -184,7 +196,9 @@ function applyPick(k){const p=pl,Pk=PICK[k.type];sfxPick(k.type);buzz(12);
   else if(k.type==='coin')G.score+=250;else if(k.type==='tank'){META.tanks[k.id]=1;saveMeta();p.max=maxHP();p.hp=p.max;buzz([30,30,60]);hitStop=.25}
   else if(k.type==='egg'){G.lives=Math.min(5,G.lives+1);if(k.id){META.items[k.id]=1;saveMeta()}}
   else if(k.type==='core'){if(k.id){META.items[k.id]=1;saveMeta()}hitStop=.3;buzz([30,30,60]);p.en=100}
-  ftext(p.x,p.y-200,Pk.txt,Pk.col,k.type==='egg'||k.type==='tank'||k.type==='core');ring(k.x,k.y,Pk.col,90);burst(k.x,k.y,Pk.col,10,380);if(k.type!=='coin')sparkle(k.x,k.y,Pk.col)}
+  else if(k.type==='sfang'){if(k.id){META.items[k.id]=1;saveMeta()}hitStop=.3;buzz([30,30,60]);sfxItemGet();for(let i=0;i<3;i++)ring(p.x,p.y-100,'#ff7a5a',160+i*80)}
+  else if(k.type==='lore'){if(k.id){META.items[k.id]=1;saveMeta()}setTimeout(()=>showLore(G.lv),350)}
+  ftext(p.x,p.y-200,Pk.txt,Pk.col,k.type==='egg'||k.type==='tank'||k.type==='core'||k.type==='sfang');ring(k.x,k.y,Pk.col,90);burst(k.x,k.y,Pk.col,10,380);if(k.type!=='coin')sparkle(k.x,k.y,Pk.col)}
 function updPicks(dt){for(const k of picks){if(!k.float){k.vy+=1800*dt;k.x+=(k.vx||0)*dt;k.vx=(k.vx||0)*Math.pow(.2,dt);k.y+=k.vy*dt;k.x=clamp(k.x,80,RW-80);const sf=surfaceBelow(k.x,k.y)-26;if(k.y>sf){k.y=sf;k.vy=0}k.life-=dt}
     if(k.cage&&!k.cage.broken)continue;
     if(pl&&!pl.dead&&Math.abs(pl.x-k.x)<72&&Math.abs(pl.y-90-k.y)<125){k.life=0;k.got=1;applyPick(k)}}

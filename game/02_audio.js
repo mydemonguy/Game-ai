@@ -106,6 +106,7 @@ function sfxEnemy(k,e){const P=e?sp(e.x,e.y):{pan:0,g:1};if(P.g<.2&&k!=='elite')
   else if(k==='smash'){tone(t,{f:82,f2:34,d:.42,v:.45*g,pan},o);noi(t,{d:.42,v:.34*g,ft:'lowpass',ff:1300,ff2:100,pan},o);fm(t,{f:150,r:1.41,idx:700,d:.3,v:.1*g,pan},o)}
   else if(k==='swipe'){tone(t,{f:220,f2:340,d:.1,v:.05*g,w:'square',ft:'lowpass',ff:1500,pan},o);noi(t,{d:.13,v:.1*g,ft:'bandpass',ff:1900,ff2:700,q:1.4,pan},o)}
   else if(k==='spawn'){tone(t,{f:200,f2:1300,d:.32,v:.07*g,vib:[24,60],pan},o);noi(t,{d:.28,v:.04*g,a:.2,ft:'highpass',ff:3000,pan},o)}
+  else if(k==='lock'){tone(t,{f:1760,d:.07,v:.05*g,w:'square',ft:'lowpass',ff:5000,pan},o);tone(t+.1,{f:1760,d:.07,v:.05*g,w:'square',ft:'lowpass',ff:5000,pan},o)}
   else if(k==='elite'){[110,116.5].forEach(f=>tone(t,{f,d:1.1,a:.04,sus:.3,v:.12,w:'sawtooth',ft:'lowpass',ff:900},o));tone(t,{f:55,d:1.1,v:.3},o)}}
 function sfxDoor(){if(!ok('door',.2))return;const t=T0(),o=SX();noi(t,{d:.32,v:.12,ft:'highpass',ff:2400,ff2:700},o);tone(t+.16,{f:130,f2:60,d:.16,v:.3},o);fm(t+.16,{f:300,r:1.41,idx:400,d:.2,v:.07},o)}
 function sfxLift(dir){if(!ok('lift',.5))return;const t=T0(),o=SX();tone(t,{f:60,f2:dir<0?130:38,d:.95,a:.1,sus:.3,v:.09,w:'sawtooth',ft:'lowpass',ff:420},o);

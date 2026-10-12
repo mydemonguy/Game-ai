@@ -2,12 +2,12 @@
 "use strict";
 /* ---------- flow: map card, screens, game loop and the Phaser game itself ---------- */
 function drawAreaMap(g,a,ox,oy,cs,opt){opt=opt||{};const rooms=AREAS[a];
-  for(const o of rooms){const seen=META.map[o.id];if(!seen&&!(META.mapped&&META.mapped[a]))continue;const x=ox+o.gx*cs,y=oy+o.gy*cs,w=o.w*cs,h=o.h*cs;
+  for(const o of rooms){const seen=META.map[o.id];if(!seen&&(o.kind==='secret'||!(META.mapped&&META.mapped[a])))continue;const x=ox+o.gx*cs,y=oy+o.gy*cs,w=o.w*cs,h=o.h*cs;
     if(!seen){g.fillStyle='#24142e';g.fillRect(x+1,y+1,w-2,h-2);g.strokeStyle='#6a4a7a';g.lineWidth=Math.max(2,cs*.05);g.strokeRect(x+1,y+1,w-2,h-2);continue}
-    g.fillStyle=o.kind==='save'?'#2a8a5a':o.kind==='boss'?'#8a1a3a':'#a8327a';g.fillRect(x+1,y+1,w-2,h-2);
+    g.fillStyle=o.kind==='save'?'#2a8a5a':o.kind==='boss'?'#8a1a3a':o.kind==='secret'?'#8a6a1a':'#a8327a';g.fillRect(x+1,y+1,w-2,h-2);
     g.strokeStyle='rgba(255,200,240,.35)';g.lineWidth=1;for(let i=1;i<o.w;i++){g.beginPath();g.moveTo(x+i*cs,y+2);g.lineTo(x+i*cs,y+h-2);g.stroke()}for(let i=1;i<o.h;i++){g.beginPath();g.moveTo(x+2,y+i*cs);g.lineTo(x+w-2,y+i*cs);g.stroke()}
     g.strokeStyle='#ffd0f0';g.lineWidth=Math.max(2,cs*.07);g.strokeRect(x+1,y+1,w-2,h-2);
-    for(const d of o.doors){const dy=y+d.row*cs+cs*.55;g.fillStyle='#ffe08a';g.fillRect(d.side==='L'?x-2:x+w-3,dy-cs*.14,5,cs*.28)}
+    for(const d of o.doors){if(ROOMS[d.to].kind==='secret'&&!META.map[d.to])continue;const dy=y+d.row*cs+cs*.55;g.fillStyle='#ffe08a';g.fillRect(d.side==='L'?x-2:x+w-3,dy-cs*.14,5,cs*.28)}
     const ic=(t,col,ix)=>{g.fillStyle=col;g.font=`700 ${Math.round(cs*.5)}px ${FU}`;g.textAlign='center';g.fillText(t,x+(ix||w/2),y+cs*.68)};
     if(o.kind==='save')ic('S','#c8ffe0');if(o.lift)ic(o.lift.dir>0?'▼':'▲','#bff0ff');if(o.kind==='boss')ic('☠','#ffd0dc');
     if(o.shrine&&o.shrine.ab&&!hasAb(o.shrine.ab))ic(gDone(o.a)?'★':'☠',gDone(o.a)?'#ffe08a':'#ff9aa8');
@@ -21,7 +21,21 @@ function paintMapCard(){const c=document.getElementById('mapc');if(!c)return;con
   const t=[0,1].filter(k=>META.tanks[a+'-'+k]).length;g.textAlign='right';g.font=`600 22px ${FU}`;g.fillStyle='#ff9ae8';g.fillText(`Energy Tanks ${t}/2`,c.width-24,40)}
 function abilitiesHTML(){return `<div class="keys">${ABIL.map(a=>`<kbd style="color:${hasAb(a.id)?a.col:'#55507a'}">${hasAb(a.id)?'◆':'◇'} ${a.name}</kbd><span>${hasAb(a.id)?a.how:'Not found yet'}</span>`).join('')}
   <kbd style="color:#ff5ad8">Energy Tanks</kbd><span>${tankCount()} of 12 found · max health ${maxHP()}</span>
-  <kbd style="color:#7fe9ff">Aether Cores</kbd><span>${coreCount()} of 5 · beat the shrine guardians · Aether charges ${Math.round((AG()-1)*100)}% faster</span></div>`}
+  <kbd style="color:#7fe9ff">Aether Cores</kbd><span>${coreCount()} of 5 · beat the shrine guardians · Aether charges ${Math.round((AG()-1)*100)}% faster</span>
+  <kbd style="color:#ff7a5a">Starblood Fangs</kbd><span>${fangCount()} of 6 · hidden behind hollow walls · claws +${fangCount()*10}% damage</span></div>`}
+/* lore tablets: shown when found, and re-readable from the pause menu */
+function showLore(a){if(G.state!=='play')return;G.state='card';padShow(false);clearInput();const L=LORE[a];
+  showCard({ey:'Data tablet · '+LV[a].ch,h:L.h,b:L.b,btns:[['Continue',()=>{G.state='play';hideCard();padShow(true)}]]})}
+function archiveCard(){const got=LORE.map((L,a)=>META.items['lore'+a]?a:-1).filter(a=>a>=0);
+  showCard({ey:'Starblood archive',h:'Data Tablets',tag:`${got.length} of 6 recovered`,b:got.length?got.map(a=>`<h3 style="margin:.9em 0 .3em;color:#ffe08a">${LV[a].ch} · ${LORE[a].h}</h3>${LORE[a].b}`).join(''):'<p>No tablets yet. The Starblood hid their records well.</p>',btns:[['Back',pauseCard]]})}
+/* fast travel between save stations you have visited */
+const saveRooms=()=>AREAS.map(r=>r.find(o=>o.kind==='save')).filter(o=>META.map[o.id]);
+function travelCard(){const list=saveRooms().filter(o=>o.id!==ROOM.id);
+  showCard({ey:'Save station network',h:'Fast Travel',b:'<p>Pick a station to warp to. Your progress is saved on arrival.</p>',btns:[...list.map(o=>[LV[o.a].ch+' · '+LV[o.a].name,()=>{G.paused=false;hideCard();padShow(true);musicDuck(0);SC.scene.resume();startTrans({travel:o.id})}]),['Back',pauseCard,1]]})}
+/* Rift Mode: a harder second run, unlocked by beating Malakar */
+let riftOpen=false;try{riftOpen=localStorage.getItem('aetherfall_rift')==='1'}catch(e){}
+function modeCard(back){showCard({ey:'New game',h:'Choose your path',b:`<p><b>Normal</b> · the saga as it was meant to be told.</p><p><b style="color:#ff4a6a">Rift Mode</b> · the Rift remembers you. Robots hit 45% harder and take more punishment, and the guardians and Malakar are far tougher.</p>`,
+  btns:[['Normal',()=>beginSaga(false)],['Rift Mode',()=>beginSaga(true)],['Back',back||toTitle,1]]})}
 /* ---------- screens ---------- */
 const scr=document.getElementById('scr'),card=document.getElementById('card'),pad=document.getElementById('pad');
 function padShow(v){pad.hidden=!(v&&touchy)}
@@ -32,13 +46,14 @@ function showCard(o){card.innerHTML=(o.ey?`<p class="eyebrow">${o.ey}</p>`:'')+(
     b.addEventListener('click',()=>{initAudio();sfxUI(alt?0:1);fn()});row.appendChild(b)});
   scr.hidden=false;card.scrollTop=0;const f=row.querySelector('button');if(f&&!touchy)setTimeout(()=>f.focus(),30)}
 function story(pages,i,done){const p=pages[i];showCard({ey:p.ey,h:p.h,b:p.b,btns:[[i<pages.length-1?'Continue':'Onward',()=>i<pages.length-1?story(pages,i+1,done):done()],...(i<pages.length-1?[['Skip',done,1]]:[])]})}
-function beginSaga(){goFull();story(STORY.intro,0,()=>{G.state='card';showCard({ey:LV[0].ch,h:LV[0].name,b:STORY.brief[0],btns:[['Fight',newRun]]})})}
+function beginSaga(hard){goFull();hard=hard===true;story(STORY.intro,0,()=>{G.state='card';showCard({ey:LV[0].ch+(hard?' · Rift Mode':''),h:LV[0].name,b:STORY.brief[0],btns:[['Fight',()=>newRun(hard)]]})})}
+const startNew=()=>riftOpen?modeCard():beginSaga(false);
 function toTitle(){G.state='menu';if(G.paused&&SC)SC.scene.resume();G.paused=false;TRANS.on=0;padShow(false);menuBG();musicFor();
   const sv=META.save,found=Object.keys(META.map).length,tot=Object.keys(ROOMS).length;
   showCard({ey:'A Starblood Saga · Six Worlds',h:'Aetherfall',big:1,tag:'One small dino. One stolen sky. One very big Rift.',
-    b:(sv?`<p>Save: ${LV[ROOMS[sv.room].a].name} · Map ${Math.round(found/tot*100)}% · Items ${completion()}%</p>`:'')+(G.best?`<p>Best score ${G.best.toLocaleString()}</p>`:''),
-    btns:[...(sv?[['Continue',()=>{goFull();continueGame()}]]:[]),[sv?'New game':'Begin the Saga',sv?confirmNew:beginSaga,!!sv],['Controls',controls,1],['Settings',soundCard,1]]})}
-function confirmNew(){showCard({ey:'New game',h:'Start over?',b:'<p>This erases your map, abilities and energy tanks.</p>',btns:[['Start over',beginSaga],['Back',toTitle,1]]})}
+    b:(sv?`<p>Save: ${LV[ROOMS[sv.room].a].name}${META.hard?' · <b style="color:#ff4a6a">Rift Mode</b>':''} · Map ${Math.round(found/tot*100)}% · Items ${completion()}%</p>`:'')+(G.best?`<p>Best score ${G.best.toLocaleString()}</p>`:''),
+    btns:[...(sv?[['Continue',()=>{goFull();continueGame()}]]:[]),[sv?'New game':'Begin the Saga',sv?confirmNew:startNew,!!sv],['Controls',controls,1],['Settings',soundCard,1]]})}
+function confirmNew(){showCard({ey:'New game',h:'Start over?',b:'<p>This erases your map, abilities and energy tanks.</p>',btns:[['Start over',startNew],['Back',toTitle,1]]})}
 function soundCard(back){back=typeof back==='function'?back:toTitle;const sl=(id,lab,v)=>`<label class="vol"><span>${lab}</span><input type="range" id="${id}" min="0" max="100" value="${Math.round(v*100)}"></label>`;
   const gq=`<label class="vol"><span>Graphics</span><span class="gq">${['high','balanced','fast'].map(q=>`<button class="btn ${FX.quality===q?'':'alt'}" data-q="${q}">${QUAL[q].name}</button>`).join(' ')}</span></label>`;
   showCard({ey:'Settings',h:'Sound & graphics',extra:`<div class="vols">${sl('vMus','Music',VOL.music)}${sl('vSfx','Effects',VOL.sfx)}${gq}</div>`,b:'<p>High draws at full screen resolution. Balanced and Fast draw fewer pixels and stretch them up, for a steadier frame rate. The game steps down by itself if it starts to stutter.</p>',btns:[['Done',back]]});
@@ -55,11 +70,12 @@ function gameOver(){G.state='over';if(pl){pl.dead=1;pl.deadT=0;pl.vx=0}G.best=Ma
   const rid=ROOM?ROOM.id:'0-0',ent=ROOM&&ROOM.entry?{x:ROOM.entry.x,y:ROOM.entry.y}:{x:300,y:GY};
   setTimeout(()=>showCard({ey:'Tyko is down',h:'The Light Fades',
   b:`<p><span class="who">LYRA:</span> "Not yet, little one. Get up. I won't let the dark have you."</p>`,btns:[...(META.save?[['Continue from save',()=>continueGame()]]:[]),['Retry this room',()=>{G.lives=3;startGame(rid,ent)},1],['Title',toTitle,1]]}),900)}
-function victory(){G.state='card';padShow(false);clearInput();G.score+=Math.round(pl.hp*50);unlocked=6;saveProg();G.best=Math.max(G.best,G.score);musicPlay('victory');
+function victory(){G.state='card';padShow(false);clearInput();G.score+=Math.round(pl.hp*50);unlocked=6;saveProg();const wasRift=!!META.hard,newRift=!riftOpen;riftOpen=true;try{localStorage.setItem('aetherfall_rift','1')}catch(e){}G.best=Math.max(G.best,G.score);musicPlay('victory');
   const found=Object.keys(META.map).length,tot=Object.keys(ROOMS).length;
-  story(STORY.ending,0,()=>showCard({ey:'The saga is complete',h:'Ithra Is Free',big:0,b:`<p>Final score <b>${G.score.toLocaleString()}</b></p><p>Items collected <b>${completion()}%</b> · Map explored ${Math.round(found/tot*100)}%</p><p>Energy tanks ${tankCount()}/12 · Eggs ${[0,1,2,3,4,5].filter(a=>META.items['egg'+a]).length}/6 · Aether cores ${coreCount()}/5 · Guardians ${[0,1,2,3,4].filter(a=>gDone(a)).length}/5</p><p>Thank you for playing Aetherfall.</p>`,btns:[['Play again',beginSaga],['Title',toTitle,1]]}))}
-function pauseCard(){showCard({ey:LV[G.lv].ch+' · '+LV[G.lv].name,h:'Paused',extra:mapCardHTML()+`<p class="tag" style="margin:.4em 0">Map ${Object.keys(META.map).length}/${Object.keys(ROOMS).length} rooms · Items ${completion()}%</p>`+abilitiesHTML(),
-  btns:[['Resume',togglePause],['Settings',()=>soundCard(pauseCard),1],['Controls',()=>controls(pauseCard),1],['Quit to title',toTitle,1]]});paintMapCard()}
+  story(STORY.ending,0,()=>showCard({ey:'The saga is complete',h:'Ithra Is Free',big:0,b:`<p>Final score <b>${G.score.toLocaleString()}</b></p><p>Items collected <b>${completion()}%</b> · Map explored ${Math.round(found/tot*100)}%</p><p>Energy tanks ${tankCount()}/12 · Eggs ${[0,1,2,3,4,5].filter(a=>META.items['egg'+a]).length}/6 · Aether cores ${coreCount()}/5 · Guardians ${[0,1,2,3,4].filter(a=>gDone(a)).length}/5</p>${wasRift?'<p><b style="color:#ff4a6a">Rift Mode conquered.</b> The Starblood would be proud.</p>':newRift?'<p><b style="color:#ff4a6a">Rift Mode unlocked.</b> Start a new game to face a harder Ithra.</p>':''}<p>Thank you for playing Aetherfall.</p>`,btns:[['Play again',()=>modeCard(toTitle)],['Title',toTitle,1]]}))}
+function pauseCard(){const canTravel=ROOM&&ROOM.kind==='save'&&!lock&&saveRooms().length>1;
+  showCard({ey:LV[G.lv].ch+' · '+LV[G.lv].name+(META.hard?' · Rift Mode':''),h:'Paused',extra:mapCardHTML()+`<p class="tag" style="margin:.4em 0">Map ${Object.keys(META.map).length}/${Object.keys(ROOMS).length} rooms · Items ${completion()}%</p>`+abilitiesHTML(),
+  btns:[['Resume',togglePause],...(canTravel?[['Fast travel',travelCard]]:[]),...(loreCount()?[['Archive',archiveCard,1]]:[]),['Settings',()=>soundCard(pauseCard),1],['Controls',()=>controls(pauseCard),1],['Quit to title',toTitle,1]]});paintMapCard()}
 function togglePause(){if(G.state!=='play'||!SC)return;G.paused=!G.paused;clearInput();
   if(G.paused){padShow(false);sfxPause(1);musicDuck(1);SC.scene.pause();pauseCard()}
   else{hideCard();padShow(true);sfxPause(0);musicDuck(0);SC.scene.resume()}}

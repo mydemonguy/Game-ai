@@ -11,7 +11,7 @@ let camLock=null;
 const gDone=a=>a>=5||!!(META.guards&&META.guards[a]);
 const gClamp=x=>clamp(x,cam+180,cam+W-RSAFE-120);
 function startGuardian(a){const D0=GUARD[a];lock=true;camLock=0;clearEnemies();spawnQ=[];
-  boss={isBoss:true,guard:a,name:D0.name,rig:D0.rig,x:clamp(Math.min(W*.33,pl.x-520),300,W-RSAFE-200),y:FY,oy:-950,vy:0,w:D0.w,h:D0.h,hp:D0.hp,max:D0.hp,face:1,state:'enter',t:1.4,
+  boss={isBoss:true,guard:a,name:D0.name,rig:D0.rig,x:clamp(Math.min(W*.33,pl.x-520),300,W-RSAFE-200),y:FY,oy:-950,vy:0,w:D0.w,h:D0.h,hp:D0.hp*(META.hard?1.5:1),max:D0.hp*(META.hard?1.5:1),face:1,state:'enter',t:1.4,
     flash:0,vx:0,phase:1,anim:'leap',seed:Math.random()*10,last:'',n:0,fadeT:0};
   showBanner(D0.name,D0.sub,2.4);sfxBossRoar();shake=12;sfxAlarm();musicFor()}
 function gPick(b){const D0=GUARD[b.guard];let o=D0.atk.slice();if(b.phase===2)o=o.concat(D0.atk2);o=o.filter(x=>x!==b.last);if(!o.length)o=D0.atk.slice();
