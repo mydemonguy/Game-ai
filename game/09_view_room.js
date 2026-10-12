@@ -155,7 +155,7 @@ function roomUpdate(dt){if(!ROOM)return;const o=ROOM,P=PAL[LV[G.lv].theme];cullR
   for(const q of V.doors){const d=q.d,x=d.side==='L'?0:RW,near=pl&&Math.abs(pl.x-x)<420&&Math.abs(pl.y-q.y)<200,open=!lock&&near;q.op+=((open?1:0)-q.op)*Math.min(1,dt*12);
     q.h.setDisplaySize(32,Math.max(8,300*(1-q.op*.92)));const col=lock?0xff3d3d:0x3d8bff;q.h.setTint(col);q.g.setTint(col);lightW(q.bx+13,q.y-150,220,.6)}
   if(o.lift&&V.lift){lightW(o.lift.x,FY-160,320,.8);V.lift.bar.setVisible((o.lift.hold||0)>0).setScale(Math.min(1,(o.lift.hold||0)/1.1),1)}
-  if(V.shrine){const q=V.shrine,got=hasAb(q.ab),y=GY-150+Math.sin(lvT*2.5)*10;for(const k of[q.orb,q.core,...q.arcs])k.setVisible(!got).setY(y);q.arcs.forEach((a,i)=>a.setRotation(lvT*2+i));if(!got)lightW(q.x,y,320,.9)}
+  if(V.shrine){const q=V.shrine,got=hasAb(q.ab)||!gDone(ROOM.a),y=GY-150+Math.sin(lvT*2.5)*10;for(const k of[q.orb,q.core,...q.arcs])k.setVisible(!got).setY(y);q.arcs.forEach((a,i)=>a.setRotation(lvT*2+i));if(!got)lightW(q.x,y,320,.9)}
   if(V.station){const st=o.station,on=st.t>0;V.station.col.setAlpha(on?.55:.3);V.station.gl.setAlpha(on?.7:.4);lightW(st.x,GY-120,260,.7)}
   for(const q of V.gateV){const g=q.g;if(g.broken){if(q.list.length)vKill(q.list);continue}
     if(g.kind==='laser'){g.beams.forEach((b,i)=>b.setAlpha(.45+.35*Math.sin(lvT*22+i*1.7)));g.scan.y=90+((lvT*700)%(GY-180));lightW(g.x,GY/2,340,.95)}

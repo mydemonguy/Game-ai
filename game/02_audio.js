@@ -90,7 +90,7 @@ function sfxPick(type){if(!ok('pick'+type,.05))return;const t=T0(),o=SX();
   else if(type==='shield'){tone(t,{f:220,f2:440,d:.42,v:.14,vib:[6,10,.1]},o);tone(t+.1,{f:660,d:.4,v:.05,w:'triangle'},o)}
   else if(type==='fang'){tone(t,{f:110,f2:78,d:.42,v:.18,w:'sawtooth',ft:'bandpass',ff:620,q:2,vib:[24,14]},o);tone(t,{f:440,f2:880,d:.2,v:.05,w:'square',ft:'lowpass',ff:2600},o)}
   else if(type==='egg'){[523,659,784].forEach((f,i)=>tone(t+i*.1,{f,d:.32,v:.11,w:'triangle'},o));tone(t+.3,{f:1047,d:.8,v:.11,w:'triangle',vib:[6,8,.3]},o);noi(t+.3,{d:.8,v:.03,a:.2,ft:'highpass',ff:7000},o)}
-  else if(type==='tank'){musicDuckFor(2.2);[440,554,659,880].forEach((f,i)=>tone(t+i*.12,{f,d:.3,v:.08,w:'square',ft:'lowpass',ff:2600},o));
+  else if(type==='tank'||type==='core'){musicDuckFor(2.2);[440,554,659,880].forEach((f,i)=>tone(t+i*.12,{f,d:.3,v:.08,w:'square',ft:'lowpass',ff:2600},o));
     [440,554,659,1109].forEach(f=>tone(t+.5,{f,d:1.3,a:.05,sus:.6,v:.045,w:'sawtooth',ft:'lowpass',ff:2200},o))}
   else tone(t,{f:880,f2:1320,d:.15,v:.08},o)}
 function sfxItemGet(){if(!ok('item',.5))return;musicDuckFor(3.2);const t=T0(),o=SX();noi(t,{d:1.1,v:.1,a:.6,ft:'lowpass',ff:200,ff2:5000,ffd:.9},o);
@@ -143,6 +143,7 @@ const TRK={
  a4:     {bpm:78, root:49,sc:'hmin',prog:[0,5,3,4,0,5,1,4],pad:'choir',cut:1300,lead:'sine',arp:'bell',arpR:2,bass:'x-------x---f---',dr:{k:'x.......x.......',s:'............t.t.',h:'..h.......h.....'},seed:17,rev:.55,amb:'wind'},
  a5:     {bpm:128,root:47,sc:'min', prog:[0,5,6,4,0,5,3,4],pad:'saw',cut:900,lead:'sawtooth',arp:'pulse',arpR:1,bass:'xoxoxoxoxoxoxoxo',dr:{k:'x...x...x...x..x',s:'....x.......x...',h:'hhohhhohhhohhhoh'},seed:19,rev:.35,amb:'rumble'},
  boss:   {bpm:150,root:52,sc:'hmin',prog:[0,0,5,4,0,0,1,4],pad:'saw',cut:1000,lead:'sawtooth',arp:'pulse',arpR:1,bass:'xxoxxxoxxxoxxfox',dr:{k:'x.x.x..xx.x.x..x',s:'....x.......x.xx',h:'hhhhhhhhhhhhhhhh'},seed:23,rev:.3,combat:1},
+ guard:  {bpm:138,root:45,sc:'phr', prog:[0,1,0,6,0,1,4,4],pad:'saw',cut:900,lead:'square',arp:'pulse',arpR:1,bass:'xx.xxo.xxx.xxof.',dr:{k:'x..x..x.x..x..x.',s:'....x.......x..x',h:'hhhhhhhhhhhhhhhh'},seed:31,rev:.32,combat:1},
  victory:{bpm:100,root:48,sc:'maj', prog:[0,3,4,0,5,3,4,4],pad:'glass',cut:2200,lead:'square',arp:'bell',arpR:2,bass:'x...f...o...f...',dr:{k:'x.......x.......',s:'....x.......x...',h:'h.h.h.h.h.h.h.h.'},seed:29,rev:.45}};
 const CMB={k:'x...x...x...x...',s:'....x.......x...',h:'hhhhhhhhhhhhhhhh',st:'x.....x.....x...',b:'o.o.o.o.o.o.o.o.'};
 const semi=(T,d)=>{const s=SCL[T.sc],o=Math.floor(d/7),i=((d%7)+7)%7;return s[i]+12*o};
@@ -188,7 +189,7 @@ function musicPlay(name){if(!AU)return;const cur=AU.cur;if(cur&&cur.name===name&
 function musicStop(fade){if(!AU||!AU.cur)return;const c=AU.cur;c.dead=1;c.g.gain.setTargetAtTime(0,AC.currentTime,(fade||1)/3);setTimeout(()=>{try{c.g.disconnect()}catch(e){}},(fade||1)*1000+1500);AU.cur=null}
 function musicDuck(on){if(!AU)return;AU.duck=on?.35:1;AU.mus.gain.setTargetAtTime(VOL.music*AU.duck,AC.currentTime,.12)}
 function musicDuckFor(sec){if(!AU)return;AU.mus.gain.setTargetAtTime(VOL.music*.2,AC.currentTime,.08);clearTimeout(AU.dt);AU.dt=setTimeout(()=>{if(AU)AU.mus.gain.setTargetAtTime(VOL.music*AU.duck,AC.currentTime,.5)},sec*1000)}
-function musicFor(){if(!AU)return;let n;if(G.state==='menu')n='title';else if(ROOM&&ROOM.kind==='boss'&&!META.boss)n='boss';else n='a'+Math.max(0,Math.min(5,G.lv));musicPlay(n)}
+function musicFor(){if(!AU)return;let n;if(G.state==='menu')n='title';else if(boss&&boss.guard!=null&&!boss.dead)n='guard';else if(ROOM&&ROOM.kind==='boss'&&!META.boss)n='boss';else n='a'+Math.max(0,Math.min(5,G.lv));musicPlay(n)}
 const AMBS={rain:{t:'bandpass',f:2600,q:.5,v:.05},rain2:{t:'bandpass',f:2200,q:.6,v:.032},hum:{t:'lowpass',f:220,q:1,v:.05,hum:.035},rumble:{t:'lowpass',f:320,q:1.2,v:.07,hum:.02},wind:{t:'bandpass',f:650,q:2.5,v:.06,lfo:380}};
 function ambienceTick(){const want=G.state==='menu'?'menu':G.state==='play'||G.state==='card'?(TRK['a'+G.lv]||{}).amb||'none':'none',key=want+G.lv+(AU.cur?AU.cur.name:'');if(key===AU.ambKey)return;AU.ambKey=key;
   const n=AC.currentTime,A=AMBS[want]||{t:'lowpass',f:400,q:1,v:want==='menu'?.015:0},a=AU.amb;a.f.type=A.t;a.f.frequency.setTargetAtTime(A.f,n,.3);a.f.Q.value=A.q;

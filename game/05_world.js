@@ -19,13 +19,18 @@ const ABIL=[
  {id:'plasma',name:'Plasma Claws',   how:'Your claws burn hotter. Claw void-crystal walls to break them.',col:'#ff5ad8',gate:'crystal'}];
 const GATEHINT={crack:'Cracked wall. A dash could smash it.',ledge:'Too high to climb. Maybe with a double jump?',laser:'Laser gate. Only a Starburst roar melts it.',
   blast:'Blast door. The plate needs a Ground Slam.',crystal:'Void crystal. Claws bounce off it.'};
-const freshMeta=()=>({ab:{},tanks:{},items:{},gates:{},cleared:{},map:{},areas:{},save:null,boss:0});
+const freshMeta=()=>({ab:{},tanks:{},items:{},gates:{},cleared:{},map:{},areas:{},save:null,boss:0,guards:{},mapped:{}});
 let META=freshMeta();try{const m=JSON.parse(localStorage.getItem('aetherfall_world')||'null');if(m&&m.ab&&m.map)META=Object.assign(freshMeta(),m)}catch(e){}
 function saveMeta(){try{localStorage.setItem('aetherfall_world',JSON.stringify(META))}catch(e){}}
 const hasAb=id=>!!META.ab[id];
 const tankCount=()=>Object.keys(META.tanks).length;
 const maxHP=()=>100+15*tankCount();
 PICK.tank={name:'Energy Tank',col:'#ff5ad8',txt:'Energy Tank: +15 max HP'};
+PICK.core={name:'Aether Core',col:'#7fe9ff',txt:'Aether Core: hits charge Aether faster'};
+const coreCount=()=>[0,1,2,3,4].filter(a=>META.items['core'+a]).length;
+const AG=()=>1+.2*coreCount();
+/* completion: 12 energy tanks, 6 golden eggs, 5 abilities, 5 guardians, 5 Aether cores */
+function completion(){const n=tankCount()+[0,1,2,3,4,5].filter(a=>META.items['egg'+a]).length+Object.keys(META.ab).length+[0,1,2,3,4].filter(a=>META.guards&&META.guards[a]).length+coreCount();return Math.round(n/33*100)}
 
 const CW=2560;           /* one map cell = 2560 x 1080 world units; rooms are whole numbers of cells */
 const TANKS=[['high','laser'],['crack','slam'],['high','plasma'],['laser','high'],['slam','plasma'],['crack','high']];

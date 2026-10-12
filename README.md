@@ -37,7 +37,7 @@ It runs fully offline, in landscape, with the system bars hidden. Since version 
 
 Walk into the blue hatches at a room's edge to move to the next room; red hatches stay sealed until the room's lockdown waves are beaten. Green stations save the game. Elevators link the worlds both ways.
 
-Abilities: Comet Dash (I), Sky Scales double jump (II), Starburst Roar (III), Ground Slam (IV), Plasma Claws (V), each found at a shrine. Each world hides 2 Energy Tanks; some need abilities from later worlds, so ride the elevators back to find them all.
+Abilities: Comet Dash (I), Sky Scales double jump (II), Starburst Roar (III), Ground Slam (IV), Plasma Claws (V), each found at a shrine. Every shrine is guarded by a boss: Foreman Krell, Bulwark, Alpha Hound, Crucible and the Null Seraph. Beating one wakes the shrine and drops an Aether Core (your hits charge the Aether bar faster). The first save at each world's station downloads its whole map. Pause shows your item completion %. Each world hides 2 Energy Tanks; some need abilities from later worlds, so ride the elevators back to find them all.
 
 ## Changing the game
 

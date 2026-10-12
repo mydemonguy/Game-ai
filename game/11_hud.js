@@ -44,7 +44,7 @@ function hudUpdate(){const g=HU.g,p=pl,play=G.state!=='menu'&&!!p&&!!ROOM;g.clea
   if(p.hits>=3){const m=1+Math.min(4,Math.floor(p.hits/10)),pop=Math.min(1,(1.8-p.hitsT)*8),a=Math.min(1,p.hitsT*2);
     tx(HU.combo,p.hits).setVisible(true).setX(W-60).setAlpha(a).setScale(1+(1-pop)*.25);HU.combo2.setVisible(true).setX(W-60).setAlpha(a);tx(HU.combo3,'×'+m+' SCORE').setVisible(m>1).setX(W-60).setAlpha(a)}
   else{HU.combo.setVisible(false);HU.combo2.setVisible(false);HU.combo3.setVisible(false)}
-  const bv=boss&&!boss.dead&&boss.state!=='enter';HU.bossN.setVisible(bv).setX(W/2);if(bv){const bw=900,bx=W/2-bw/2;bar(bx,164,bw,20,boss.hp/boss.max,0x7a0a2a,0xff3d6e);for(const m of[.55,.25]){g.fillStyle(0xffffff,.6);g.fillRect(bx+bw*m-1,161,2,26)}}
+  const bv=boss&&!boss.dead&&boss.state!=='enter';HU.bossN.setVisible(bv).setX(W/2);if(bv){tx(HU.bossN,boss.name?boss.name.toUpperCase():'MALAKAR, THE VOID SOVEREIGN');const bw=900,bx=W/2-bw/2;bar(bx,164,bw,20,boss.hp/boss.max,0x7a0a2a,0xff3d6e);for(const m of(boss.guard!=null?[.5]:[.55,.25])){g.fillStyle(0xffffff,.6);g.fillRect(bx+bw*m-1,161,2,26)}}
   HU.seal.setVisible(lock&&!!ROOM.arena&&!boss&&Math.floor(lvT*2)%2===1).setX(W/2);
   const hint=G.lv===0&&lvT<10&&ROOM.id==='0-0';if(hint)tx(HU.hint,touchy?'Slide on the left side to move   ·   ▲ jump   ·   ⚔ strike   ·   walk into hatches to explore   ·   II map':'A / D move   ·   W jump   ·   J strike   ·   S drop   ·   walk into hatches to explore   ·   Esc map');HU.hint.setVisible(hint).setX(W/2);
   if(banner){const a=Math.min(1,banner.life*2,(banner.max-banner.life)*4);HU.bnBack.setVisible(true).setAlpha(a).setSize(W,banner.sub?190:150);

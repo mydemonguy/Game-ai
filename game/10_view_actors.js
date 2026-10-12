@@ -13,7 +13,7 @@ const gI=(x,y,size,col,a)=>SC.add.image(x,y,'glow').setBlendMode('ADD').setTint(
 function shadowObj(){return SC.add.ellipse(0,0,100,24,0x000000,.4).setDepth(D.shadows)}
 function setShadow(sh,x,w,y){sh.setPosition(x,y+4);sh.width=w*2;sh.setSize(w*2,24);sh.setDisplaySize(w*2,24)}
 function imgsOf(c,out){out=out||[];for(const ch of c.list){if(ch.type==='Container')imgsOf(ch,out);else if(ch.type==='Image'&&ch.blendMode!==Phaser.BlendModes.ADD)out.push(ch)}return out}
-function flashRig(v,f){const on=f>.06;if(on===v.fl)return;v.fl=on;for(const im of v.imgs)on?im.setTintFill(0xffffff):im.clearTint()}
+function flashRig(v,f){const on=f>.06;if(on===v.fl)return;v.fl=on;for(const im of v.imgs)on?im.setTintFill(0xffffff):v.tint?im.setTint(v.tint):im.clearTint()}
 
 /* three-segment limb: hip -> knee -> ankle, matching the old canvas rigs */
 function leg3(p,d,ox,l1,l2){const foot=rbI(p+'_foot',d),c2=Cn(0,l2,[foot]),c1=Cn(0,l1,[rbI(p+'_shin',d),c2]),c0=Cn(ox,0,[rbI(p+'_thigh',d),c1]);c0.c1=c1;c0.c2=c2;return c0}
@@ -129,7 +129,7 @@ function updBoxView(b,v){v.g.setAlpha(.45+.2*Math.sin(lvT*3+b.x));if(b.flash>0)v
   if(b.hp<2&&v.hp===2){v.hp=1;v.cr.lineStyle(3,0x000000,.6);v.cr.beginPath();v.cr.moveTo(b.x-30,FY-90);v.cr.lineTo(b.x-6,FY-60);v.cr.lineTo(b.x-20,FY-30);v.cr.strokePath()}lightW(b.x,FY-60,110,.35)}
 
 /* ---- per-frame overlay: health bars, warning marks, hazards ---- */
-const OV={g:null,hz:null,bars:[],glows:[],marks:[],mi:0,hzT:[]};
+const OV={g:null,hz:null,bars:[],glows:[],marks:[],mi:0,hzT:[],lines:[]};
 function ovInit(){OV.g=SC.add.graphics().setDepth(D.light+.5);OV.hz=SC.add.graphics().setDepth(D.hz);OV.hzA=SC.add.graphics().setDepth(D.hz).setBlendMode('ADD');
   for(let i=0;i<10;i++)OV.marks.push(SC.add.text(0,0,'!',{fontFamily:FD,fontStyle:'900',fontSize:'56px',color:'#ff3d3d',stroke:INK,strokeThickness:6}).setOrigin(.5,1).setDepth(D.texts).setVisible(false));
   OV.wg=[];for(let i=0;i<8;i++)OV.wg.push(gI(0,0,120,'#ff3d6e',0).setDepth(D.enemies+.5));
@@ -140,7 +140,9 @@ function ovUpdate(){const g=OV.g;g.clear();for(let i=0;i<OV.bars.length;i+=2){co
   for(let i=OV.mi;i<OV.marks.length;i++)OV.marks[i].setVisible(false);
   OV.wg.forEach((o,i)=>{const w=OV.glows[i];if(w){o.setPosition(w[0],w[1]).setTint(hexC(w[2])).setAlpha(.5+.3*Math.sin(lvT*30))}else o.setAlpha(0)});
   const hg=OV.hz,ha=OV.hzA;hg.clear();ha.clear();let ti=0;
-  for(const h of hz){if(h.kind==='quake'){const a=Math.min(1,h.act*2);ha.fillStyle(0xffb347,.5*a);ha.fillEllipse(h.x,FY-20,140,80);hg.fillStyle(0xfff0c8,a);hg.beginPath();hg.moveTo(h.x-34,FY);
+  for(const l of OV.lines){ha.lineStyle(10,0xff3d5a,l[4]*.35);ha.lineBetween(l[0],l[1],l[2],l[3]);ha.lineStyle(3,0xffd0d8,l[4]);ha.lineBetween(l[0],l[1],l[2],l[3])}OV.lines=[];
+  for(const h of hz){if(h.kind==='rock'){if(h.t>0){hg.fillStyle(0xff8a3a,.22+.2*Math.sin(lvT*24));hg.fillEllipse(h.x,FY+4,150,30);if(h.t<.4){const y=FY-30-(h.t/.4)*900;hg.fillStyle(0x5a4c44,1);hg.fillCircle(h.x,y,30);hg.lineStyle(4,0x1a1418,1);hg.strokeCircle(h.x,y,30);hg.fillStyle(0x8a7a6a,1);hg.fillCircle(h.x-8,y-8,10)}}continue}
+    if(h.kind==='quake'){const a=Math.min(1,h.act*2);ha.fillStyle(0xffb347,.5*a);ha.fillEllipse(h.x,FY-20,140,80);hg.fillStyle(0xfff0c8,a);hg.beginPath();hg.moveTo(h.x-34,FY);
       for(let i=0;i<5;i++)hg.lineTo(h.x-34+i*17,FY-(i%2?46:18));hg.lineTo(h.x+34,FY);hg.closePath();hg.fillPath();lightW(h.x,FY-20,180,.8);continue}
     if(h.kind==='pillar'){if(h.t>0){hg.fillStyle(0xff3d6e,.25+.25*Math.sin(lvT*30));hg.fillEllipse(h.x,GY+6,h.w,36)}else{const a=Math.min(1,h.act/.2);ha.fillStyle(0xff3d6e,.35*a);ha.fillRect(h.x-h.w/2,0,h.w,GY);ha.fillStyle(0xffd0dc,.8*a);ha.fillRect(h.x-h.w*.18,0,h.w*.36,GY);lightW(h.x,GY-300,420,1)}continue}
     const x0=cam-50,x1=cam+W+50;if(h.t>0){const al=.35+.3*Math.sin(lvT*24);hg.lineStyle(4,0xff3d6e,al);for(let x=x0;x<x1;x+=50){hg.lineBetween(x,h.y,x+30,h.y)}
@@ -150,6 +152,6 @@ function ovUpdate(){const g=OV.g;g.clear();for(let i=0;i<OV.bars.length;i+=2){co
 
 /* ---- the whole actor pass, once per rendered frame ---- */
 function actorsUpdate(){FRAME++;updPlayerView();
-  sync(en,mkEnemyView,updEnemyView);if(boss&&!boss.dead)sync([boss],mkBoss,updBossView);
+  sync(en,mkEnemyView,updEnemyView);if(boss&&!boss.dead){if(boss.guard!=null)sync([boss],mkGuardView,updGuardView);else sync([boss],mkBoss,updBossView)}
   sync(shots,mkShotView,updShotView);sync(picks,mkPickView,updPickView);sync(boxes,mkBoxView,updBoxView);sweepViews();ovUpdate()}
 </script>

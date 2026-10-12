@@ -2,14 +2,15 @@
 "use strict";
 /* ---------- flow: map card, screens, game loop and the Phaser game itself ---------- */
 function drawAreaMap(g,a,ox,oy,cs,opt){opt=opt||{};const rooms=AREAS[a];
-  for(const o of rooms){if(!META.map[o.id])continue;const x=ox+o.gx*cs,y=oy+o.gy*cs,w=o.w*cs,h=o.h*cs;
+  for(const o of rooms){const seen=META.map[o.id];if(!seen&&!(META.mapped&&META.mapped[a]))continue;const x=ox+o.gx*cs,y=oy+o.gy*cs,w=o.w*cs,h=o.h*cs;
+    if(!seen){g.fillStyle='#24142e';g.fillRect(x+1,y+1,w-2,h-2);g.strokeStyle='#6a4a7a';g.lineWidth=Math.max(2,cs*.05);g.strokeRect(x+1,y+1,w-2,h-2);continue}
     g.fillStyle=o.kind==='save'?'#2a8a5a':o.kind==='boss'?'#8a1a3a':'#a8327a';g.fillRect(x+1,y+1,w-2,h-2);
     g.strokeStyle='rgba(255,200,240,.35)';g.lineWidth=1;for(let i=1;i<o.w;i++){g.beginPath();g.moveTo(x+i*cs,y+2);g.lineTo(x+i*cs,y+h-2);g.stroke()}for(let i=1;i<o.h;i++){g.beginPath();g.moveTo(x+2,y+i*cs);g.lineTo(x+w-2,y+i*cs);g.stroke()}
     g.strokeStyle='#ffd0f0';g.lineWidth=Math.max(2,cs*.07);g.strokeRect(x+1,y+1,w-2,h-2);
     for(const d of o.doors){const dy=y+d.row*cs+cs*.55;g.fillStyle='#ffe08a';g.fillRect(d.side==='L'?x-2:x+w-3,dy-cs*.14,5,cs*.28)}
     const ic=(t,col,ix)=>{g.fillStyle=col;g.font=`700 ${Math.round(cs*.5)}px ${FU}`;g.textAlign='center';g.fillText(t,x+(ix||w/2),y+cs*.68)};
     if(o.kind==='save')ic('S','#c8ffe0');if(o.lift)ic(o.lift.dir>0?'▼':'▲','#bff0ff');if(o.kind==='boss')ic('☠','#ffd0dc');
-    if(o.shrine&&o.shrine.ab&&!hasAb(o.shrine.ab))ic('★','#ffe08a');
+    if(o.shrine&&o.shrine.ab&&!hasAb(o.shrine.ab))ic(gDone(o.a)?'★':'☠',gDone(o.a)?'#ffe08a':'#ff9aa8');
     genRoom(o);for(const it of o.items){if(!it.id||(it.type==='tank'?META.tanks[it.id]:META.items[it.id]))continue;g.fillStyle=it.type==='tank'?'#ff9ae8':'#ffe08a';g.beginPath();g.arc(x+it.x/o.RW*w,y+cs*.3,Math.max(2.5,cs*.1),0,7);g.fill()}}
   if(opt.me&&ROOM&&ROOM.a===a){const o=ROOM,px=ox+o.gx*cs+pl.x/o.RW*o.w*cs,py=oy+o.gy*cs+Math.min(o.h-.2,pl.y/H)*cs;{g.fillStyle='#ffffff';g.beginPath();g.arc(px,py-cs*.15,Math.max(3,cs*.13),0,7);g.fill()}}}
 function mapCardHTML(){return`<canvas id="mapc" width="1100" height="520" style="width:auto;height:auto;max-width:100%;max-height:min(44vh,300px);background:#0a0814;border:1px solid rgba(180,140,255,.35)"></canvas>`}
@@ -19,7 +20,8 @@ function paintMapCard(){const c=document.getElementById('mapc');if(!c)return;con
   drawAreaMap(g,a,ox,oy,cs,{me:1});g.fillStyle='#ece7ff';g.font=`700 30px ${FD}`;g.textAlign='left';g.fillText(LV[a].name.toUpperCase(),24,40);
   const t=[0,1].filter(k=>META.tanks[a+'-'+k]).length;g.textAlign='right';g.font=`600 22px ${FU}`;g.fillStyle='#ff9ae8';g.fillText(`Energy Tanks ${t}/2`,c.width-24,40)}
 function abilitiesHTML(){return `<div class="keys">${ABIL.map(a=>`<kbd style="color:${hasAb(a.id)?a.col:'#55507a'}">${hasAb(a.id)?'◆':'◇'} ${a.name}</kbd><span>${hasAb(a.id)?a.how:'Not found yet'}</span>`).join('')}
-  <kbd style="color:#ff5ad8">Energy Tanks</kbd><span>${tankCount()} of 12 found · max health ${maxHP()}</span></div>`}
+  <kbd style="color:#ff5ad8">Energy Tanks</kbd><span>${tankCount()} of 12 found · max health ${maxHP()}</span>
+  <kbd style="color:#7fe9ff">Aether Cores</kbd><span>${coreCount()} of 5 · beat the shrine guardians · Aether charges ${Math.round((AG()-1)*100)}% faster</span></div>`}
 /* ---------- screens ---------- */
 const scr=document.getElementById('scr'),card=document.getElementById('card'),pad=document.getElementById('pad');
 function padShow(v){pad.hidden=!(v&&touchy)}
@@ -34,7 +36,7 @@ function beginSaga(){goFull();story(STORY.intro,0,()=>{G.state='card';showCard({
 function toTitle(){G.state='menu';if(G.paused&&SC)SC.scene.resume();G.paused=false;TRANS.on=0;padShow(false);menuBG();musicFor();
   const sv=META.save,found=Object.keys(META.map).length,tot=Object.keys(ROOMS).length;
   showCard({ey:'A Starblood Saga · Six Worlds',h:'Aetherfall',big:1,tag:'One small dino. One stolen sky. One very big Rift.',
-    b:(sv?`<p>Save: ${LV[ROOMS[sv.room].a].name} · Map ${Math.round(found/tot*100)}% · Tanks ${tankCount()}/12</p>`:'')+(G.best?`<p>Best score ${G.best.toLocaleString()}</p>`:''),
+    b:(sv?`<p>Save: ${LV[ROOMS[sv.room].a].name} · Map ${Math.round(found/tot*100)}% · Items ${completion()}%</p>`:'')+(G.best?`<p>Best score ${G.best.toLocaleString()}</p>`:''),
     btns:[...(sv?[['Continue',()=>{goFull();continueGame()}]]:[]),[sv?'New game':'Begin the Saga',sv?confirmNew:beginSaga,!!sv],['Controls',controls,1],['Settings',soundCard,1]]})}
 function confirmNew(){showCard({ey:'New game',h:'Start over?',b:'<p>This erases your map, abilities and energy tanks.</p>',btns:[['Start over',beginSaga],['Back',toTitle,1]]})}
 function soundCard(back){back=typeof back==='function'?back:toTitle;const sl=(id,lab,v)=>`<label class="vol"><span>${lab}</span><input type="range" id="${id}" min="0" max="100" value="${Math.round(v*100)}"></label>`;
@@ -55,8 +57,8 @@ function gameOver(){G.state='over';if(pl){pl.dead=1;pl.deadT=0;pl.vx=0}G.best=Ma
   b:`<p><span class="who">LYRA:</span> "Not yet, little one. Get up. I won't let the dark have you."</p>`,btns:[...(META.save?[['Continue from save',()=>continueGame()]]:[]),['Retry this room',()=>{G.lives=3;startGame(rid,ent)},1],['Title',toTitle,1]]}),900)}
 function victory(){G.state='card';padShow(false);clearInput();G.score+=Math.round(pl.hp*50);unlocked=6;saveProg();G.best=Math.max(G.best,G.score);musicPlay('victory');
   const found=Object.keys(META.map).length,tot=Object.keys(ROOMS).length;
-  story(STORY.ending,0,()=>showCard({ey:'The saga is complete',h:'Ithra Is Free',big:0,b:`<p>Final score <b>${G.score.toLocaleString()}</b></p><p>Map explored ${Math.round(found/tot*100)}% · Energy tanks ${tankCount()}/12 · Eggs ${Object.keys(META.items).filter(k=>k.startsWith('egg')).length}/6</p><p>Thank you for playing Aetherfall.</p>`,btns:[['Play again',beginSaga],['Title',toTitle,1]]}))}
-function pauseCard(){showCard({ey:LV[G.lv].ch+' · '+LV[G.lv].name,h:'Paused',extra:mapCardHTML()+`<p class="tag" style="margin:.4em 0">Map ${Object.keys(META.map).length}/${Object.keys(ROOMS).length} rooms · Tanks ${tankCount()}/12</p>`+abilitiesHTML(),
+  story(STORY.ending,0,()=>showCard({ey:'The saga is complete',h:'Ithra Is Free',big:0,b:`<p>Final score <b>${G.score.toLocaleString()}</b></p><p>Items collected <b>${completion()}%</b> · Map explored ${Math.round(found/tot*100)}%</p><p>Energy tanks ${tankCount()}/12 · Eggs ${[0,1,2,3,4,5].filter(a=>META.items['egg'+a]).length}/6 · Aether cores ${coreCount()}/5 · Guardians ${[0,1,2,3,4].filter(a=>gDone(a)).length}/5</p><p>Thank you for playing Aetherfall.</p>`,btns:[['Play again',beginSaga],['Title',toTitle,1]]}))}
+function pauseCard(){showCard({ey:LV[G.lv].ch+' · '+LV[G.lv].name,h:'Paused',extra:mapCardHTML()+`<p class="tag" style="margin:.4em 0">Map ${Object.keys(META.map).length}/${Object.keys(ROOMS).length} rooms · Items ${completion()}%</p>`+abilitiesHTML(),
   btns:[['Resume',togglePause],['Settings',()=>soundCard(pauseCard),1],['Controls',()=>controls(pauseCard),1],['Quit to title',toTitle,1]]});paintMapCard()}
 function togglePause(){if(G.state!=='play'||!SC)return;G.paused=!G.paused;clearInput();
   if(G.paused){padShow(false);sfxPause(1);musicDuck(1);SC.scene.pause();pauseCard()}
@@ -88,8 +90,8 @@ function gameUpdate(dt){if(banner){banner.life-=dt;if(banner.life<=0)banner=null
     if(Math.abs(d)<m){const push=(m-Math.abs(d))*.5*(d<0?-1:1);a.x-=push;b.x+=push;if(a.body)a.body.x-=push;if(b.body)b.body.x+=push}}
   updShots(dt);updHz(dt);updPicks(dt);updBoxes(dt);updAtmos(dt);updWorld(dt);if(G.state!=='play'||TRANS.on){clearP();return}
   if(pl.dead&&G.respawnT>0){G.respawnT-=dt;pl.deadT+=dt;if(G.respawnT<=0){const e=ROOM.entry;pl.dead=0;plTeleport(e.x,e.y);pl.hp=pl.max;pl.inv=2.5;pl.en=Math.max(pl.en,50);pl.hits=0;
-    showBanner('Back on your feet','Lives left: '+G.lives,1.6);ring(pl.x,pl.y-90,'#ffe08a',220);burst(pl.x,pl.y-90,'#ffe08a',30,700);sfxRevive()}}
-  if(boss&&boss.state==='enter'){cam+=(arenaCam()-cam)*Math.min(1,dt*3);camY+=(Math.max(0,RH-H)-camY)*Math.min(1,dt*3)}else updCamera(dt);
+    if(lock){const rx=clamp(pl.x,cam+200,cam+W-RSAFE-200);plTeleport(rx,FY)}showBanner('Back on your feet','Lives left: '+G.lives,1.6);ring(pl.x,pl.y-90,'#ffe08a',220);burst(pl.x,pl.y-90,'#ffe08a',30,700);sfxRevive()}}
+  if(boss&&boss.state==='enter'&&boss.guard==null){cam+=(arenaCam()-cam)*Math.min(1,dt*3);camY+=(Math.max(0,RH-H)-camY)*Math.min(1,dt*3)}else updCamera(dt);
   clearP()}
 /* title backdrop: a world's gate corridor with the camera drifting along it */
 function menuBG(){clearEnemies();killAllViews();pl=null;shots=[];hz=[];picks=[];boxes=[];boss=null;banner=null;shake=0;lock=false;

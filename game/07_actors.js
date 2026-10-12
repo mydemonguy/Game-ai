@@ -26,7 +26,7 @@ function spawnWave(list){list.forEach((t,i)=>spawnQ.push({t:i*.55,type:t,side:i%
 function damage(e,d,kb){if(e.dead)return;d=Math.round(d);e.hp-=d;e.flash=.14;if(!e.isBoss)e.vx+=kb*(e.heavy?.35:1);
   if(pl){pl.hits++;pl.hitsT=1.8}const hy=e.y-e.h*.55;
   ftext(e.x,e.y-e.h-10,d,d>=30?'#ffd27a':'#fff',d>=30);burst(e.x,hy,'#ffd27a',6,500);sparks(e.x,hy,'#fff3c4',9,Math.sign(kb)||1);ring(e.x,hy,'#ffd27a',d>=30?140:90);sfxHit(d,e);buzz(8);hitStop=d>=30?.06:.035;if(d>=30)camKick(.018);
-  if(e.hp<=0){if(e.isBoss){killBoss();return}
+  if(e.hp<=0){if(e.isBoss){if(e.guard!=null)guardianDown(e);else killBoss();return}
     e.dead=true;G.score+=e.score*(1+Math.min(4,Math.floor((pl?pl.hits:0)/10)));burst(e.x,e.y-e.h/2,'#ff4fd8',30,850);ring(e.x,e.y-e.h/2,'#ff4fd8',180);souls(e.x,e.y-e.h/2);sfxEnemyDie(e);buzz(14);shake=Math.max(shake,7);
     explode(e);dropFrom(e)}}
 function hurtPlayer(d,kx){const p=pl;if(p.inv>0||p.dead||G.state!=='play')return;
@@ -68,7 +68,7 @@ function updPlayerPost(dt){const p=pl;
   if(p.dead)return;
   if(p.atk>0&&p.atk<.18){const reach=p.combo===3?240:180,box={x:p.face>0?p.x-10:p.x-reach+10,y:p.y-190,w:reach,h:190};
     for(const e of allTargets())if(!p.hitDone.has(e)&&overlap(box,ebox(e))){p.hitDone.add(e);
-      damage(e,(p.combo===3?26:14)*(1+G.lv*.06)*pdm(),p.face*(p.combo===3?750:260));p.en=Math.min(100,p.en+(p.combo===3?9:6))}
+      damage(e,(p.combo===3?26:14)*(1+G.lv*.06)*pdm(),p.face*(p.combo===3?750:260));p.en=Math.min(100,p.en+(p.combo===3?9:6)*AG())}
     hitBoxesWith(box,p.hitDone);if(!p.hitDone.has('geo')){p.hitDone.add('geo');clawGeo(box)}}}
 const allTargets=()=>boss&&!boss.dead&&boss.state!=='enter'?en.concat([boss]):en;
 
@@ -122,7 +122,7 @@ function chooseAttack(b){let o=['dash','barrage','rift'];if(b.phase>=2)o.push('b
     xs.forEach((x,i)=>hz.push({kind:'pillar',x:bclamp(x),t:.9+i*.08,act:.45,w:160}));S.warn()}
   else if(a==='beam'){b.state='cast';b.t=1.2;const low=Math.random()<.5;hz.push({kind:'beam',y:low?GY-60:GY-215,low,t:1.05*k+.2,act:.6});S.warn()}
   else if(a==='summon'){b.state='cast';b.t=.9;spawnEnemy('d',-1);spawnEnemy('d',1);if(b.phase===3)spawnEnemy('c',1)}}
-function updBoss(b,dt){b.flash-=dt;b.t-=dt;
+function updBoss(b,dt){if(b.guard!=null)return updGuardian(b,dt);b.flash-=dt;b.t-=dt;
   const r=b.hp/b.max,ph=r<.25?3:r<.55?2:1;
   if(ph!==b.phase&&b.state!=='enter'){b.phase=ph;showBanner(ph===2?'Malakar Unleashed':'The Void Consumes',ph===2?'He calls the Hollowed to his side':'Final phase',1.8);
     shake=22;S.boom();sfxBossRoar();camKick(.05);b.state='idle';b.t=1.2;burst(b.x,b.y-170,'#ff3d6e',40,1000);ring(b.x,b.y-170,'#ff3d6e',400);hz=hz.filter(h=>h.kind!=='beam')}
@@ -151,7 +151,7 @@ const circleBox=(s,b)=>{const cx=Math.max(b.x,Math.min(s.x,b.x+b.w)),cy=Math.max
 function atkBox(){const p=pl;if(!(p.atk>0))return null;const reach=p.combo===3?240:180;return{x:p.face>0?p.x-10:p.x-reach+10,y:p.y-190,w:reach,h:190}}
 function inSolid(x,y){if(!ROOM)return false;for(const s of ROOM.solids)if(x>s.x&&x<s.x+s.w&&y>s.y&&y<s.y+s.h)return true;for(const s of solidRects())if(x>s.x&&x<s.x+s.w&&y>s.y&&y<s.y+s.h)return true;return false}
 function updShots(dt){const ab=atkBox();
-  for(const s of shots){s.x+=s.vx*dt;s.y+=s.vy*dt;s.life-=dt;
+  for(const s of shots){if(s.g)s.vy+=s.g*dt;s.x+=s.vx*dt;s.y+=s.vy*dt;s.life-=dt;
     if(!s.friend&&ab&&circleBox(s,ab)){s.friend=true;s.vx=pl.face*Math.abs(s.vx)*1.5+pl.face*200;s.vy*=-.4;s.hit=new Set();s.dmg*=2.2;s.col='#5ce1ff';s.life=1.5;sfxDeflect();ftext(s.x,s.y-30,'Deflect','#5ce1ff');ring(s.x,s.y,'#5ce1ff',80);pl.en=Math.min(100,pl.en+8);continue}
     if(s.friend){hitBoxesWith({x:s.x-s.r,y:s.y-s.r,w:s.r*2,h:s.r*2},s.hit);for(const e of allTargets()){if(s.hit.has(e))continue;if(circleBox(s,ebox(e))){s.hit.add(e);damage(e,s.dmg*(1+G.lv*.05),Math.sign(s.vx)*500);if(!s.pierce){s.life=0;break}}}}
     else if(circleBox(s,pbox())){hurtPlayer(s.dmg,Math.sign(s.vx)*380);s.life=0;burst(s.x,s.y,s.col,10)}
@@ -159,7 +159,9 @@ function updShots(dt){const ab=atkBox();
     if(s.x<cam-300||s.x>cam+W+300||s.y<camY-300||s.y>camY+H+300)s.life=0;
     if(Math.random()<.4)part(s.x,s.y,0,0,.25,s.col,s.wave?14:6,0)}
   shots=shots.filter(s=>s.life>0)}
-function updHz(dt){for(const h of hz){if(h.kind==='quake'){updQuake(h,dt);continue}if(h.t>0){h.t-=dt;if(h.t<=0){S.boom();shake=Math.max(shake,h.kind==='beam'?14:9);if(h.kind==='pillar')burst(h.x,GY,'#ff3d6e',24,900)}continue}
+function updHz(dt){for(const h of hz){if(h.kind==='quake'){updQuake(h,dt);continue}if(h.t>0){h.t-=dt;if(h.t<=0){if(h.kind==='rock'){sfxCrate(1);shake=Math.max(shake,7);burst(h.x,FY-20,'#c8b8a0',14,600);debris(h.x,FY-60,'crate');
+        if(!pl.dead&&Math.abs(pl.x-h.x)<85)hurtPlayer(16*dm(),(pl.x<h.x?-1:1)*500);continue}S.boom();shake=Math.max(shake,h.kind==='beam'?14:9);if(h.kind==='pillar')burst(h.x,GY,'#ff3d6e',24,900)}continue}
+    if(h.kind==='rock'){h.act-=dt;continue}
     h.act-=dt;if(h.hitP)continue;const pb=pbox();
     if(h.kind==='pillar'&&Math.abs(pl.x-h.x)<h.w/2+30){h.hitP=true;hurtPlayer(22,(pl.x<h.x?-1:1)*600)}
     if(h.kind==='beam'&&pb.y<h.y+38&&pb.y+pb.h>h.y-38){h.hitP=true;hurtPlayer(26,(pl.x<cam+W/2?-1:1)*500)}}
@@ -181,7 +183,8 @@ function applyPick(k){const p=pl,Pk=PICK[k.type];sfxPick(k.type);buzz(12);
   else if(k.type==='shard')p.en=Math.min(100,p.en+35);else if(k.type==='shield'){p.shield=3;p.shieldT=14}else if(k.type==='fang')p.fury=10;
   else if(k.type==='coin')G.score+=250;else if(k.type==='tank'){META.tanks[k.id]=1;saveMeta();p.max=maxHP();p.hp=p.max;buzz([30,30,60]);hitStop=.25}
   else if(k.type==='egg'){G.lives=Math.min(5,G.lives+1);if(k.id){META.items[k.id]=1;saveMeta()}}
-  ftext(p.x,p.y-200,Pk.txt,Pk.col,k.type==='egg'||k.type==='tank');ring(k.x,k.y,Pk.col,90);burst(k.x,k.y,Pk.col,10,380);if(k.type!=='coin')sparkle(k.x,k.y,Pk.col)}
+  else if(k.type==='core'){if(k.id){META.items[k.id]=1;saveMeta()}hitStop=.3;buzz([30,30,60]);p.en=100}
+  ftext(p.x,p.y-200,Pk.txt,Pk.col,k.type==='egg'||k.type==='tank'||k.type==='core');ring(k.x,k.y,Pk.col,90);burst(k.x,k.y,Pk.col,10,380);if(k.type!=='coin')sparkle(k.x,k.y,Pk.col)}
 function updPicks(dt){for(const k of picks){if(!k.float){k.vy+=1800*dt;k.x+=(k.vx||0)*dt;k.vx=(k.vx||0)*Math.pow(.2,dt);k.y+=k.vy*dt;k.x=clamp(k.x,80,RW-80);const sf=surfaceBelow(k.x,k.y)-26;if(k.y>sf){k.y=sf;k.vy=0}k.life-=dt}
     if(k.cage&&!k.cage.broken)continue;
     if(pl&&!pl.dead&&Math.abs(pl.x-k.x)<72&&Math.abs(pl.y-90-k.y)<125){k.life=0;k.got=1;applyPick(k)}}
