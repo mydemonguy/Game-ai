@@ -85,9 +85,8 @@ h2{margin:0;font-family:var(--display);font-weight:700;font-size:clamp(24px,4vw,
 .sp::before,.dsh::before{display:block}
 .sp::before{background:conic-gradient(#5ce1ff calc(var(--e,0)*1turn),rgba(236,231,255,.13) 0)}
 .dsh::before{background:conic-gradient(#b48cff calc(var(--c,1)*1turn),rgba(236,231,255,.13) 0)}
-.sp.ready{opacity:.9;border-color:#5ce1ff;animation:ready 1.1s ease-in-out infinite}
+.sp.ready{opacity:.95;border-color:#5ce1ff;box-shadow:0 0 22px rgba(92,225,255,.7),inset 0 0 14px rgba(92,225,255,.25)}
 .sp.ready svg{fill:currentColor}
-@keyframes ready{50%{box-shadow:0 0 28px rgba(92,225,255,.8),inset 0 0 18px rgba(92,225,255,.3)}}
 .ps{pointer-events:auto;position:absolute;right:calc(var(--sr) + 14px);top:calc(var(--st) + 12px);width:46px;height:46px;border-radius:14px;
   border:2px solid rgba(236,231,255,.3);background:rgba(12,10,30,.5);color:#ece7ff;font-weight:700;font-size:16px;display:grid;place-items:center}
 #rotate{position:fixed;inset:0;z-index:9;display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;text-align:center;padding:24px;background:var(--void);font-family:var(--display);font-size:22px}
@@ -125,7 +124,7 @@ const RSAFE=touchy?500:200;
 /* the stage is always 1080 tall; its width follows the screen (1920 on 16:9, 2400 on a 20:9 phone) so there are no black bars */
 function calcW(){const w=innerWidth,h=innerHeight;return w>=h?Math.round(Math.min(2560,Math.max(1440,H*w/h))):1920}
 W=calcW();
-function fit(){const nw=calcW();if(nw!==W){W=nw;if(window.GAME)GAME.scale.setGameSize(W,H)}
+function fit(){const nw=calcW();if(nw!==W){W=nw;if(window.GAME)GAME.scale.setGameSize(Math.round(W*RS),Math.round(H*RS))}
   document.getElementById('rotate').hidden=!(touchy&&innerHeight>innerWidth*1.05)}
 addEventListener('resize',fit);
 
@@ -245,7 +244,7 @@ function initAudio(){if(AC){if(AC.state==='suspended'&&!document.hidden)AC.resum
   try{AC=new(window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive'})}catch(e){try{AC=new(window.AudioContext||window.webkitAudioContext)()}catch(_){AC=null;return}}
   const n=AC.currentTime,master=AC.createGain(),comp=AC.createDynamicsCompressor();master.gain.value=.85;
   comp.threshold.value=-16;comp.knee.value=12;comp.ratio.value=4;comp.attack.value=.003;comp.release.value=.2;master.connect(comp);comp.connect(AC.destination);
-  const rev=AC.createConvolver();rev.buffer=impulse(2.6,3);const revG=AC.createGain();revG.gain.value=.3;rev.connect(revG);revG.connect(master);
+  const rev=AC.createConvolver();rev.buffer=impulse(1.8,3.2);const revG=AC.createGain();revG.gain.value=.3;rev.connect(revG);revG.connect(master);
   const mus=AC.createGain();mus.gain.value=VOL.music;mus.connect(master);const mSend=AC.createGain();mSend.gain.value=.55;mus.connect(mSend);mSend.connect(rev);
   const sfx=AC.createGain();sfx.gain.value=VOL.sfx;sfx.connect(master);const sSend=AC.createGain();sSend.gain.value=.35;sfx.connect(sSend);sSend.connect(rev);
   /* tempo echo for lead lines */
@@ -712,6 +711,7 @@ let TKEY=null;const TKEYS={};
 function addTex(key,c){if(TX.exists(key))TX.remove(key);TX.addCanvas(key,c);if(TKEY)(TKEYS[TKEY]=TKEYS[TKEY]||[]).push(key);return key}
 /* textures of a world are dropped when Tyko leaves it, so GPU memory stays at one world's worth */
 function freeTheme(t){for(const k of TKEYS[t]||[])if(TX.exists(k))TX.remove(k);TKEYS[t]=[];delete THEMED[t];for(const k in MACHS)if(k.startsWith('m_'+t+'_'))delete MACHS[k]}
+function topRow(c){const g=c.getContext('2d'),d=g.getImageData(0,0,c.width,c.height).data,w=c.width;for(let y=0;y<c.height;y+=2){for(let x=0;x<w;x+=3)if(d[(y*w+x)*4+3]>6)return Math.max(0,y-4)}return 0}
 function withX(g,fn){const o=X;X=g;try{fn()}finally{X=o}}
 
 function bakeCommon(){
@@ -766,7 +766,9 @@ function themeTex(a){const L=LV[a],t=L.theme,P=PAL[t],M={light:P.light,metal:P.a
   const r=rng(L.len*7+L.name.length*97),ks=KINDS[t];
   for(const[layer,base,col,depth,gap]of[['far',GY-50,L.far,2,.6],['mid',GY-6,L.mid,1,1]]){const[c,g]=mkC(SW,GY+10),list=[];let x=0;
     while(x<SW-60){const w=layer==='far'?110+r()*220:90+r()*170;list.push({x,w,h:layer==='far'?200+r()*380:150+r()*270,k:ks[Math.floor(r()*ks.length)],s:r()});x+=layer==='far'?w*(.55+r()*.7):w+160+r()*380}
-    const oW=W;W=SW*3;withX(g,()=>{for(const o of list)for(const ox of[0,SW,-SW])shape(o,ox,base,col,L.glow,depth)});W=oW;addTex(layer+'_'+t,c)}
+    const oW=W;W=SW*3;withX(g,()=>{for(const o of list)for(const ox of[0,SW,-SW])shape(o,ox,base,col,L.glow,depth)});W=oW;
+    /* trim the empty sky above the silhouettes so the GPU doesn't blend thousands of transparent pixels */
+    const top=topRow(c),[c2,g2]=mkC(SW,c.height-top);g2.drawImage(c,0,-top);T[layer+'Top']=top;addTex(layer+'_'+t,c2)}
   {const[c,g]=mkC(4,340),fr=g.createLinearGradient(0,0,0,340);fr.addColorStop(0,rgba(L.sky[2],0));fr.addColorStop(1,rgba(L.sky[2],.55));g.fillStyle=fr;g.fillRect(0,0,4,340);addTex('fog_'+t,c)}
   /* machinery walls behind the play plane */
   T.walls=[0,1,2,3].map(i=>{const b=bakeWall(P,L.len*3+i*71,L.sky[1]);addTex('wl_'+t+i,b.c);return b});
@@ -1243,8 +1245,13 @@ function updBoxes(dt){for(const b of boxes)b.flash-=dt;boxes=boxes.filter(b=>b.h
 /* ---------- effects: GPU particles, rings, floating numbers, light map, weather, lightning, post-processing ---------- */
 const D={sky:0,stars:1,skyfx:2,far:3,fog:4,mid:5,walls:6,signs:7,back:8,props:9,lamps:10,vents:11,solids:12,plats:13,fixtures:14,doors:15,crates:16,picks:17,hz:18,
   shadows:19,enemies:20,boss:21,player:22,drones:23,shots:24,parts:25,rings:26,light:30,fg:31,weather:32,flash:33,texts:34};
-const FX={em:{},rings:[],texts:[],ri:0,ti:0,holes:[],lights:[],quality:'high',fxCam:null};
-try{FX.quality=localStorage.getItem('aetherfall_gfx')||'high'}catch(e){}
+const FX={em:{},rings:[],texts:[],ri:0,ti:0,holes:[],lights:[],quality:'balanced',kz:0};
+/* quality tiers: the game always thinks in a 1080-tall stage, but draws it into a smaller canvas (render scale) that the screen stretches up.
+   Fill rate is the bottleneck on phone GPUs, so this is the big lever: Balanced draws 56% of the pixels, Fast 36%. */
+const QUAL={high:{rs:1,part:1,name:'High'},balanced:{rs:.75,part:1,name:'Balanced'},fast:{rs:.6,part:.5,name:'Fast'}};
+try{const q=localStorage.getItem('aetherfall_q2');if(QUAL[q])FX.quality=q}catch(e){}
+let RS=QUAL[FX.quality].rs;
+const PQ=()=>QUAL[FX.quality].part;
 const hexC=c=>typeof c==='number'?c:c.startsWith('rgba')?(()=>{const m=c.match(/[\d.]+/g);return(+m[0]<<16)|(+m[1]<<8)|+m[2]})():hexN(c);
 const alphaOf=c=>typeof c==='string'&&c.startsWith('rgba')?+c.match(/[\d.]+/g)[3]:1;
 
@@ -1256,29 +1263,24 @@ function fxInit(s){
   FX.em.streak=mk('streak','ADD',D.parts);
   FX.em.chunk=mk('px','NORMAL',D.parts-.4,{alpha:{start:1,end:.6}});
   for(let i=0;i<28;i++){const r=s.add.image(0,0,'ring').setBlendMode('ADD').setDepth(D.rings).setVisible(false);FX.rings.push(r)}
-  for(let i=0;i<34;i++){const t=s.add.text(0,0,'',{fontFamily:FU,fontStyle:'700',fontSize:'38px',color:'#ffffff',stroke:'rgba(0,0,0,.75)',strokeThickness:7}).setOrigin(.5,1).setDepth(D.texts).setVisible(false);FX.texts.push(t)}
+  for(let i=0;i<34;i++){const t=s.add.text(0,0,'',{fontFamily:FU,fontStyle:'700',fontSize:'44px',color:'#ffffff',stroke:'rgba(0,0,0,.75)',strokeThickness:7}).setOrigin(.5,1).setDepth(D.texts).setVisible(false);FX.texts.push(t)}
   /* light map: a quarter-resolution darkness layer with soft holes punched at every light */
   FX.LS=4;FX.rt=s.add.renderTexture(0,0,Math.ceil(W/4),Math.ceil(H/4)).setOrigin(0).setScrollFactor(0).setScale(4).setDepth(D.light);
   FX.dimg=s.make.image({x:0,y:0,key:'dgrad',add:false}).setOrigin(0);
   for(let i=0;i<90;i++)FX.holes.push(s.make.image({x:0,y:0,key:'hole',add:false}));
-  FX.flash=s.add.rectangle(0,0,W,H,0xffffff,0).setOrigin(0).setScrollFactor(0).setDepth(D.flash);
-  FX.bolt=s.add.graphics().setScrollFactor(0).setDepth(D.weather).setBlendMode('ADD');
-  setupPost(s)}
+  FX.flash=s.add.rectangle(0,0,W,H,0xffffff,0).setOrigin(0).setScrollFactor(0).setDepth(D.flash).setVisible(false);
+  FX.bolt=s.add.graphics().setScrollFactor(0).setDepth(D.weather).setBlendMode('ADD')}
 function fxResize(){if(!FX.rt)return;FX.rt.resize(Math.ceil(W/4),Math.ceil(H/4));FX.flash.setSize(W,H)}
-/* post-processing on the world camera: soft bloom, vignette and a light colour grade (High quality only) */
-function setupPost(s){const c=s.cameras.main;if(!c.postFX)return;c.postFX.clear();FX.bloom=null;FX.grade=null;
-  if(s.game.renderer.type!==Phaser.WEBGL)return;
-  FX.grade=c.postFX.addColorMatrix();
-  if(FX.quality==='high'){FX.bloom=c.postFX.addBloom(0xffffff,1,1,1.1,.55,3)}
-  c.postFX.addVignette(.5,.5,.92,.32)}
-function gradeFor(a){if(!FX.grade)return;const m=FX.grade;m.reset();m.saturate(.12,true);m.contrast(.06,true);if(a===4)m.hue(-6,true);if(a===5)m.brightness(.96,true)}
-function setQuality(q){FX.quality=q;try{localStorage.setItem('aetherfall_gfx',q)}catch(e){}if(SC){setupPost(SC);gradeFor(G.lv)}}
-
+/* no full-screen post-processing passes: on a 2400x1080 phone each one costs as much as drawing the whole scene again.
+   Changing quality only changes the render scale (and particle density). */
+function setQuality(q){if(!QUAL[q])return;FX.quality=q;try{localStorage.setItem('aetherfall_q2',q)}catch(e){}setRenderScale(QUAL[q].rs);if(V.bgA>=0)V.bgW=-1}
+function setRenderScale(rs){RS=rs;if(window.GAME)GAME.scale.setGameSize(Math.round(W*RS),Math.round(H*RS))}
+function gradeFor(){}
 /* ---- particles: one generic call; every other effect is built from it ---- */
 const PSC={add:14,norm:64,glow:60,streak:14,chunk:8};
 function part(x,y,vx,vy,life,col,sz,g,kind){kind=kind||(typeof col==='string'&&col.startsWith('rgba')?'norm':'add');const em=FX.em[kind];if(!em)return;const p=em.emitParticle(1,x,y);if(!p)return;
   p.velocityX=vx;p.velocityY=vy;p.accelerationY=g||0;p.life=p.lifeCurrent=Math.max(30,life*1000);p.tint=hexC(col);p.scaleX=p.scaleY=sz/PSC[kind];return p}
-function burst(x,y,col,n,sp){sp=sp||600;n=FX.quality==='low'?Math.ceil(n*.6):n;for(let i=0;i<n;i++){const a=Math.random()*6.283,v=sp*(.3+Math.random()*.7);part(x,y,Math.cos(a)*v,Math.sin(a)*v-120,.35+Math.random()*.45,col,4+Math.random()*6,900)}}
+function burst(x,y,col,n,sp){sp=sp||600;n=Math.ceil(n*(PQ()<1?.6:1));for(let i=0;i<n;i++){const a=Math.random()*6.283,v=sp*(.3+Math.random()*.7);part(x,y,Math.cos(a)*v,Math.sin(a)*v-120,.35+Math.random()*.45,col,4+Math.random()*6,900)}}
 function sparks(x,y,col,n,dir){for(let i=0;i<n;i++){const a=(dir>0?0:Math.PI)+(Math.random()-.5)*1.6,v=700+Math.random()*900,p=part(x,y,Math.cos(a)*v,Math.sin(a)*v,.12+Math.random()*.16,col,10,600,'streak');if(p){p.angle=a*57.3-90;p.scaleX=.6;p.scaleY=.5+Math.random()*.4}}}
 function dust(x,y){for(let i=0;i<8;i++)part(x+(Math.random()-.5)*60,y-6,(Math.random()-.5)*300,-Math.random()*200,.45,'rgba(220,210,255,.45)',18+Math.random()*14,300,'norm')}
 function souls(x,y){for(let i=0;i<6;i++)part(x+(Math.random()-.5)*40,y,(Math.random()-.5)*60,-120-Math.random()*160,1.2,'#bff6ff',20,-40,'glow')}
@@ -1290,7 +1292,7 @@ function explode(e){const big=e.heavy;burst(e.x,e.y-e.h*.5,'#ffb347',big?22:12,b
   debris(e.x,e.y-e.h*.7,'robot');part(e.x,e.y-e.h*.5,0,0,.25,'#fff0c8',big?380:240,0,'glow')}
 function teleFx(x,y,h){for(let i=0;i<14;i++)part(x+(Math.random()-.5)*60,y-Math.random()*h,0,-300-Math.random()*300,.45,'#ff4fd8',10,0,'add');ring(x,y-h/2,'#ff4fd8',120)}
 /* a quick zoom punch on the world camera for big moments */
-function camKick(z){if(!SC)return;const c=SC.cameras.main;SC.tweens.killTweensOf(c);c.setZoom(1+z);SC.tweens.add({targets:c,zoom:1,duration:260,ease:'Quad.Out'})}
+function camKick(z){if(!SC)return;SC.tweens.killTweensOf(FX);FX.kz=z;SC.tweens.add({targets:FX,kz:0,duration:260,ease:'Quad.Out'})}
 function muzzle(x,y,col){part(x,y,0,0,.12,col,120,0,'glow')}
 function ghost(p){if(V.ghost)V.ghost(p)}
 /* expanding ring */
@@ -1298,9 +1300,10 @@ function ring(x,y,col,r){const o=FX.rings[FX.ri++%FX.rings.length];if(!o)return;
   SC.tweens.killTweensOf(o);SC.tweens.add({targets:o,scale:(r||90)*1.2/112,alpha:0,duration:300,ease:'Quad.Out',onComplete:()=>o.setVisible(false)})}
 /* floating damage numbers and labels */
 function ftext(x,y,s,col,big){const t=FX.texts[FX.ti++%FX.texts.length];if(!t)return;const num=typeof s==='number';
-  t.setText(String(s)).setPosition(x,y).setColor(col).setFontSize(big?52:num?38:30).setVisible(true).setAlpha(1).setScale(num?1.5:1);
+  /* white text tinted to colour and scaled to size, so only the string ever re-renders the text texture */
+  const sc=(big?52:num?38:30)/44;tx(t,s).setPosition(x,y).setTint(hexC(col)).setVisible(true).setAlpha(1).setScale(sc*(num?1.5:1));
   SC.tweens.killTweensOf(t);SC.tweens.add({targets:t,y:y-80,duration:800,ease:'Cubic.Out',onComplete:()=>t.setVisible(false)});
-  SC.tweens.add({targets:t,scale:1,duration:160,ease:'Back.Out'});SC.tweens.add({targets:t,alpha:0,delay:450,duration:350})}
+  SC.tweens.add({targets:t,scale:sc,duration:160,ease:'Back.Out'});SC.tweens.add({targets:t,alpha:0,delay:450,duration:350})}
 
 /* ---- light map ---- */
 const lightW=(x,y,r,a)=>{const sx=x-cam,sy=y-camY;if(sx+r<0||sx-r>W||sy+r<0||sy-r>H)return;FX.lights.push(sx,sy,r,a)};
@@ -1315,7 +1318,7 @@ const AMB={
 const ATM={flash:0,lt:6,bolt:null,thunder:0};
 function mixHex(a,b,t){const A=hexRGB(a),Bc=hexRGB(b);return'#'+A.map((v,i)=>Math.round(v+(Bc[i]-v)*t).toString(16).padStart(2,'0')).join('')}
 function applyLighting(){const A=AMB[LV[G.lv].theme],rt=FX.rt,LS=FX.LS,lw=rt.width,lh=rt.height;
-  const alarm=lock?.5+.5*Math.sin(lvT*6):0,a=A.a*(1-Math.min(.92,ATM.flash))*(FX.quality==='low'?.85:1);
+  const alarm=lock?.5+.5*Math.sin(lvT*6):0,a=A.a*(1-Math.min(.92,ATM.flash));
   rt.clear();const c1=alarm?mixHex(A.col,'#3a0404',alarm*.6):A.col;FX.dimg.setDisplaySize(lw,lh).setTint(hexN(c1)).setAlpha(Math.min(1,a*1.15));rt.draw(FX.dimg,0,0);
   const L=FX.lights,list=[];for(let i=0,k=0;i<L.length&&k<FX.holes.length;i+=4,k++){const r=L[i+2]/LS,h=FX.holes[k];h.setPosition(L[i]/LS,L[i+1]/LS).setScale(r*2/64).setAlpha(Math.min(1,L[i+3]));list.push(h)}
   if(list.length)rt.erase(list);FX.lights=[]}
@@ -1328,18 +1331,18 @@ function updAtmos(dt){const A=AMB[LV[G.lv].theme];ATM.flash*=Math.pow(.015,dt);i
   if(V.steam)V.steam(dt)}
 function drawSkyFx(){const g=FX.bolt;g.clear();const A=AMB[LV[G.lv].theme];if(ATM.bolt&&ATM.bolt.t>0){const b=ATM.bolt,col=hexN(A.lightning);
     for(const[lw,al]of[[14,.25],[5,.9]]){g.lineStyle(lw,col,al*Math.min(1,b.t*8));g.beginPath();b.pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.strokePath()}}
-  FX.flash.fillColor=A.lightning?hexN(A.lightning):0xffffff;FX.flash.fillAlpha=ATM.flash>.02?ATM.flash*.28:0}
+  const fl=ATM.flash>.02;FX.flash.setVisible(fl);if(fl){FX.flash.fillColor=A.lightning?hexN(A.lightning):0xffffff;FX.flash.fillAlpha=ATM.flash*.28}}
 </script>
 <script>
 "use strict";
 /* ---------- view, part 1: parallax backdrops, weather, room geometry, machines, lamps, doors and fixtures ---------- */
 const V={bgA:-1,bgW:0,bg:[],rm:[],lamps:[],ems:[],wems:[],doors:[],fans:[],signs:[],cols:[],gateV:[],cageV:[],fx:{}};
 function vKill(list){for(const o of list)if(o&&o.destroy){if(SC)SC.tweens.killTweensOf(o);o.destroy()}list.length=0}
-const glowImg=(x,y,w,h,col,a,depth,list)=>{const g=SC.add.image(x,y,'glow').setBlendMode('ADD').setTint(hexC(col)).setDisplaySize(w,h).setAlpha(a).setDepth(depth);(list||V.rm).push(g);return g};
+const glowImg=(x,y,w,h,col,a,depth,list)=>{const g=SC.add.image(x,y,'glow').setBlendMode('ADD').setTint(hexC(col)).setDisplaySize(w,h).setAlpha(a).setDepth(depth+.5);(list||V.rm).push(g);return g};
 
 /* wrapping parallax strip: a few copies of one 2048px texture slid along (no per-frame texture uploads) */
 function strip(key,y,depth,add){const n=Math.ceil(W/SW)+1,list=[];for(let k=0;k<n;k++)list.push(add(SC.add.image(k*SW,y,key).setOrigin(0).setScrollFactor(0).setDepth(depth)));return list}
-function stripAt(list,px,y){const off=((px%SW)+SW)%SW;list.forEach((im,k)=>{im.x=Math.round(-off+k*SW);im.y=y})}
+function stripAt(list,px,y){const off=((px%SW)+SW)%SW;y+=list.oy||0;list.forEach((im,k)=>{im.x=Math.round(-off+k*SW);im.y=y})}
 /* repeat a texture over a rectangle with plain images (cropped at the edges) */
 function tiles(x,y,w,h,key,tw,th,depth,a){for(let ty=0;ty<h;ty+=th)for(let tx=0;tx<w;tx+=tw){const cw=Math.min(tw,w-tx),ch=Math.min(th,h-ty),im=SC.add.image(x+tx,y+ty,key).setOrigin(0).setDepth(depth);
     if(cw<tw||ch<th)im.setCrop(0,0,cw,ch);if(a!=null)im.setAlpha(a);V.rm.push(im)}}
@@ -1355,13 +1358,13 @@ function buildBG(a){vKill(V.bg);const s=SC,L=LV[a],t=L.theme,A=AMB[t],r=rng(L.le
   V.ships=[];for(let i=0;i<5;i++){const sh=add(s.add.image(0,0,'ship_'+t).setScrollFactor(0).setDepth(D.skyfx)),gl=add(s.add.image(0,0,'glow').setScrollFactor(0).setDepth(D.skyfx).setBlendMode('ADD').setTint(hexN(L.glow)));
     sh.d={x:r()*3000,y:90+r()*360,v:(60+r()*140)*(r()<.5?-1:1),sc:.4+r()*.6,s:r(),gl};sh.setScale(sh.d.sc*Math.sign(sh.d.v),sh.d.sc);gl.setDisplaySize(80*sh.d.sc,32*sh.d.sc).setAlpha(.7);V.ships.push(sh)}
   V.search=[];if(A.search)for(let i=0;i<3;i++){const b=add(s.add.image(W*(.2+i*.3),GY-40,'beam').setOrigin(.5,0).setScrollFactor(0).setDepth(D.skyfx).setBlendMode('ADD').setTint(hexN(A.search)).setAlpha(.16));b.setDisplaySize(150,GY*1.25);b.ph=i*2.1;V.search.push(b)}
-  V.far=strip('far_'+t,0,D.far,add);
+  const TT=THEMED[t];V.far=strip('far_'+t,0,D.far,add);V.far.oy=TT.farTop||0;
   V.fog=add(s.add.image(0,GY-340,'fog_'+t).setOrigin(0).setScrollFactor(0).setDepth(D.fog).setDisplaySize(W,340));
-  V.mid=strip('mid_'+t,0,D.mid,add);V.fgb=strip('fgb_'+t,H-300,D.fg,add);V.fgt=strip('fgt_'+t,0,D.fg,add);
+  V.mid=strip('mid_'+t,0,D.mid,add);V.mid.oy=TT.midTop||0;V.fgb=strip('fgb_'+t,H-300,D.fg,add);V.fgt=strip('fgt_'+t,0,D.fg,add);
   buildWeather(a);gradeFor(a)}
 
 /* weather and floating motes: GPU particle emitters pinned to the screen */
-function buildWeather(a){const s=SC,L=LV[a],t=L.theme,A=AMB[t],w=A.weather,add=o=>{V.bg.push(o);return o},lo=FX.quality==='low';V.splash=null;V.fogs=[];
+function buildWeather(a){const s=SC,L=LV[a],t=L.theme,A=AMB[t],w=A.weather,add=o=>{V.bg.push(o);return o},lo=PQ()<1;V.splash=null;V.fogs=[];
   const zone=()=>({type:'random',source:new Phaser.Geom.Rectangle(-300,-140,W+700,60)});
   if(w==='rain'){add(s.add.particles(0,0,'streak',{emitZone:zone(),speedY:{min:1300,max:1750},speedX:A.heavy?-260:-120,lifespan:950,quantity:A.heavy?(lo?2:4):(lo?1:2),frequency:16,
       scaleX:.45,scaleY:{min:.5,max:1},alpha:A.heavy?.34:.24,rotate:A.heavy?9.8:4.6,tint:A.heavy?0xbed2ff:0xbedcd2}).setScrollFactor(0).setDepth(D.weather));
@@ -1380,7 +1383,7 @@ function buildWeather(a){const s=SC,L=LV[a],t=L.theme,A=AMB[t],w=A.weather,add=o
   if(A.fog){const r=rng(9);for(let i=0;i<7;i++){const f=add(s.add.image(0,0,'glow').setScrollFactor(0).setDepth(D.weather).setBlendMode('ADD').setTint(hexN(A.fog)));f.d={x:r()*3200,y:GY-60-r()*160,w:380+r()*420,v:10+r()*25};f.setDisplaySize(f.d.w*2,f.d.w*.4).setAlpha(.06+r()*.05);V.fogs.push(f)}}}
 
 /* ---- the room itself ---- */
-function emissive(x,y,e,sf,depth){const g=SC.add.image(x,y,'glow').setBlendMode('ADD').setTint(hexN(e.col)).setDepth(depth);g.setDisplaySize(e.r*2,(e.ry||e.r)*2);g.e=e;g.bx=x;g.by=y;g.sf=sf;
+function emissive(x,y,e,sf,depth){const g=SC.add.image(x,y,'glow').setBlendMode('ADD').setTint(hexN(e.col)).setDepth(depth+(sf===1?0:.5));g.setDisplaySize(e.r*2,(e.ry||e.r)*2);g.e=e;g.bx=x;g.by=y;g.sf=sf;
   if(sf!==1)g.setScrollFactor(sf,.05);V.rm.push(g);(sf===1?V.ems:V.wems).push(g);return g}
 V.room=function(o){vKill(V.rm);V.lamps=[];V.ems=[];V.wems=[];V.doors=[];V.fans=[];V.signs=[];V.cols=[];V.gateV=[];V.cageV=[];V.lift=null;V.shrine=null;V.station=null;V.conv=null;
   if(V.bgA!==o.a||V.bgW!==W)buildBG(o.a);
@@ -1402,9 +1405,9 @@ V.room=function(o){vKill(V.rm);V.lamps=[];V.ems=[];V.wems=[];V.doors=[];V.fans=[
   for(const l of o.lamps){const alarm=l.k==='alarm',col=alarm?'#ff3d2a':P.acc2,c=hexN(col);
     add(s.add.rectangle(l.x,l.y0,4,l.y-l.y0,ink).setOrigin(.5,0).setDepth(D.lamps));add(s.add.image(l.x,l.y,'lamp_'+t).setOrigin(.5,0).setDepth(D.lamps));
     const o2={l,col};if(!alarm){o2.bulb=add(s.add.rectangle(l.x,l.y+26,56,6,0xfff6dc).setOrigin(.5,0).setDepth(D.lamps));
-      o2.cone=add(s.add.image(l.x,l.y+30,'cone').setOrigin(.5,0).setBlendMode('ADD').setTint(c).setDepth(D.lamps).setAlpha(.22));o2.cone.setDisplaySize(380,l.fy-(l.y+30));
+      o2.cone=add(s.add.image(l.x,l.y+30,'cone').setOrigin(.5,0).setBlendMode('ADD').setTint(c).setDepth(D.lamps+.5).setAlpha(.22));o2.cone.setDisplaySize(380,l.fy-(l.y+30));
       o2.pool=glowImg(l.x,l.fy+6,420,52,col,.35,D.lamps);o2.gl=glowImg(l.x,l.y+30,140,140,col,.8,D.lamps);if(A.weather==='rain')o2.wet=glowImg(l.x,l.fy+60,80,240,col,.25,D.solids+.2)}
-    else{o2.bulb=add(s.add.circle(l.x,l.y+30,12,0x5a1a14).setDepth(D.lamps));o2.beam=add(s.add.image(l.x,l.y+30,'beam').setOrigin(.5,0).setBlendMode('ADD').setTint(c).setDepth(D.lamps).setAlpha(.38).setVisible(false));
+    else{o2.bulb=add(s.add.circle(l.x,l.y+30,12,0x5a1a14).setDepth(D.lamps));o2.beam=add(s.add.image(l.x,l.y+30,'beam').setOrigin(.5,0).setBlendMode('ADD').setTint(c).setDepth(D.lamps+.5).setAlpha(.38).setVisible(false));
       o2.beam.setDisplaySize(200,(l.fy-l.y)*1.15);o2.gl=glowImg(l.x,l.y+30,120,120,col,.9,D.lamps).setVisible(false)}
     V.lamps.push(o2)}
   /* steam vent grates */
@@ -1412,7 +1415,7 @@ V.room=function(o){vKill(V.rm);V.lamps=[];V.ems=[];V.wems=[];V.doors=[];V.fans=[
   /* floors, ledges and walls */
   for(const sd of o.solids){if(sd.k==='floor'||sd.k==='ledge'){const h=Math.min(sd.h,200);tiles(Math.max(sd.x,-200),sd.y,Math.min(sd.w,RW+400),h,'gt_'+t,512,200,D.solids);
       if(sd.h>200)add(s.add.rectangle(sd.x,sd.y+200,sd.w,sd.h-200,ink).setOrigin(0).setDepth(D.solids));
-      add(s.add.rectangle(sd.x,sd.y-1,sd.w,3,gl,.45).setOrigin(0).setBlendMode('ADD').setDepth(D.solids+.1));
+      add(s.add.rectangle(Math.max(sd.x,-200),sd.y-1,Math.min(sd.w,RW+400),3,gl,.45).setOrigin(0).setBlendMode('ADD').setDepth(D.solids+.5));
       if(sd.k==='ledge')add(s.add.rectangle(sd.x,sd.y+sd.h-6,sd.w,6,ink).setOrigin(0).setDepth(D.solids))}
     else{const y0=Math.max(sd.y,-300),h2=sd.y+sd.h-y0;tiles(sd.x,y0,sd.w,Math.min(h2,RH+300-y0),'wp_'+t,512,512,D.solids);add(s.add.rectangle(sd.x,sd.y,sd.w,sd.h,0,.35).setOrigin(0).setDepth(D.solids));
       if(sd.k==='wall')add(s.add.rectangle(sd.x<0?sd.x+sd.w-3:sd.x,sd.y,3,sd.h,gl,.35).setOrigin(0).setDepth(D.solids));else add(s.add.rectangle(sd.x,sd.y+sd.h-3,sd.w,3,gl,.35).setOrigin(0).setDepth(D.solids))}}
@@ -1426,7 +1429,7 @@ V.room=function(o){vKill(V.rm);V.lamps=[];V.ems=[];V.wems=[];V.doors=[];V.fans=[
     const h=add(s.add.image(bx+13,y-300,'hatch').setOrigin(.5,0).setDepth(D.doors).setDisplaySize(32,300));const g=glowImg(bx+13,y-150,180,300,'#3d8bff',.45,D.doors);V.doors.push({d,h,g,bx,y,op:0})}
   /* elevator */
   if(o.lift){const l=o.lift,x=l.x;add(s.add.image(x,FY+4,'lift_'+t).setOrigin(.5,1).setDepth(D.fixtures));
-    add(s.add.image(x,FY-26,'vgrad').setOrigin(.5,1).setDisplaySize(180,394).setBlendMode('ADD').setTint(0x7fd8ff).setAlpha(.35).setDepth(D.fixtures));glowImg(x,FY-20,280,60,'#7fd8ff',.5,D.fixtures);
+    add(s.add.image(x,FY-26,'vgrad').setOrigin(.5,1).setDisplaySize(180,394).setBlendMode('ADD').setTint(0x7fd8ff).setAlpha(.35).setDepth(D.fixtures+.5));glowImg(x,FY-20,280,60,'#7fd8ff',.5,D.fixtures);
     add(s.add.text(x,FY-450,(l.dir>0?'▼ ':'▲ ')+'ELEVATOR · '+LV[ROOMS[l.to].a].name.toUpperCase(),{fontFamily:FU,fontStyle:'700',fontSize:'26px',color:'#bff0ff'}).setOrigin(.5,1).setDepth(D.light+1));
     V.lift={bar:add(s.add.rectangle(x-80,FY-430,160,6,0x7fd8ff,.85).setOrigin(0,.5).setDepth(D.fixtures))}}
   /* ability shrine */
@@ -1435,28 +1438,32 @@ V.room=function(o){vKill(V.rm);V.lamps=[];V.ems=[];V.wems=[];V.doors=[];V.fans=[
       arcs:[0,1,2].map(i=>add(s.add.image(sh.x,GY-150,'arc').setTint(hexN(Ab.col)).setScale((28+i*10)/28).setDepth(D.fixtures))),ab:sh.ab,x:sh.x}}
   /* save station */
   const st=o.station;if(st){add(s.add.image(st.x,GY,'station_'+t).setOrigin(.5,1).setDepth(D.fixtures));
-    V.station={col:add(s.add.image(st.x,GY-26,'vgrad').setOrigin(.5,1).setDisplaySize(88,188).setBlendMode('ADD').setTint(0x7dffb0).setDepth(D.fixtures)),
+    V.station={col:add(s.add.image(st.x,GY-26,'vgrad').setOrigin(.5,1).setDisplaySize(88,188).setBlendMode('ADD').setTint(0x7dffb0).setDepth(D.fixtures+.5)),
       gl:glowImg(st.x,GY-30,180,40,'#7dffb0',.4,D.fixtures)};add(s.add.text(st.x,GY-244,'SAVE',{fontFamily:FU,fontStyle:'700',fontSize:'20px',color:'#7dffb0'}).setOrigin(.5,1).setDepth(D.light+1))}
   /* ability gates */
   o.gates.forEach(g=>{if(g.broken)return;const x0=g.x-g.w/2,list=[],a2=q=>{list.push(q);return q};
     if(g.kind==='crack'){a2(s.add.image(x0,g.top,'g_crack_'+t).setOrigin(0).setDepth(D.fixtures));for(let y=g.top+120;y<GY;y+=210)a2(glowImg(x0+g.w*.45,y+40,60,60,'#ffd27a',.35,D.fixtures,list))}
     else if(g.kind==='ledge'){a2(s.add.image(x0,g.top,'g_ledge_'+t).setOrigin(0).setDepth(D.fixtures));a2(glowImg(g.x,g.top,120,120,'#7fe9ff',.4,D.fixtures,list))}
-    else if(g.kind==='laser'){g.beams=[];a2(s.add.rectangle(x0-10,90,g.w+20,GY-180,0xff281e,.18).setOrigin(0).setBlendMode('ADD').setDepth(D.fixtures));
-      for(let i=0;i<5;i++)g.beams.push(a2(s.add.rectangle(x0+4+i*(g.w-8)/4,90,6,GY-180,Phaser.Display.Color.GetColor(255,70+i*25,60+i*10)).setOrigin(.5,0).setBlendMode('ADD').setDepth(D.fixtures)));
-      g.scan=a2(s.add.rectangle(x0-10,90,g.w+20,4,0xffc8b4,.7).setOrigin(0).setBlendMode('ADD').setDepth(D.fixtures));
+    else if(g.kind==='laser'){g.beams=[];a2(s.add.rectangle(x0-10,90,g.w+20,GY-180,0xff281e,.18).setOrigin(0).setBlendMode('ADD').setDepth(D.fixtures+.5));
+      for(let i=0;i<5;i++)g.beams.push(a2(s.add.rectangle(x0+4+i*(g.w-8)/4,90,6,GY-180,Phaser.Display.Color.GetColor(255,70+i*25,60+i*10)).setOrigin(.5,0).setBlendMode('ADD').setDepth(D.fixtures+.5)));
+      g.scan=a2(s.add.rectangle(x0-10,90,g.w+20,4,0xffc8b4,.7).setOrigin(0).setBlendMode('ADD').setDepth(D.fixtures+.5));
       for(const ey of[0,GY-90])a2(s.add.image(x0-24,ey,'g_lcap_'+t).setOrigin(0).setDepth(D.fixtures));a2(glowImg(g.x,GY/2,360,GY*.84,'#ff3d3d',.45,D.fixtures,list))}
     else if(g.kind==='blast'){a2(s.add.image(x0,0,'g_blast_'+t).setOrigin(0).setDepth(D.fixtures));g.lamps=[];for(let y=120;y<GY;y+=160)g.lamps.push(a2(glowImg(g.x,y+8,52,52,'#ff3d2a',.7,D.fixtures,list)));
       a2(s.add.image(g.plate,GY,'g_plate_'+t).setOrigin(.5,1).setDepth(D.fixtures));g.pg=a2(glowImg(g.plate,GY-8,140,32,'#ffb347',.5,D.fixtures,list))}
     else{g.img=a2(s.add.image(x0-20,0,'g_crystal_'+t).setOrigin(0).setDepth(D.fixtures));g.cg=a2(glowImg(g.x,GY/2,280,GY*.9,'#ff5ad8',.35,D.fixtures,list))}
     for(const q of list)if(V.rm.indexOf(q)<0)V.rm.push(q);V.gateV.push({g,list})});
   o.cages.forEach(c=>{if(c.broken)return;const x0=c.x-70,y0=GY-170,list=[],a2=q=>{list.push(q);V.rm.push(q);return q};
-    if(c.kind==='laser'){c.beams=[];for(let i=0;i<6;i++)c.beams.push(a2(s.add.rectangle(x0+10+i*24,y0,4,170,0xff463c,.5).setOrigin(0).setBlendMode('ADD').setDepth(D.fixtures)));a2(s.add.image(c.x,y0,'c_lcap_'+t).setOrigin(.5,1).setDepth(D.fixtures))}
+    if(c.kind==='laser'){c.beams=[];for(let i=0;i<6;i++)c.beams.push(a2(s.add.rectangle(x0+10+i*24,y0,4,170,0xff463c,.5).setOrigin(0).setBlendMode('ADD').setDepth(D.fixtures+.5)));a2(s.add.image(c.x,y0,'c_lcap_'+t).setOrigin(.5,1).setDepth(D.fixtures))}
     else if(c.kind==='crack')a2(s.add.image(c.x,GY,'c_crack_'+t).setOrigin(.5,1).setDepth(D.fixtures));
     else if(c.kind==='slam'){a2(s.add.image(c.x,GY,'c_slam_'+t).setOrigin(.5,1).setDepth(D.fixtures));a2(glowImg(c.x,y0+34,80,80,'#ffb347',.5,D.fixtures,[]))}
     else a2(s.add.image(c.x,GY,'c_plasma_'+t).setOrigin(.5,1).setDepth(D.fixtures));V.cageV.push({c,list})});
   /* braced columns that sweep past in front */
   x=1800;const cspan=RW*1.55+W;while(x<cspan){V.cols.push(add(s.add.image(x,0,'fgcol_'+t).setOrigin(0).setScrollFactor(1.55,0).setDepth(D.fg).setAlpha(.85)));x+=3000+r()*1800}
+  /* static room objects outside the view are skipped by the camera (cameraFilter), so the renderer never touches them */
+  V.cull=[];for(const q of V.rm){if(!q.getBounds||q.type==='Graphics'||q.scrollFactorX!==1)continue;const b=q.getBounds();V.cull.push(q,b.x,b.y,b.right,b.bottom)}
   if(V.lastT&&V.lastT!==t)freeTheme(V.lastT);V.lastT=t};
+function cullRoom(){const C=V.cull;if(!C)return;const id=SC.cameras.main.id,x0=cam-160,x1=cam+W+160,y0=camY-160,y1=camY+H+160;
+  for(let i=0;i<C.length;i+=5){const o=C[i];if(C[i+3]>x0&&C[i+1]<x1&&C[i+4]>y0&&C[i+2]<y1)o.cameraFilter&=~id;else o.cameraFilter|=id}}
 function C_dirty(){}
 
 /* ---- per-frame updates for the backdrop and the room ---- */
@@ -1471,7 +1478,7 @@ function bgUpdate(dt){if(V.bgW!==W){buildBG(G.lv);if(ROOM)V.room(ROOM)}const L=L
   for(const f of V.fogs)f.setPosition(((f.d.x-cam*.9-lvT*f.d.v)%3400+3400)%3400-500,f.d.y-camY*.9);
   if(V.splash&&ROOM&&FY>camY&&FY<camY+H+50&&Math.random()<.8)for(let i=0;i<(AMB[L.theme].heavy?3:1);i++)V.splash.emitParticleAt(cam+Math.random()*W,FY-2);
   if(V.conv)V.conv.x=-((lvT*120)%48)}
-function roomUpdate(dt){if(!ROOM)return;const o=ROOM,P=PAL[LV[G.lv].theme];
+function roomUpdate(dt){if(!ROOM)return;const o=ROOM,P=PAL[LV[G.lv].theme];cullRoom();
   for(const f of V.fans)f.rotation+=dt*5;
   for(const g of V.ems){const e=g.e,p=e.blink?(Math.sin(lvT*3+g.bx*.01+e.x)>-.3?1:.25):(.8+.2*Math.sin(lvT*2+e.y));g.setAlpha(e.a*p);lightW(g.bx,g.by,e.r*2.4+40,Math.min(1,e.a*1.3*p))}
   for(const g of V.wems){const e=g.e,p=e.blink?(Math.sin(lvT*3+g.bx*.01+e.x)>-.3?1:.25):(.8+.2*Math.sin(lvT*2+e.y));g.setAlpha(e.a*p);const sx=g.bx-cam*.62;if(sx>-100&&sx<W+100)lightS(sx,g.by-camY*.05,e.r*1.8,e.a*p)}
@@ -1615,13 +1622,13 @@ function updPlayerView(){const p=pl,vis=!!p&&G.state!=='menu';for(const k of['sp
 
 /* ---- shots, pickups, crates ---- */
 function mkShotView(s){if(s.wave){const c=SC.add.image(0,0,'crescent').setOrigin(.2,.5).setBlendMode('ADD').setDepth(D.shots).setTint(hexC(s.col)),g=gI(0,0,300,s.col,.6).setDepth(D.shots);return{c,g,objs:[c,g]}}
-  const g=gI(0,0,s.r*6.4,s.col,.9).setDepth(D.shots),core=SC.add.circle(0,0,s.r*.6,0xffffff).setDepth(D.shots);return{g,core,col:s.col,objs:[g,core]}}
+  const g=gI(0,0,s.r*6.4,s.col,.9).setDepth(D.shots),core=SC.add.circle(0,0,s.r*.6,0xffffff).setDepth(D.shots+.5);return{g,core,col:s.col,objs:[g,core]}}
 function updShotView(s,v){if(s.wave){const a=Math.min(1,s.life*2);v.c.setPosition(s.x-Math.sign(s.vx)*40,s.y).setScale(Math.sign(s.vx)*(s.r+30)/100,(s.r+30)/100).setAlpha(a);v.g.setPosition(s.x,s.y).setAlpha(a*.6);lightW(s.x,s.y,340,.9);return}
   if(v.col!==s.col){v.col=s.col;v.g.setTint(hexC(s.col))}v.g.setPosition(s.x,s.y);v.core.setPosition(s.x,s.y);lightW(s.x,s.y,150,.9)}
 function mkPickView(k){const i=SC.add.image(0,0,'pk_'+k.type).setDepth(D.picks);let ring=null;if(k.type!=='coin'&&k.float){ring=SC.add.circle(0,0,34).setStrokeStyle(2.5,0xffffff,.55).setDepth(D.picks)}return{i,ring,objs:ring?[i,ring]:[i]}}
 function updPickView(k,v){const y=k.y+(k.float?Math.sin(lvT*3+k.x*.01)*8:0),blink=!k.float&&k.life<3&&Math.floor(k.life*8)%2;v.i.setPosition(k.x,y).setVisible(!blink);
   if(k.type==='coin')v.i.setScale(Math.max(.15,Math.abs(Math.cos(lvT*4+k.x))),1);if(v.ring)v.ring.setPosition(k.x,y).setRadius(34+Math.sin(lvT*4+k.x)*4);lightW(k.x,k.y,110,.55)}
-function mkBoxView(b){const t=LV[G.lv].theme,i=SC.add.image(b.x,FY+2,'crate_'+t).setOrigin(.5,1).setDepth(D.crates),g=gI(b.x,FY-62,60,'#5ce1ff',.5).setDepth(D.crates),cr=SC.add.graphics().setDepth(D.crates);return{i,g,cr,hp:2,objs:[i,g,cr]}}
+function mkBoxView(b){const t=LV[G.lv].theme,i=SC.add.image(b.x,FY+2,'crate_'+t).setOrigin(.5,1).setDepth(D.crates),g=gI(b.x,FY-62,60,'#5ce1ff',.5).setDepth(D.crates+.5),cr=SC.add.graphics().setDepth(D.crates);return{i,g,cr,hp:2,objs:[i,g,cr]}}
 function updBoxView(b,v){v.g.setAlpha(.45+.2*Math.sin(lvT*3+b.x));if(b.flash>0)v.i.setTintFill(0xffffff);else v.i.clearTint();
   if(b.hp<2&&v.hp===2){v.hp=1;v.cr.lineStyle(3,0x000000,.6);v.cr.beginPath();v.cr.moveTo(b.x-30,FY-90);v.cr.lineTo(b.x-6,FY-60);v.cr.lineTo(b.x-20,FY-30);v.cr.strokePath()}lightW(b.x,FY-60,110,.35)}
 
@@ -1661,7 +1668,7 @@ const tx=(o,v)=>{v=String(v);if(o._s!==v){o._s=v;o.setText(v)}return o},cc=(o,c)
 class HudScene extends Phaser.Scene{
   constructor(){super({key:'hud',active:false})}
   create(){const s=this,T=(x,y,str,size,col,font,weight)=>s.add.text(x,y,str,{fontFamily:font||FU,fontStyle:weight||'700',fontSize:size+'px',color:col||'#ece7ff'});HU.s=s;
-    HU.vig=s.add.image(0,0,'vig').setOrigin(0).setTint(0xff003c).setAlpha(0);
+    HU.vg=s.add.image(0,0,'vig').setOrigin(0).setTint(0x000000).setAlpha(.38);HU.vig=s.add.image(0,0,'vig').setOrigin(0).setTint(0xff003c).setAlpha(0);
     HU.flash=s.add.rectangle(0,0,W,H,0xff2850,0).setOrigin(0);
     HU.g=s.add.graphics();
     HU.name=T(48,34,'TYKO',30,'#ece7ff',FD,'700');HU.hp=T(58,80,'',20,'#ffffff',FU,'600');HU.ae=T(48,142,'',20,'#9d97bd');
@@ -1677,11 +1684,11 @@ class HudScene extends Phaser.Scene{
     HU.dim=s.add.rectangle(0,0,W,H,0x05040c,0).setOrigin(0);HU.fade=s.add.rectangle(0,0,W,H,0x000000,0).setOrigin(0);
     HU.fps=T(10,H-26,'',16,'#9d97bd').setVisible(false);
     this.scale.on('resize',()=>this.layout());this.layout()}
-  layout(){this.cameras.main.setSize(W,H);HU.vig.setDisplaySize(W,H);HU.flash.setSize(W,H);HU.dim.setSize(W,H);HU.fade.setSize(W,H);HU.bnBack.setSize(W,190)}
+  layout(){this.cameras.main.setSize(this.scale.width,this.scale.height).setOrigin(0,0).setZoom(RS);HU.vg.setDisplaySize(W,H);HU.vig.setDisplaySize(W,H);HU.flash.setSize(W,H);HU.dim.setSize(W,H);HU.fade.setSize(W,H);HU.bnBack.setSize(W,190)}
   update(){hudUpdate()}}
-function hudUpdate(){const g=HU.g,p=pl,play=G.state!=='menu'&&!!p&&!!ROOM;g.clear();HU.map.clear();
+function hudUpdate(){const g=HU.g,p=pl,play=G.state!=='menu'&&!!p&&!!ROOM;g.clear();HU.map.clear();HU.vg.setVisible(FX.quality==='high');
   const all=[HU.name,HU.hp,HU.ae,HU.ch,HU.score,HU.scl,HU.mapDot,HU.combo,HU.combo2,HU.combo3,HU.bossN,HU.hint,HU.seal,...HU.eggs,...HU.buffs.map(b=>b.i),...HU.buffs.map(b=>b.t)];
-  if(!play){for(const o of all)o.setVisible(false);HU.vig.setAlpha(0);HU.flash.fillAlpha=0;HU.dim.fillAlpha=0;HU.bnBack.setVisible(false);HU.bn.setVisible(false);HU.bs.setVisible(false);HU.fade.fillAlpha=TRANS.on?transA():0;return}
+  if(!play){for(const o of all)o.setVisible(false);HU.vig.setAlpha(0);shA(HU.flash,0);shA(HU.dim,0);HU.bnBack.setVisible(false);HU.bn.setVisible(false);HU.bs.setVisible(false);shA(HU.fade,TRANS.on?transA():0);return}
   for(const o of[HU.name,HU.hp,HU.ae,HU.ch,HU.score,HU.scl])o.setVisible(true);
   const L=LV[G.lv],bar=(x,y,w,h,v,c1,c2)=>{g.fillStyle(0x05040c,.7);g.fillRect(x-3,y-3,w+6,h+6);const f=clamp(v,0,1);g.fillGradientStyle(c1,c2,c1,c2,1);g.fillRect(x,y,w*f,h);g.lineStyle(2,0xece7ff,.35);g.strokeRect(x-3,y-3,w+6,h+6)};
   bar(48,80,480,24,p.hp/p.max,0xff3d6e,0xff8a4c);tx(HU.hp,Math.ceil(p.hp)+' / '+p.max);
@@ -1703,9 +1710,11 @@ function hudUpdate(){const g=HU.g,p=pl,play=G.state!=='menu'&&!!p&&!!ROOM;g.clea
     if(HU.bnFor!==banner){HU.bnFor=banner;HU.bn.setShadow(0,0,L.glow,30,false,true);tx(HU.bn,banner.t.toUpperCase());tx(HU.bs,(banner.sub||'').toUpperCase());cc(HU.bs,L.glow)}
     HU.bn.setVisible(true).setX(W/2).setAlpha(a);HU.bs.setVisible(!!banner.sub).setX(W/2).setAlpha(a)}
   else{HU.bnBack.setVisible(false);HU.bn.setVisible(false);HU.bs.setVisible(false)}
-  HU.flash.fillAlpha=flashT>0?Math.min(1,flashT*1.4):0;
+  shA(HU.flash,flashT>0?Math.min(1,flashT*1.4):0);
   HU.vig.setAlpha(p.hp<30?.55+Math.sin(lvT*5)*.2:0);
-  HU.dim.fillAlpha=G.state==='over'?.5:0;HU.fade.fillAlpha=TRANS.on?transA():0}
+  shA(HU.dim,G.state==='over'?.5:0);shA(HU.fade,TRANS.on?transA():0)}
+/* full-screen rectangles are hidden instead of drawn at zero alpha */
+function shA(r,a){r.setVisible(a>.003);if(a>.003)r.fillAlpha=a}
 function transA(){const d=TRANS.act&&TRANS.act.lift?.7:.22;return TRANS.phase===0?Math.min(1,TRANS.t/d):Math.max(0,1-TRANS.t/.25)}
 /* minimap: explored rooms of this world on a 7x3 grid around Tyko */
 function drawMinimap(){const g=HU.map,cs=40,cols=7,rows=3,mw=cols*cs,mh=rows*cs,mx=W/2-mw/2,my=56,o=ROOM;
@@ -1756,9 +1765,9 @@ function toTitle(){G.state='menu';if(G.paused&&SC)SC.scene.resume();G.paused=fal
     btns:[...(sv?[['Continue',()=>{goFull();continueGame()}]]:[]),[sv?'New game':'Begin the Saga',sv?confirmNew:beginSaga,!!sv],['Controls',controls,1],['Settings',soundCard,1]]})}
 function confirmNew(){showCard({ey:'New game',h:'Start over?',b:'<p>This erases your map, abilities and energy tanks.</p>',btns:[['Start over',beginSaga],['Back',toTitle,1]]})}
 function soundCard(back){back=typeof back==='function'?back:toTitle;const sl=(id,lab,v)=>`<label class="vol"><span>${lab}</span><input type="range" id="${id}" min="0" max="100" value="${Math.round(v*100)}"></label>`;
-  const gq=`<label class="vol"><span>Graphics</span><span class="gq"><button class="btn ${FX.quality==='high'?'':'alt'}" data-q="high">High</button> <button class="btn ${FX.quality==='low'?'':'alt'}" data-q="low">Fast</button></span></label>`;
-  showCard({ey:'Settings',h:'Sound & graphics',extra:`<div class="vols">${sl('vMus','Music',VOL.music)}${sl('vSfx','Effects',VOL.sfx)}${gq}</div>`,b:'<p>High adds bloom glow and more particles. Fast is smoother on older phones.</p>',btns:[['Done',back]]});
-  card.querySelectorAll('[data-q]').forEach(b=>b.addEventListener('click',()=>{setQuality(b.dataset.q);sfxUI(1);soundCard(back)}));
+  const gq=`<label class="vol"><span>Graphics</span><span class="gq">${['high','balanced','fast'].map(q=>`<button class="btn ${FX.quality===q?'':'alt'}" data-q="${q}">${QUAL[q].name}</button>`).join(' ')}</span></label>`;
+  showCard({ey:'Settings',h:'Sound & graphics',extra:`<div class="vols">${sl('vMus','Music',VOL.music)}${sl('vSfx','Effects',VOL.sfx)}${gq}</div>`,b:'<p>High draws at full screen resolution. Balanced and Fast draw fewer pixels and stretch them up, for a steadier frame rate. The game steps down by itself if it starts to stutter.</p>',btns:[['Done',back]]});
+  card.querySelectorAll('[data-q]').forEach(b=>b.addEventListener('click',()=>{setQuality(b.dataset.q);PERF.drops=2;sfxUI(1);soundCard(back)}));
   const m=document.getElementById('vMus'),f=document.getElementById('vSfx');
   m.addEventListener('input',()=>{initAudio();setVol('music',m.value/100)});f.addEventListener('input',()=>{initAudio();setVol('sfx',f.value/100)});f.addEventListener('change',()=>sfxPick('coin'))}
 function controls(back){back=typeof back==='function'?back:toTitle;showCard({ey:'How to play',h:'Controls',extra:`<div class="keys">
@@ -1784,7 +1793,7 @@ function goFull(){try{const d=document.documentElement;if(touchy&&!document.full
 addEventListener('blur',()=>{if(G.state==='play'&&!G.paused)togglePause()});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(G.state==='play'&&!G.paused)togglePause();audioSuspend(1)}else audioSuspend(0)});
 const SPB=document.querySelector('.act.sp'),DSB=document.querySelector('.act.dsh');let padE=-1,padC=-1;
-function syncPad(){if(pad.hidden||!pl)return;const e=Math.round(pl.en)/100,c=Math.round(Math.max(0,Math.min(1,1-pl.dashCD/.75))*40)/40;
+function syncPad(){if(pad.hidden||!pl)return;const e=Math.round(pl.en/5)/20,c=Math.round(Math.max(0,Math.min(1,1-pl.dashCD/.75))*10)/10;
   if(e!==padE){padE=e;SPB.style.setProperty('--e',e);SPB.classList.toggle('ready',pl.en>=50)}
   if(c!==padC){padC=c;DSB.style.setProperty('--c',c)}}
 
@@ -1812,11 +1821,15 @@ function gameUpdate(dt){if(banner){banner.life-=dt;if(banner.life<=0)banner=null
 /* title backdrop: a world's gate corridor with the camera drifting along it */
 function menuBG(){clearEnemies();killAllViews();pl=null;shots=[];hz=[];picks=[];boxes=[];boss=null;banner=null;shake=0;lock=false;
   const a=Math.min(unlocked,6)-1;enterRoom(a+'-6',{x:300,y:GY});cam=0;camY=0}
-function render(dt){const c=SC.cameras.main,sx=shake?(Math.random()-.5)*shake*2:0,sy=shake?(Math.random()-.5)*shake*2:0;
-  c.setScroll(Math.round(cam+sx),Math.round(camY+sy));bgUpdate(dt);roomUpdate(dt);actorsUpdate();drawSkyFx();applyLighting()}
-const PERF={t:0,n:0,acc:0,done:0};
-function perfWatch(dt){if(PERF.done||G.state!=='play'||FX.quality!=='high')return;PERF.t+=dt;if(PERF.t<3)return;PERF.n++;PERF.acc+=dt;
-  if(PERF.acc>=4){const fps=PERF.n/PERF.acc;PERF.done=1;if(fps<44){setQuality('low');showBanner('Graphics: Fast','Switched for a smoother frame rate',2.2)}}}
+function render(dt){const c=SC.cameras.main,sx=shake?(Math.random()-.5)*shake*2:0,sy=shake?(Math.random()-.5)*shake*2:0,k=1+FX.kz;
+  /* the camera zoom maps the 1080-tall stage onto the (smaller) canvas; a kick zooms in a little more around the centre */
+  if(c.zoom!==RS*k)c.setZoom(RS*k);c.setScroll(Math.round(cam+sx+W/2*(1-1/k)),Math.round(camY+sy+H/2*(1-1/k)));bgUpdate(dt);roomUpdate(dt);actorsUpdate();drawSkyFx();applyLighting()}
+/* adaptive quality: if play runs below ~50 fps for a few seconds, step the render scale down (High -> Balanced -> Fast) */
+const PERF={t0:0,n:0,warm:0,drops:0};
+function perfWatch(dt){if(G.state!=='play'||TRANS.on||FX.quality==='fast'||PERF.drops>=2){PERF.t0=0;return}const now=performance.now();
+  if(!PERF.t0){PERF.t0=now;PERF.n=0;return}PERF.n++;const el=(now-PERF.t0)/1000;if(el<4)return;const fps=PERF.n/el;PERF.t0=0;
+  if(PERF.warm<1){PERF.warm++;return}
+  if(fps<50){PERF.drops++;const q=FX.quality==='high'?'balanced':'fast';setQuality(q);showBanner('Graphics: '+QUAL[q].name,'Adjusted for a smoother frame rate',2)}}
 
 /* ---------- Phaser scenes ---------- */
 class BootScene extends Phaser.Scene{
@@ -1827,7 +1840,7 @@ class BootScene extends Phaser.Scene{
 class GameScene extends Phaser.Scene{
   constructor(){super('game')}
   create(){physInit(this);fxInit(this);mkPlayerView();ovInit();
-    this.scale.on('resize',()=>{this.cameras.main.setSize(W,H);fxResize()});
+    const lay=()=>{this.cameras.main.setSize(this.scale.width,this.scale.height).setOrigin(0,0).setZoom(RS);fxResize()};this.scale.on('resize',lay);lay();
     toTitle();initAudio()}
   update(time,delta){const dt=Math.min(.033,Math.max(0,delta/1000));
     try{if(G.state==='play'&&!G.paused){gameUpdate(dt);perfWatch(dt)}
@@ -1839,10 +1852,10 @@ class GameScene extends Phaser.Scene{
 const _hudUpd=HudScene.prototype.update;HudScene.prototype.update=function(){_hudUpd.call(this);musicTick();syncPad()};
 
 fit();
-window.GAME=new Phaser.Game({type:/[?window.GAME=new Phaser.Game({type:Phaser.AUTO,]canvas/.test(location.search)?Phaser.CANVAS:Phaser.AUTO,parent:'stage',width:W,height:H,backgroundColor:'#07060f',banner:false,
+window.GAME=new Phaser.Game({type:/[?&]canvas/.test(location.search)?Phaser.CANVAS:Phaser.AUTO,parent:'stage',width:Math.round(W*RS),height:Math.round(H*RS),backgroundColor:'#07060f',banner:false,
   scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},
   physics:{default:'arcade',arcade:{gravity:{y:3300},debug:false,isPaused:true}},
-  render:{antialias:true,powerPreference:'high-performance',batchSize:4096},
+  render:{antialias:true,antialiasGL:false,powerPreference:'high-performance',batchSize:4096,clearBeforeRender:true},fps:{target:60,limit:95,smoothStep:true},
   input:{keyboard:false,mouse:false,touch:false,gamepad:false},audio:{noAudio:true},
   scene:[BootScene,GameScene,HudScene]});
 document.addEventListener('pointerdown',()=>initAudio(),true);addEventListener('keydown',()=>initAudio(),true);

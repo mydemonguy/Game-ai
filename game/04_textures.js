@@ -7,6 +7,7 @@ let TKEY=null;const TKEYS={};
 function addTex(key,c){if(TX.exists(key))TX.remove(key);TX.addCanvas(key,c);if(TKEY)(TKEYS[TKEY]=TKEYS[TKEY]||[]).push(key);return key}
 /* textures of a world are dropped when Tyko leaves it, so GPU memory stays at one world's worth */
 function freeTheme(t){for(const k of TKEYS[t]||[])if(TX.exists(k))TX.remove(k);TKEYS[t]=[];delete THEMED[t];for(const k in MACHS)if(k.startsWith('m_'+t+'_'))delete MACHS[k]}
+function topRow(c){const g=c.getContext('2d'),d=g.getImageData(0,0,c.width,c.height).data,w=c.width;for(let y=0;y<c.height;y+=2){for(let x=0;x<w;x+=3)if(d[(y*w+x)*4+3]>6)return Math.max(0,y-4)}return 0}
 function withX(g,fn){const o=X;X=g;try{fn()}finally{X=o}}
 
 function bakeCommon(){
@@ -61,7 +62,9 @@ function themeTex(a){const L=LV[a],t=L.theme,P=PAL[t],M={light:P.light,metal:P.a
   const r=rng(L.len*7+L.name.length*97),ks=KINDS[t];
   for(const[layer,base,col,depth,gap]of[['far',GY-50,L.far,2,.6],['mid',GY-6,L.mid,1,1]]){const[c,g]=mkC(SW,GY+10),list=[];let x=0;
     while(x<SW-60){const w=layer==='far'?110+r()*220:90+r()*170;list.push({x,w,h:layer==='far'?200+r()*380:150+r()*270,k:ks[Math.floor(r()*ks.length)],s:r()});x+=layer==='far'?w*(.55+r()*.7):w+160+r()*380}
-    const oW=W;W=SW*3;withX(g,()=>{for(const o of list)for(const ox of[0,SW,-SW])shape(o,ox,base,col,L.glow,depth)});W=oW;addTex(layer+'_'+t,c)}
+    const oW=W;W=SW*3;withX(g,()=>{for(const o of list)for(const ox of[0,SW,-SW])shape(o,ox,base,col,L.glow,depth)});W=oW;
+    /* trim the empty sky above the silhouettes so the GPU doesn't blend thousands of transparent pixels */
+    const top=topRow(c),[c2,g2]=mkC(SW,c.height-top);g2.drawImage(c,0,-top);T[layer+'Top']=top;addTex(layer+'_'+t,c2)}
   {const[c,g]=mkC(4,340),fr=g.createLinearGradient(0,0,0,340);fr.addColorStop(0,rgba(L.sky[2],0));fr.addColorStop(1,rgba(L.sky[2],.55));g.fillStyle=fr;g.fillRect(0,0,4,340);addTex('fog_'+t,c)}
   /* machinery walls behind the play plane */
   T.walls=[0,1,2,3].map(i=>{const b=bakeWall(P,L.len*3+i*71,L.sky[1]);addTex('wl_'+t+i,b.c);return b});

@@ -118,13 +118,13 @@ function updPlayerView(){const p=pl,vis=!!p&&G.state!=='menu';for(const k of['sp
 
 /* ---- shots, pickups, crates ---- */
 function mkShotView(s){if(s.wave){const c=SC.add.image(0,0,'crescent').setOrigin(.2,.5).setBlendMode('ADD').setDepth(D.shots).setTint(hexC(s.col)),g=gI(0,0,300,s.col,.6).setDepth(D.shots);return{c,g,objs:[c,g]}}
-  const g=gI(0,0,s.r*6.4,s.col,.9).setDepth(D.shots),core=SC.add.circle(0,0,s.r*.6,0xffffff).setDepth(D.shots);return{g,core,col:s.col,objs:[g,core]}}
+  const g=gI(0,0,s.r*6.4,s.col,.9).setDepth(D.shots),core=SC.add.circle(0,0,s.r*.6,0xffffff).setDepth(D.shots+.5);return{g,core,col:s.col,objs:[g,core]}}
 function updShotView(s,v){if(s.wave){const a=Math.min(1,s.life*2);v.c.setPosition(s.x-Math.sign(s.vx)*40,s.y).setScale(Math.sign(s.vx)*(s.r+30)/100,(s.r+30)/100).setAlpha(a);v.g.setPosition(s.x,s.y).setAlpha(a*.6);lightW(s.x,s.y,340,.9);return}
   if(v.col!==s.col){v.col=s.col;v.g.setTint(hexC(s.col))}v.g.setPosition(s.x,s.y);v.core.setPosition(s.x,s.y);lightW(s.x,s.y,150,.9)}
 function mkPickView(k){const i=SC.add.image(0,0,'pk_'+k.type).setDepth(D.picks);let ring=null;if(k.type!=='coin'&&k.float){ring=SC.add.circle(0,0,34).setStrokeStyle(2.5,0xffffff,.55).setDepth(D.picks)}return{i,ring,objs:ring?[i,ring]:[i]}}
 function updPickView(k,v){const y=k.y+(k.float?Math.sin(lvT*3+k.x*.01)*8:0),blink=!k.float&&k.life<3&&Math.floor(k.life*8)%2;v.i.setPosition(k.x,y).setVisible(!blink);
   if(k.type==='coin')v.i.setScale(Math.max(.15,Math.abs(Math.cos(lvT*4+k.x))),1);if(v.ring)v.ring.setPosition(k.x,y).setRadius(34+Math.sin(lvT*4+k.x)*4);lightW(k.x,k.y,110,.55)}
-function mkBoxView(b){const t=LV[G.lv].theme,i=SC.add.image(b.x,FY+2,'crate_'+t).setOrigin(.5,1).setDepth(D.crates),g=gI(b.x,FY-62,60,'#5ce1ff',.5).setDepth(D.crates),cr=SC.add.graphics().setDepth(D.crates);return{i,g,cr,hp:2,objs:[i,g,cr]}}
+function mkBoxView(b){const t=LV[G.lv].theme,i=SC.add.image(b.x,FY+2,'crate_'+t).setOrigin(.5,1).setDepth(D.crates),g=gI(b.x,FY-62,60,'#5ce1ff',.5).setDepth(D.crates+.5),cr=SC.add.graphics().setDepth(D.crates);return{i,g,cr,hp:2,objs:[i,g,cr]}}
 function updBoxView(b,v){v.g.setAlpha(.45+.2*Math.sin(lvT*3+b.x));if(b.flash>0)v.i.setTintFill(0xffffff);else v.i.clearTint();
   if(b.hp<2&&v.hp===2){v.hp=1;v.cr.lineStyle(3,0x000000,.6);v.cr.beginPath();v.cr.moveTo(b.x-30,FY-90);v.cr.lineTo(b.x-6,FY-60);v.cr.lineTo(b.x-20,FY-30);v.cr.strokePath()}lightW(b.x,FY-60,110,.35)}
 

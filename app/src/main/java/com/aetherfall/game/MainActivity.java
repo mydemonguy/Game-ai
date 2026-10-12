@@ -3,6 +3,7 @@ package com.aetherfall.game;
 import android.app.Activity;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
 import android.webkit.WebSettings;
@@ -21,6 +22,7 @@ public class MainActivity extends Activity {
             lp.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
             getWindow().setAttributes(lp);
         }
+        cap60Hz();
         web = new WebView(this);
         web.setBackgroundColor(0xFF07060F);
         WebSettings s = web.getSettings();
@@ -54,6 +56,22 @@ public class MainActivity extends Activity {
     protected void onDestroy() {
         web.destroy();
         super.onDestroy();
+    }
+
+    /** Ask for a 60 Hz display mode: on 90/120 Hz screens the WebView would otherwise draw the game up to twice as often. */
+    private void cap60Hz() {
+        try {
+            WindowManager.LayoutParams lp = getWindow().getAttributes();
+            lp.preferredRefreshRate = 60f;
+            Display d = getWindowManager().getDefaultDisplay();
+            Display.Mode cur = d.getMode(), best = null;
+            for (Display.Mode m : d.getSupportedModes()) {
+                if (m.getPhysicalWidth() != cur.getPhysicalWidth() || m.getPhysicalHeight() != cur.getPhysicalHeight()) continue;
+                if (best == null || Math.abs(m.getRefreshRate() - 60f) < Math.abs(best.getRefreshRate() - 60f)) best = m;
+            }
+            if (best != null) lp.preferredDisplayModeId = best.getModeId();
+            getWindow().setAttributes(lp);
+        } catch (Exception ignored) { }
     }
 
     @SuppressWarnings("deprecation")

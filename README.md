@@ -1,7 +1,7 @@
 # Aetherfall – Android project
 
 A 1080p sci-fi fantasy action-explorer: six worlds of connected rooms (Super Metroid-style map), abilities that open new paths, and a final boss fight against Malakar, the Void Sovereign. Synthesised music for every world with a combat layer during lockdowns, plus layered sound effects.
-It runs fully offline, in landscape, with the system bars hidden. Since version 2.0 it runs on the **Phaser 3** game engine (WebGL): Arcade physics, GPU particles for weather and impacts, a real-time light map, bloom and vignette post-processing, and cut-out robot rigs animated as Phaser containers. Settings has a Graphics switch (High / Fast); the game drops to Fast by itself if the frame rate dips.
+It runs fully offline, in landscape, with the system bars hidden. Since version 2.0 it runs on the **Phaser 3** game engine (WebGL): Arcade physics, GPU particles for weather and impacts, a real-time light map, bloom and vignette post-processing, and cut-out robot rigs animated as Phaser containers. Settings has a Graphics switch: High draws at full screen resolution, Balanced (default) and Fast draw fewer pixels and let the screen stretch them up. The game steps down by itself if the frame rate dips, and asks Android for a 60 Hz display mode so 90/120 Hz screens don't double the work.
 
 ## Option A: Build on GitHub (no computer setup needed)
 

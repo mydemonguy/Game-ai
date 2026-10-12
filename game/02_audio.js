@@ -13,7 +13,7 @@ function initAudio(){if(AC){if(AC.state==='suspended'&&!document.hidden)AC.resum
   try{AC=new(window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive'})}catch(e){try{AC=new(window.AudioContext||window.webkitAudioContext)()}catch(_){AC=null;return}}
   const n=AC.currentTime,master=AC.createGain(),comp=AC.createDynamicsCompressor();master.gain.value=.85;
   comp.threshold.value=-16;comp.knee.value=12;comp.ratio.value=4;comp.attack.value=.003;comp.release.value=.2;master.connect(comp);comp.connect(AC.destination);
-  const rev=AC.createConvolver();rev.buffer=impulse(2.6,3);const revG=AC.createGain();revG.gain.value=.3;rev.connect(revG);revG.connect(master);
+  const rev=AC.createConvolver();rev.buffer=impulse(1.8,3.2);const revG=AC.createGain();revG.gain.value=.3;rev.connect(revG);revG.connect(master);
   const mus=AC.createGain();mus.gain.value=VOL.music;mus.connect(master);const mSend=AC.createGain();mSend.gain.value=.55;mus.connect(mSend);mSend.connect(rev);
   const sfx=AC.createGain();sfx.gain.value=VOL.sfx;sfx.connect(master);const sSend=AC.createGain();sSend.gain.value=.35;sfx.connect(sSend);sSend.connect(rev);
   /* tempo echo for lead lines */

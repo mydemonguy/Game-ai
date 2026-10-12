@@ -3,11 +3,11 @@
 /* ---------- view, part 1: parallax backdrops, weather, room geometry, machines, lamps, doors and fixtures ---------- */
 const V={bgA:-1,bgW:0,bg:[],rm:[],lamps:[],ems:[],wems:[],doors:[],fans:[],signs:[],cols:[],gateV:[],cageV:[],fx:{}};
 function vKill(list){for(const o of list)if(o&&o.destroy){if(SC)SC.tweens.killTweensOf(o);o.destroy()}list.length=0}
-const glowImg=(x,y,w,h,col,a,depth,list)=>{const g=SC.add.image(x,y,'glow').setBlendMode('ADD').setTint(hexC(col)).setDisplaySize(w,h).setAlpha(a).setDepth(depth);(list||V.rm).push(g);return g};
+const glowImg=(x,y,w,h,col,a,depth,list)=>{const g=SC.add.image(x,y,'glow').setBlendMode('ADD').setTint(hexC(col)).setDisplaySize(w,h).setAlpha(a).setDepth(depth+.5);(list||V.rm).push(g);return g};
 
 /* wrapping parallax strip: a few copies of one 2048px texture slid along (no per-frame texture uploads) */
 function strip(key,y,depth,add){const n=Math.ceil(W/SW)+1,list=[];for(let k=0;k<n;k++)list.push(add(SC.add.image(k*SW,y,key).setOrigin(0).setScrollFactor(0).setDepth(depth)));return list}
-function stripAt(list,px,y){const off=((px%SW)+SW)%SW;list.forEach((im,k)=>{im.x=Math.round(-off+k*SW);im.y=y})}
+function stripAt(list,px,y){const off=((px%SW)+SW)%SW;y+=list.oy||0;list.forEach((im,k)=>{im.x=Math.round(-off+k*SW);im.y=y})}
 /* repeat a texture over a rectangle with plain images (cropped at the edges) */
 function tiles(x,y,w,h,key,tw,th,depth,a){for(let ty=0;ty<h;ty+=th)for(let tx=0;tx<w;tx+=tw){const cw=Math.min(tw,w-tx),ch=Math.min(th,h-ty),im=SC.add.image(x+tx,y+ty,key).setOrigin(0).setDepth(depth);
     if(cw<tw||ch<th)im.setCrop(0,0,cw,ch);if(a!=null)im.setAlpha(a);V.rm.push(im)}}
@@ -23,13 +23,13 @@ function buildBG(a){vKill(V.bg);const s=SC,L=LV[a],t=L.theme,A=AMB[t],r=rng(L.le
   V.ships=[];for(let i=0;i<5;i++){const sh=add(s.add.image(0,0,'ship_'+t).setScrollFactor(0).setDepth(D.skyfx)),gl=add(s.add.image(0,0,'glow').setScrollFactor(0).setDepth(D.skyfx).setBlendMode('ADD').setTint(hexN(L.glow)));
     sh.d={x:r()*3000,y:90+r()*360,v:(60+r()*140)*(r()<.5?-1:1),sc:.4+r()*.6,s:r(),gl};sh.setScale(sh.d.sc*Math.sign(sh.d.v),sh.d.sc);gl.setDisplaySize(80*sh.d.sc,32*sh.d.sc).setAlpha(.7);V.ships.push(sh)}
   V.search=[];if(A.search)for(let i=0;i<3;i++){const b=add(s.add.image(W*(.2+i*.3),GY-40,'beam').setOrigin(.5,0).setScrollFactor(0).setDepth(D.skyfx).setBlendMode('ADD').setTint(hexN(A.search)).setAlpha(.16));b.setDisplaySize(150,GY*1.25);b.ph=i*2.1;V.search.push(b)}
-  V.far=strip('far_'+t,0,D.far,add);
+  const TT=THEMED[t];V.far=strip('far_'+t,0,D.far,add);V.far.oy=TT.farTop||0;
   V.fog=add(s.add.image(0,GY-340,'fog_'+t).setOrigin(0).setScrollFactor(0).setDepth(D.fog).setDisplaySize(W,340));
-  V.mid=strip('mid_'+t,0,D.mid,add);V.fgb=strip('fgb_'+t,H-300,D.fg,add);V.fgt=strip('fgt_'+t,0,D.fg,add);
+  V.mid=strip('mid_'+t,0,D.mid,add);V.mid.oy=TT.midTop||0;V.fgb=strip('fgb_'+t,H-300,D.fg,add);V.fgt=strip('fgt_'+t,0,D.fg,add);
   buildWeather(a);gradeFor(a)}
 
 /* weather and floating motes: GPU particle emitters pinned to the screen */
-function buildWeather(a){const s=SC,L=LV[a],t=L.theme,A=AMB[t],w=A.weather,add=o=>{V.bg.push(o);return o},lo=FX.quality==='low';V.splash=null;V.fogs=[];
+function buildWeather(a){const s=SC,L=LV[a],t=L.theme,A=AMB[t],w=A.weather,add=o=>{V.bg.push(o);return o},lo=PQ()<1;V.splash=null;V.fogs=[];
   const zone=()=>({type:'random',source:new Phaser.Geom.Rectangle(-300,-140,W+700,60)});
   if(w==='rain'){add(s.add.particles(0,0,'streak',{emitZone:zone(),speedY:{min:1300,max:1750},speedX:A.heavy?-260:-120,lifespan:950,quantity:A.heavy?(lo?2:4):(lo?1:2),frequency:16,
       scaleX:.45,scaleY:{min:.5,max:1},alpha:A.heavy?.34:.24,rotate:A.heavy?9.8:4.6,tint:A.heavy?0xbed2ff:0xbedcd2}).setScrollFactor(0).setDepth(D.weather));
@@ -48,7 +48,7 @@ function buildWeather(a){const s=SC,L=LV[a],t=L.theme,A=AMB[t],w=A.weather,add=o
   if(A.fog){const r=rng(9);for(let i=0;i<7;i++){const f=add(s.add.image(0,0,'glow').setScrollFactor(0).setDepth(D.weather).setBlendMode('ADD').setTint(hexN(A.fog)));f.d={x:r()*3200,y:GY-60-r()*160,w:380+r()*420,v:10+r()*25};f.setDisplaySize(f.d.w*2,f.d.w*.4).setAlpha(.06+r()*.05);V.fogs.push(f)}}}
 
 /* ---- the room itself ---- */
-function emissive(x,y,e,sf,depth){const g=SC.add.image(x,y,'glow').setBlendMode('ADD').setTint(hexN(e.col)).setDepth(depth);g.setDisplaySize(e.r*2,(e.ry||e.r)*2);g.e=e;g.bx=x;g.by=y;g.sf=sf;
+function emissive(x,y,e,sf,depth){const g=SC.add.image(x,y,'glow').setBlendMode('ADD').setTint(hexN(e.col)).setDepth(depth+(sf===1?0:.5));g.setDisplaySize(e.r*2,(e.ry||e.r)*2);g.e=e;g.bx=x;g.by=y;g.sf=sf;
   if(sf!==1)g.setScrollFactor(sf,.05);V.rm.push(g);(sf===1?V.ems:V.wems).push(g);return g}
 V.room=function(o){vKill(V.rm);V.lamps=[];V.ems=[];V.wems=[];V.doors=[];V.fans=[];V.signs=[];V.cols=[];V.gateV=[];V.cageV=[];V.lift=null;V.shrine=null;V.station=null;V.conv=null;
   if(V.bgA!==o.a||V.bgW!==W)buildBG(o.a);
@@ -70,9 +70,9 @@ V.room=function(o){vKill(V.rm);V.lamps=[];V.ems=[];V.wems=[];V.doors=[];V.fans=[
   for(const l of o.lamps){const alarm=l.k==='alarm',col=alarm?'#ff3d2a':P.acc2,c=hexN(col);
     add(s.add.rectangle(l.x,l.y0,4,l.y-l.y0,ink).setOrigin(.5,0).setDepth(D.lamps));add(s.add.image(l.x,l.y,'lamp_'+t).setOrigin(.5,0).setDepth(D.lamps));
     const o2={l,col};if(!alarm){o2.bulb=add(s.add.rectangle(l.x,l.y+26,56,6,0xfff6dc).setOrigin(.5,0).setDepth(D.lamps));
-      o2.cone=add(s.add.image(l.x,l.y+30,'cone').setOrigin(.5,0).setBlendMode('ADD').setTint(c).setDepth(D.lamps).setAlpha(.22));o2.cone.setDisplaySize(380,l.fy-(l.y+30));
+      o2.cone=add(s.add.image(l.x,l.y+30,'cone').setOrigin(.5,0).setBlendMode('ADD').setTint(c).setDepth(D.lamps+.5).setAlpha(.22));o2.cone.setDisplaySize(380,l.fy-(l.y+30));
       o2.pool=glowImg(l.x,l.fy+6,420,52,col,.35,D.lamps);o2.gl=glowImg(l.x,l.y+30,140,140,col,.8,D.lamps);if(A.weather==='rain')o2.wet=glowImg(l.x,l.fy+60,80,240,col,.25,D.solids+.2)}
-    else{o2.bulb=add(s.add.circle(l.x,l.y+30,12,0x5a1a14).setDepth(D.lamps));o2.beam=add(s.add.image(l.x,l.y+30,'beam').setOrigin(.5,0).setBlendMode('ADD').setTint(c).setDepth(D.lamps).setAlpha(.38).setVisible(false));
+    else{o2.bulb=add(s.add.circle(l.x,l.y+30,12,0x5a1a14).setDepth(D.lamps));o2.beam=add(s.add.image(l.x,l.y+30,'beam').setOrigin(.5,0).setBlendMode('ADD').setTint(c).setDepth(D.lamps+.5).setAlpha(.38).setVisible(false));
       o2.beam.setDisplaySize(200,(l.fy-l.y)*1.15);o2.gl=glowImg(l.x,l.y+30,120,120,col,.9,D.lamps).setVisible(false)}
     V.lamps.push(o2)}
   /* steam vent grates */
@@ -80,7 +80,7 @@ V.room=function(o){vKill(V.rm);V.lamps=[];V.ems=[];V.wems=[];V.doors=[];V.fans=[
   /* floors, ledges and walls */
   for(const sd of o.solids){if(sd.k==='floor'||sd.k==='ledge'){const h=Math.min(sd.h,200);tiles(Math.max(sd.x,-200),sd.y,Math.min(sd.w,RW+400),h,'gt_'+t,512,200,D.solids);
       if(sd.h>200)add(s.add.rectangle(sd.x,sd.y+200,sd.w,sd.h-200,ink).setOrigin(0).setDepth(D.solids));
-      add(s.add.rectangle(sd.x,sd.y-1,sd.w,3,gl,.45).setOrigin(0).setBlendMode('ADD').setDepth(D.solids+.1));
+      add(s.add.rectangle(Math.max(sd.x,-200),sd.y-1,Math.min(sd.w,RW+400),3,gl,.45).setOrigin(0).setBlendMode('ADD').setDepth(D.solids+.5));
       if(sd.k==='ledge')add(s.add.rectangle(sd.x,sd.y+sd.h-6,sd.w,6,ink).setOrigin(0).setDepth(D.solids))}
     else{const y0=Math.max(sd.y,-300),h2=sd.y+sd.h-y0;tiles(sd.x,y0,sd.w,Math.min(h2,RH+300-y0),'wp_'+t,512,512,D.solids);add(s.add.rectangle(sd.x,sd.y,sd.w,sd.h,0,.35).setOrigin(0).setDepth(D.solids));
       if(sd.k==='wall')add(s.add.rectangle(sd.x<0?sd.x+sd.w-3:sd.x,sd.y,3,sd.h,gl,.35).setOrigin(0).setDepth(D.solids));else add(s.add.rectangle(sd.x,sd.y+sd.h-3,sd.w,3,gl,.35).setOrigin(0).setDepth(D.solids))}}
@@ -94,7 +94,7 @@ V.room=function(o){vKill(V.rm);V.lamps=[];V.ems=[];V.wems=[];V.doors=[];V.fans=[
     const h=add(s.add.image(bx+13,y-300,'hatch').setOrigin(.5,0).setDepth(D.doors).setDisplaySize(32,300));const g=glowImg(bx+13,y-150,180,300,'#3d8bff',.45,D.doors);V.doors.push({d,h,g,bx,y,op:0})}
   /* elevator */
   if(o.lift){const l=o.lift,x=l.x;add(s.add.image(x,FY+4,'lift_'+t).setOrigin(.5,1).setDepth(D.fixtures));
-    add(s.add.image(x,FY-26,'vgrad').setOrigin(.5,1).setDisplaySize(180,394).setBlendMode('ADD').setTint(0x7fd8ff).setAlpha(.35).setDepth(D.fixtures));glowImg(x,FY-20,280,60,'#7fd8ff',.5,D.fixtures);
+    add(s.add.image(x,FY-26,'vgrad').setOrigin(.5,1).setDisplaySize(180,394).setBlendMode('ADD').setTint(0x7fd8ff).setAlpha(.35).setDepth(D.fixtures+.5));glowImg(x,FY-20,280,60,'#7fd8ff',.5,D.fixtures);
     add(s.add.text(x,FY-450,(l.dir>0?'▼ ':'▲ ')+'ELEVATOR · '+LV[ROOMS[l.to].a].name.toUpperCase(),{fontFamily:FU,fontStyle:'700',fontSize:'26px',color:'#bff0ff'}).setOrigin(.5,1).setDepth(D.light+1));
     V.lift={bar:add(s.add.rectangle(x-80,FY-430,160,6,0x7fd8ff,.85).setOrigin(0,.5).setDepth(D.fixtures))}}
   /* ability shrine */
@@ -103,28 +103,32 @@ V.room=function(o){vKill(V.rm);V.lamps=[];V.ems=[];V.wems=[];V.doors=[];V.fans=[
       arcs:[0,1,2].map(i=>add(s.add.image(sh.x,GY-150,'arc').setTint(hexN(Ab.col)).setScale((28+i*10)/28).setDepth(D.fixtures))),ab:sh.ab,x:sh.x}}
   /* save station */
   const st=o.station;if(st){add(s.add.image(st.x,GY,'station_'+t).setOrigin(.5,1).setDepth(D.fixtures));
-    V.station={col:add(s.add.image(st.x,GY-26,'vgrad').setOrigin(.5,1).setDisplaySize(88,188).setBlendMode('ADD').setTint(0x7dffb0).setDepth(D.fixtures)),
+    V.station={col:add(s.add.image(st.x,GY-26,'vgrad').setOrigin(.5,1).setDisplaySize(88,188).setBlendMode('ADD').setTint(0x7dffb0).setDepth(D.fixtures+.5)),
       gl:glowImg(st.x,GY-30,180,40,'#7dffb0',.4,D.fixtures)};add(s.add.text(st.x,GY-244,'SAVE',{fontFamily:FU,fontStyle:'700',fontSize:'20px',color:'#7dffb0'}).setOrigin(.5,1).setDepth(D.light+1))}
   /* ability gates */
   o.gates.forEach(g=>{if(g.broken)return;const x0=g.x-g.w/2,list=[],a2=q=>{list.push(q);return q};
     if(g.kind==='crack'){a2(s.add.image(x0,g.top,'g_crack_'+t).setOrigin(0).setDepth(D.fixtures));for(let y=g.top+120;y<GY;y+=210)a2(glowImg(x0+g.w*.45,y+40,60,60,'#ffd27a',.35,D.fixtures,list))}
     else if(g.kind==='ledge'){a2(s.add.image(x0,g.top,'g_ledge_'+t).setOrigin(0).setDepth(D.fixtures));a2(glowImg(g.x,g.top,120,120,'#7fe9ff',.4,D.fixtures,list))}
-    else if(g.kind==='laser'){g.beams=[];a2(s.add.rectangle(x0-10,90,g.w+20,GY-180,0xff281e,.18).setOrigin(0).setBlendMode('ADD').setDepth(D.fixtures));
-      for(let i=0;i<5;i++)g.beams.push(a2(s.add.rectangle(x0+4+i*(g.w-8)/4,90,6,GY-180,Phaser.Display.Color.GetColor(255,70+i*25,60+i*10)).setOrigin(.5,0).setBlendMode('ADD').setDepth(D.fixtures)));
-      g.scan=a2(s.add.rectangle(x0-10,90,g.w+20,4,0xffc8b4,.7).setOrigin(0).setBlendMode('ADD').setDepth(D.fixtures));
+    else if(g.kind==='laser'){g.beams=[];a2(s.add.rectangle(x0-10,90,g.w+20,GY-180,0xff281e,.18).setOrigin(0).setBlendMode('ADD').setDepth(D.fixtures+.5));
+      for(let i=0;i<5;i++)g.beams.push(a2(s.add.rectangle(x0+4+i*(g.w-8)/4,90,6,GY-180,Phaser.Display.Color.GetColor(255,70+i*25,60+i*10)).setOrigin(.5,0).setBlendMode('ADD').setDepth(D.fixtures+.5)));
+      g.scan=a2(s.add.rectangle(x0-10,90,g.w+20,4,0xffc8b4,.7).setOrigin(0).setBlendMode('ADD').setDepth(D.fixtures+.5));
       for(const ey of[0,GY-90])a2(s.add.image(x0-24,ey,'g_lcap_'+t).setOrigin(0).setDepth(D.fixtures));a2(glowImg(g.x,GY/2,360,GY*.84,'#ff3d3d',.45,D.fixtures,list))}
     else if(g.kind==='blast'){a2(s.add.image(x0,0,'g_blast_'+t).setOrigin(0).setDepth(D.fixtures));g.lamps=[];for(let y=120;y<GY;y+=160)g.lamps.push(a2(glowImg(g.x,y+8,52,52,'#ff3d2a',.7,D.fixtures,list)));
       a2(s.add.image(g.plate,GY,'g_plate_'+t).setOrigin(.5,1).setDepth(D.fixtures));g.pg=a2(glowImg(g.plate,GY-8,140,32,'#ffb347',.5,D.fixtures,list))}
     else{g.img=a2(s.add.image(x0-20,0,'g_crystal_'+t).setOrigin(0).setDepth(D.fixtures));g.cg=a2(glowImg(g.x,GY/2,280,GY*.9,'#ff5ad8',.35,D.fixtures,list))}
     for(const q of list)if(V.rm.indexOf(q)<0)V.rm.push(q);V.gateV.push({g,list})});
   o.cages.forEach(c=>{if(c.broken)return;const x0=c.x-70,y0=GY-170,list=[],a2=q=>{list.push(q);V.rm.push(q);return q};
-    if(c.kind==='laser'){c.beams=[];for(let i=0;i<6;i++)c.beams.push(a2(s.add.rectangle(x0+10+i*24,y0,4,170,0xff463c,.5).setOrigin(0).setBlendMode('ADD').setDepth(D.fixtures)));a2(s.add.image(c.x,y0,'c_lcap_'+t).setOrigin(.5,1).setDepth(D.fixtures))}
+    if(c.kind==='laser'){c.beams=[];for(let i=0;i<6;i++)c.beams.push(a2(s.add.rectangle(x0+10+i*24,y0,4,170,0xff463c,.5).setOrigin(0).setBlendMode('ADD').setDepth(D.fixtures+.5)));a2(s.add.image(c.x,y0,'c_lcap_'+t).setOrigin(.5,1).setDepth(D.fixtures))}
     else if(c.kind==='crack')a2(s.add.image(c.x,GY,'c_crack_'+t).setOrigin(.5,1).setDepth(D.fixtures));
     else if(c.kind==='slam'){a2(s.add.image(c.x,GY,'c_slam_'+t).setOrigin(.5,1).setDepth(D.fixtures));a2(glowImg(c.x,y0+34,80,80,'#ffb347',.5,D.fixtures,[]))}
     else a2(s.add.image(c.x,GY,'c_plasma_'+t).setOrigin(.5,1).setDepth(D.fixtures));V.cageV.push({c,list})});
   /* braced columns that sweep past in front */
   x=1800;const cspan=RW*1.55+W;while(x<cspan){V.cols.push(add(s.add.image(x,0,'fgcol_'+t).setOrigin(0).setScrollFactor(1.55,0).setDepth(D.fg).setAlpha(.85)));x+=3000+r()*1800}
+  /* static room objects outside the view are skipped by the camera (cameraFilter), so the renderer never touches them */
+  V.cull=[];for(const q of V.rm){if(!q.getBounds||q.type==='Graphics'||q.scrollFactorX!==1)continue;const b=q.getBounds();V.cull.push(q,b.x,b.y,b.right,b.bottom)}
   if(V.lastT&&V.lastT!==t)freeTheme(V.lastT);V.lastT=t};
+function cullRoom(){const C=V.cull;if(!C)return;const id=SC.cameras.main.id,x0=cam-160,x1=cam+W+160,y0=camY-160,y1=camY+H+160;
+  for(let i=0;i<C.length;i+=5){const o=C[i];if(C[i+3]>x0&&C[i+1]<x1&&C[i+4]>y0&&C[i+2]<y1)o.cameraFilter&=~id;else o.cameraFilter|=id}}
 function C_dirty(){}
 
 /* ---- per-frame updates for the backdrop and the room ---- */
@@ -139,7 +143,7 @@ function bgUpdate(dt){if(V.bgW!==W){buildBG(G.lv);if(ROOM)V.room(ROOM)}const L=L
   for(const f of V.fogs)f.setPosition(((f.d.x-cam*.9-lvT*f.d.v)%3400+3400)%3400-500,f.d.y-camY*.9);
   if(V.splash&&ROOM&&FY>camY&&FY<camY+H+50&&Math.random()<.8)for(let i=0;i<(AMB[L.theme].heavy?3:1);i++)V.splash.emitParticleAt(cam+Math.random()*W,FY-2);
   if(V.conv)V.conv.x=-((lvT*120)%48)}
-function roomUpdate(dt){if(!ROOM)return;const o=ROOM,P=PAL[LV[G.lv].theme];
+function roomUpdate(dt){if(!ROOM)return;const o=ROOM,P=PAL[LV[G.lv].theme];cullRoom();
   for(const f of V.fans)f.rotation+=dt*5;
   for(const g of V.ems){const e=g.e,p=e.blink?(Math.sin(lvT*3+g.bx*.01+e.x)>-.3?1:.25):(.8+.2*Math.sin(lvT*2+e.y));g.setAlpha(e.a*p);lightW(g.bx,g.by,e.r*2.4+40,Math.min(1,e.a*1.3*p))}
   for(const g of V.wems){const e=g.e,p=e.blink?(Math.sin(lvT*3+g.bx*.01+e.x)>-.3?1:.25):(.8+.2*Math.sin(lvT*2+e.y));g.setAlpha(e.a*p);const sx=g.bx-cam*.62;if(sx>-100&&sx<W+100)lightS(sx,g.by-camY*.05,e.r*1.8,e.a*p)}

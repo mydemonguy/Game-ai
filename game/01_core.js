@@ -8,7 +8,7 @@ const RSAFE=touchy?500:200;
 /* the stage is always 1080 tall; its width follows the screen (1920 on 16:9, 2400 on a 20:9 phone) so there are no black bars */
 function calcW(){const w=innerWidth,h=innerHeight;return w>=h?Math.round(Math.min(2560,Math.max(1440,H*w/h))):1920}
 W=calcW();
-function fit(){const nw=calcW();if(nw!==W){W=nw;if(window.GAME)GAME.scale.setGameSize(W,H)}
+function fit(){const nw=calcW();if(nw!==W){W=nw;if(window.GAME)GAME.scale.setGameSize(Math.round(W*RS),Math.round(H*RS))}
   document.getElementById('rotate').hidden=!(touchy&&innerHeight>innerWidth*1.05)}
 addEventListener('resize',fit);
 

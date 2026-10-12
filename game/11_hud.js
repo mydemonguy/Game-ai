@@ -9,7 +9,7 @@ const tx=(o,v)=>{v=String(v);if(o._s!==v){o._s=v;o.setText(v)}return o},cc=(o,c)
 class HudScene extends Phaser.Scene{
   constructor(){super({key:'hud',active:false})}
   create(){const s=this,T=(x,y,str,size,col,font,weight)=>s.add.text(x,y,str,{fontFamily:font||FU,fontStyle:weight||'700',fontSize:size+'px',color:col||'#ece7ff'});HU.s=s;
-    HU.vig=s.add.image(0,0,'vig').setOrigin(0).setTint(0xff003c).setAlpha(0);
+    HU.vg=s.add.image(0,0,'vig').setOrigin(0).setTint(0x000000).setAlpha(.38);HU.vig=s.add.image(0,0,'vig').setOrigin(0).setTint(0xff003c).setAlpha(0);
     HU.flash=s.add.rectangle(0,0,W,H,0xff2850,0).setOrigin(0);
     HU.g=s.add.graphics();
     HU.name=T(48,34,'TYKO',30,'#ece7ff',FD,'700');HU.hp=T(58,80,'',20,'#ffffff',FU,'600');HU.ae=T(48,142,'',20,'#9d97bd');
@@ -25,11 +25,11 @@ class HudScene extends Phaser.Scene{
     HU.dim=s.add.rectangle(0,0,W,H,0x05040c,0).setOrigin(0);HU.fade=s.add.rectangle(0,0,W,H,0x000000,0).setOrigin(0);
     HU.fps=T(10,H-26,'',16,'#9d97bd').setVisible(false);
     this.scale.on('resize',()=>this.layout());this.layout()}
-  layout(){this.cameras.main.setSize(W,H);HU.vig.setDisplaySize(W,H);HU.flash.setSize(W,H);HU.dim.setSize(W,H);HU.fade.setSize(W,H);HU.bnBack.setSize(W,190)}
+  layout(){this.cameras.main.setSize(this.scale.width,this.scale.height).setOrigin(0,0).setZoom(RS);HU.vg.setDisplaySize(W,H);HU.vig.setDisplaySize(W,H);HU.flash.setSize(W,H);HU.dim.setSize(W,H);HU.fade.setSize(W,H);HU.bnBack.setSize(W,190)}
   update(){hudUpdate()}}
-function hudUpdate(){const g=HU.g,p=pl,play=G.state!=='menu'&&!!p&&!!ROOM;g.clear();HU.map.clear();
+function hudUpdate(){const g=HU.g,p=pl,play=G.state!=='menu'&&!!p&&!!ROOM;g.clear();HU.map.clear();HU.vg.setVisible(FX.quality==='high');
   const all=[HU.name,HU.hp,HU.ae,HU.ch,HU.score,HU.scl,HU.mapDot,HU.combo,HU.combo2,HU.combo3,HU.bossN,HU.hint,HU.seal,...HU.eggs,...HU.buffs.map(b=>b.i),...HU.buffs.map(b=>b.t)];
-  if(!play){for(const o of all)o.setVisible(false);HU.vig.setAlpha(0);HU.flash.fillAlpha=0;HU.dim.fillAlpha=0;HU.bnBack.setVisible(false);HU.bn.setVisible(false);HU.bs.setVisible(false);HU.fade.fillAlpha=TRANS.on?transA():0;return}
+  if(!play){for(const o of all)o.setVisible(false);HU.vig.setAlpha(0);shA(HU.flash,0);shA(HU.dim,0);HU.bnBack.setVisible(false);HU.bn.setVisible(false);HU.bs.setVisible(false);shA(HU.fade,TRANS.on?transA():0);return}
   for(const o of[HU.name,HU.hp,HU.ae,HU.ch,HU.score,HU.scl])o.setVisible(true);
   const L=LV[G.lv],bar=(x,y,w,h,v,c1,c2)=>{g.fillStyle(0x05040c,.7);g.fillRect(x-3,y-3,w+6,h+6);const f=clamp(v,0,1);g.fillGradientStyle(c1,c2,c1,c2,1);g.fillRect(x,y,w*f,h);g.lineStyle(2,0xece7ff,.35);g.strokeRect(x-3,y-3,w+6,h+6)};
   bar(48,80,480,24,p.hp/p.max,0xff3d6e,0xff8a4c);tx(HU.hp,Math.ceil(p.hp)+' / '+p.max);
@@ -51,9 +51,11 @@ function hudUpdate(){const g=HU.g,p=pl,play=G.state!=='menu'&&!!p&&!!ROOM;g.clea
     if(HU.bnFor!==banner){HU.bnFor=banner;HU.bn.setShadow(0,0,L.glow,30,false,true);tx(HU.bn,banner.t.toUpperCase());tx(HU.bs,(banner.sub||'').toUpperCase());cc(HU.bs,L.glow)}
     HU.bn.setVisible(true).setX(W/2).setAlpha(a);HU.bs.setVisible(!!banner.sub).setX(W/2).setAlpha(a)}
   else{HU.bnBack.setVisible(false);HU.bn.setVisible(false);HU.bs.setVisible(false)}
-  HU.flash.fillAlpha=flashT>0?Math.min(1,flashT*1.4):0;
+  shA(HU.flash,flashT>0?Math.min(1,flashT*1.4):0);
   HU.vig.setAlpha(p.hp<30?.55+Math.sin(lvT*5)*.2:0);
-  HU.dim.fillAlpha=G.state==='over'?.5:0;HU.fade.fillAlpha=TRANS.on?transA():0}
+  shA(HU.dim,G.state==='over'?.5:0);shA(HU.fade,TRANS.on?transA():0)}
+/* full-screen rectangles are hidden instead of drawn at zero alpha */
+function shA(r,a){r.setVisible(a>.003);if(a>.003)r.fillAlpha=a}
 function transA(){const d=TRANS.act&&TRANS.act.lift?.7:.22;return TRANS.phase===0?Math.min(1,TRANS.t/d):Math.max(0,1-TRANS.t/.25)}
 /* minimap: explored rooms of this world on a 7x3 grid around Tyko */
 function drawMinimap(){const g=HU.map,cs=40,cols=7,rows=3,mw=cols*cs,mh=rows*cs,mx=W/2-mw/2,my=56,o=ROOM;

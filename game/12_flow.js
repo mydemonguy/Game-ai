@@ -38,9 +38,9 @@ function toTitle(){G.state='menu';if(G.paused&&SC)SC.scene.resume();G.paused=fal
     btns:[...(sv?[['Continue',()=>{goFull();continueGame()}]]:[]),[sv?'New game':'Begin the Saga',sv?confirmNew:beginSaga,!!sv],['Controls',controls,1],['Settings',soundCard,1]]})}
 function confirmNew(){showCard({ey:'New game',h:'Start over?',b:'<p>This erases your map, abilities and energy tanks.</p>',btns:[['Start over',beginSaga],['Back',toTitle,1]]})}
 function soundCard(back){back=typeof back==='function'?back:toTitle;const sl=(id,lab,v)=>`<label class="vol"><span>${lab}</span><input type="range" id="${id}" min="0" max="100" value="${Math.round(v*100)}"></label>`;
-  const gq=`<label class="vol"><span>Graphics</span><span class="gq"><button class="btn ${FX.quality==='high'?'':'alt'}" data-q="high">High</button> <button class="btn ${FX.quality==='low'?'':'alt'}" data-q="low">Fast</button></span></label>`;
-  showCard({ey:'Settings',h:'Sound & graphics',extra:`<div class="vols">${sl('vMus','Music',VOL.music)}${sl('vSfx','Effects',VOL.sfx)}${gq}</div>`,b:'<p>High adds bloom glow and more particles. Fast is smoother on older phones.</p>',btns:[['Done',back]]});
-  card.querySelectorAll('[data-q]').forEach(b=>b.addEventListener('click',()=>{setQuality(b.dataset.q);sfxUI(1);soundCard(back)}));
+  const gq=`<label class="vol"><span>Graphics</span><span class="gq">${['high','balanced','fast'].map(q=>`<button class="btn ${FX.quality===q?'':'alt'}" data-q="${q}">${QUAL[q].name}</button>`).join(' ')}</span></label>`;
+  showCard({ey:'Settings',h:'Sound & graphics',extra:`<div class="vols">${sl('vMus','Music',VOL.music)}${sl('vSfx','Effects',VOL.sfx)}${gq}</div>`,b:'<p>High draws at full screen resolution. Balanced and Fast draw fewer pixels and stretch them up, for a steadier frame rate. The game steps down by itself if it starts to stutter.</p>',btns:[['Done',back]]});
+  card.querySelectorAll('[data-q]').forEach(b=>b.addEventListener('click',()=>{setQuality(b.dataset.q);PERF.drops=2;sfxUI(1);soundCard(back)}));
   const m=document.getElementById('vMus'),f=document.getElementById('vSfx');
   m.addEventListener('input',()=>{initAudio();setVol('music',m.value/100)});f.addEventListener('input',()=>{initAudio();setVol('sfx',f.value/100)});f.addEventListener('change',()=>sfxPick('coin'))}
 function controls(back){back=typeof back==='function'?back:toTitle;showCard({ey:'How to play',h:'Controls',extra:`<div class="keys">
@@ -66,7 +66,7 @@ function goFull(){try{const d=document.documentElement;if(touchy&&!document.full
 addEventListener('blur',()=>{if(G.state==='play'&&!G.paused)togglePause()});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(G.state==='play'&&!G.paused)togglePause();audioSuspend(1)}else audioSuspend(0)});
 const SPB=document.querySelector('.act.sp'),DSB=document.querySelector('.act.dsh');let padE=-1,padC=-1;
-function syncPad(){if(pad.hidden||!pl)return;const e=Math.round(pl.en)/100,c=Math.round(Math.max(0,Math.min(1,1-pl.dashCD/.75))*40)/40;
+function syncPad(){if(pad.hidden||!pl)return;const e=Math.round(pl.en/5)/20,c=Math.round(Math.max(0,Math.min(1,1-pl.dashCD/.75))*10)/10;
   if(e!==padE){padE=e;SPB.style.setProperty('--e',e);SPB.classList.toggle('ready',pl.en>=50)}
   if(c!==padC){padC=c;DSB.style.setProperty('--c',c)}}
 
@@ -94,11 +94,15 @@ function gameUpdate(dt){if(banner){banner.life-=dt;if(banner.life<=0)banner=null
 /* title backdrop: a world's gate corridor with the camera drifting along it */
 function menuBG(){clearEnemies();killAllViews();pl=null;shots=[];hz=[];picks=[];boxes=[];boss=null;banner=null;shake=0;lock=false;
   const a=Math.min(unlocked,6)-1;enterRoom(a+'-6',{x:300,y:GY});cam=0;camY=0}
-function render(dt){const c=SC.cameras.main,sx=shake?(Math.random()-.5)*shake*2:0,sy=shake?(Math.random()-.5)*shake*2:0;
-  c.setScroll(Math.round(cam+sx),Math.round(camY+sy));bgUpdate(dt);roomUpdate(dt);actorsUpdate();drawSkyFx();applyLighting()}
-const PERF={t:0,n:0,acc:0,done:0};
-function perfWatch(dt){if(PERF.done||G.state!=='play'||FX.quality!=='high')return;PERF.t+=dt;if(PERF.t<3)return;PERF.n++;PERF.acc+=dt;
-  if(PERF.acc>=4){const fps=PERF.n/PERF.acc;PERF.done=1;if(fps<44){setQuality('low');showBanner('Graphics: Fast','Switched for a smoother frame rate',2.2)}}}
+function render(dt){const c=SC.cameras.main,sx=shake?(Math.random()-.5)*shake*2:0,sy=shake?(Math.random()-.5)*shake*2:0,k=1+FX.kz;
+  /* the camera zoom maps the 1080-tall stage onto the (smaller) canvas; a kick zooms in a little more around the centre */
+  if(c.zoom!==RS*k)c.setZoom(RS*k);c.setScroll(Math.round(cam+sx+W/2*(1-1/k)),Math.round(camY+sy+H/2*(1-1/k)));bgUpdate(dt);roomUpdate(dt);actorsUpdate();drawSkyFx();applyLighting()}
+/* adaptive quality: if play runs below ~50 fps for a few seconds, step the render scale down (High -> Balanced -> Fast) */
+const PERF={t0:0,n:0,warm:0,drops:0};
+function perfWatch(dt){if(G.state!=='play'||TRANS.on||FX.quality==='fast'||PERF.drops>=2){PERF.t0=0;return}const now=performance.now();
+  if(!PERF.t0){PERF.t0=now;PERF.n=0;return}PERF.n++;const el=(now-PERF.t0)/1000;if(el<4)return;const fps=PERF.n/el;PERF.t0=0;
+  if(PERF.warm<1){PERF.warm++;return}
+  if(fps<50){PERF.drops++;const q=FX.quality==='high'?'balanced':'fast';setQuality(q);showBanner('Graphics: '+QUAL[q].name,'Adjusted for a smoother frame rate',2)}}
 
 /* ---------- Phaser scenes ---------- */
 class BootScene extends Phaser.Scene{
@@ -109,7 +113,7 @@ class BootScene extends Phaser.Scene{
 class GameScene extends Phaser.Scene{
   constructor(){super('game')}
   create(){physInit(this);fxInit(this);mkPlayerView();ovInit();
-    this.scale.on('resize',()=>{this.cameras.main.setSize(W,H);fxResize()});
+    const lay=()=>{this.cameras.main.setSize(this.scale.width,this.scale.height).setOrigin(0,0).setZoom(RS);fxResize()};this.scale.on('resize',lay);lay();
     toTitle();initAudio()}
   update(time,delta){const dt=Math.min(.033,Math.max(0,delta/1000));
     try{if(G.state==='play'&&!G.paused){gameUpdate(dt);perfWatch(dt)}
@@ -121,10 +125,10 @@ class GameScene extends Phaser.Scene{
 const _hudUpd=HudScene.prototype.update;HudScene.prototype.update=function(){_hudUpd.call(this);musicTick();syncPad()};
 
 fit();
-window.GAME=new Phaser.Game({type:/[?window.GAME=new Phaser.Game({type:Phaser.AUTO,]canvas/.test(location.search)?Phaser.CANVAS:Phaser.AUTO,parent:'stage',width:W,height:H,backgroundColor:'#07060f',banner:false,
+window.GAME=new Phaser.Game({type:/[?&]canvas/.test(location.search)?Phaser.CANVAS:Phaser.AUTO,parent:'stage',width:Math.round(W*RS),height:Math.round(H*RS),backgroundColor:'#07060f',banner:false,
   scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},
   physics:{default:'arcade',arcade:{gravity:{y:3300},debug:false,isPaused:true}},
-  render:{antialias:true,powerPreference:'high-performance',batchSize:4096},
+  render:{antialias:true,antialiasGL:false,powerPreference:'high-performance',batchSize:4096,clearBeforeRender:true},fps:{target:60,limit:95,smoothStep:true},
   input:{keyboard:false,mouse:false,touch:false,gamepad:false},audio:{noAudio:true},
   scene:[BootScene,GameScene,HudScene]});
 document.addEventListener('pointerdown',()=>initAudio(),true);addEventListener('keydown',()=>initAudio(),true);
