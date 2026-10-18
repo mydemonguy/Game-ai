@@ -48,7 +48,10 @@ const ownArm=i=>i>=0&&!!(META.guards&&META.guards[ARMS[i].g]);
 function cycleArm(){const own=ARMS.map((_,i)=>i).filter(ownArm);if(!own.length)return;const i=own.indexOf(META.arm);META.arm=own[(i+1)%own.length];padArms();if(!smp('weapon_change',{v:.5}))sfxUI(1);
   if(pl)ftext(pl.x,pl.y-220,ARMS[META.arm].name,ARMS[META.arm].col)}
 function fireArm(p){const i=META.arm;if(!ownArm(i))return;const A=ARMS[i];if(p.en<A.cost){if(hintT<=0){hintT=1;ftext(p.x,p.y-210,'Not enough Aether','#9d97bd')}return}
-  p.en-=A.cost;p.armCD=.35;if(i!==1)smp('blaster',{v:.32,rate:[1.25,1,.8,.7,1.4][i]});const x=p.x+p.face*60,y=p.y-100,f=p.face,dmg=pdm();muzzle(x,y,A.col);buzz(15);
+  p.en-=A.cost;p.armCD=.35;if(i!==1)smp('blaster',{v:.32,rate:[1.25,1,.8,.7,1.4][i]});
+  if(NET.role==='client'&&coop()&&i!==1&&i!==2){NET.ev.push({t:'arm',i});muzzle(p.x+p.face*60,p.y-100,A.col);buzz(15);return}armFx(p,i)}
+/* a Guardian Arm's effect (on the host this also runs for Kiro's shots) */
+function armFx(p,i){const A=ARMS[i],x=p.x+p.face*60,y=p.y-100,f=p.face,dmg=pdm();muzzle(x,y,A.col);buzz(15);
   if(i===0){for(let k=0;k<3;k++)shots.push({x,y,vx:f*(620+k*230),vy:-520-k*60,g:1500,r:14,dmg:12*dmg,friend:true,life:1.6,col:A.col,hit:new Set()});sfxEnemy('shot',{x,y,type:'d'})}
   else if(i===1){p.aegis=3;sfxBlock();ring(p.x+f*110,p.y-95,A.col,150)}
   else if(i===2){p.dashT=.32;p.thr=1;p.thrHit=new Set();p.inv=Math.max(p.inv,.4);p.atk=0;sfxDash();shake=6}

@@ -50,11 +50,11 @@ function showCard(o){card.innerHTML=(o.ey?`<p class="eyebrow">${o.ey}</p>`:'')+(
 function story(pages,i,done){const p=pages[i];showCard({ey:p.ey,h:p.h,b:p.b,btns:[[i<pages.length-1?'Continue':'Onward',()=>i<pages.length-1?story(pages,i+1,done):done()],...(i<pages.length-1?[['Skip',done,1]]:[])]})}
 function beginSaga(hard){goFull();hard=hard===true;story(STORY.intro,0,()=>{G.state='card';showCard({ey:LV[0].ch+(hard?' · Rift Mode':''),h:LV[0].name,b:STORY.brief[0],btns:[['Fight',()=>newRun(hard)]]})})}
 const startNew=()=>riftOpen?modeCard():beginSaga(false);
-function toTitle(){rushEnd();G.state='menu';if(G.paused&&SC)SC.scene.resume();G.paused=false;TRANS.on=0;padShow(false);menuBG();musicFor();
+function toTitle(){rushEnd();if(NET.conn||NET.role)netLeave(true);G.state='menu';if(G.paused&&SC)SC.scene.resume();G.paused=false;TRANS.on=0;padShow(false);menuBG();musicFor();
   const sv=META.save,found=Object.keys(META.map).length,tot=Object.keys(ROOMS).length;
   showCard({ey:'A Starblood Saga · Six Worlds',h:'Aetherfall',big:1,tag:'One small dino. One stolen sky. One very big Rift.',
     b:(sv?`<p>Save: ${LV[ROOMS[sv.room].a].name}${META.hard?' · <b style="color:#ff4a6a">Rift Mode</b>':''} · Map ${Math.round(found/tot*100)}% · Items ${completion()}%</p>`:'')+(G.best?`<p>Best score ${G.best.toLocaleString()}</p>`:''),
-    btns:[...(sv?[['Continue',()=>{goFull();continueGame()}]]:[]),[sv?'New game':'Begin the Saga',sv?confirmNew:startNew,!!sv],...(riftOpen?[['Boss Rush',startRush,1]]:[]),['Controls',controls,1],['Settings',soundCard,1]]})}
+    btns:[...(sv?[['Continue',()=>{goFull();continueGame()}]]:[]),[sv?'New game':'Begin the Saga',sv?confirmNew:startNew,!!sv],...(riftOpen?[['Boss Rush',startRush,1]]:[]),['Co-op',coopCard,1],['Controls',controls,1],['Settings',soundCard,1]]})}
 function confirmNew(){showCard({ey:'New game',h:'Start over?',b:'<p>This erases your map, abilities and energy tanks.</p>',btns:[['Start over',startNew],['Back',toTitle,1]]})}
 function soundCard(back){back=typeof back==='function'?back:toTitle;const sl=(id,lab,v)=>`<label class="vol"><span>${lab}</span><input type="range" id="${id}" min="0" max="100" value="${Math.round(v*100)}"></label>`;
   const gq=`<label class="vol"><span>Graphics</span><span class="gq">${['high','balanced','fast'].map(q=>`<button class="btn ${FX.quality===q?'':'alt'}" data-q="${q}">${QUAL[q].name}</button>`).join(' ')}</span></label>`;
@@ -76,7 +76,8 @@ function gameOver(){if(G.rush){G.state='over';if(pl){pl.dead=1;pl.deadT=0}padSho
 function victory(){if(G.rush)return rushDone();G.state='card';padShow(false);clearInput();G.score+=Math.round(pl.hp*50);unlocked=6;saveProg();const wasRift=!!META.hard,newRift=!riftOpen;riftOpen=true;try{localStorage.setItem('aetherfall_rift','1')}catch(e){}G.best=Math.max(G.best,G.score);musicPlay('victory');
   const found=Object.keys(META.map).length,tot=Object.keys(ROOMS).length;
   story(STORY.ending,0,()=>showCard({ey:'The saga is complete',h:'Ithra Is Free',big:0,b:`<p>Final score <b>${G.score.toLocaleString()}</b></p><p>Items collected <b>${completion()}%</b> · Map explored ${Math.round(found/tot*100)}%</p><p>Energy tanks ${tankCount()}/12 · Eggs ${[0,1,2,3,4,5].filter(a=>META.items['egg'+a]).length}/6 · Aether cores ${coreCount()}/5 · Guardians ${[0,1,2,3,4].filter(a=>gDone(a)).length}/5</p>${wasRift?'<p><b style="color:#ff4a6a">Rift Mode conquered.</b> The Starblood would be proud.</p>':newRift?'<p><b style="color:#ff4a6a">Rift Mode unlocked.</b> Start a new game to face a harder Ithra.</p>':''}<p>Thank you for playing Aetherfall.</p>`,btns:[['Play again',()=>modeCard(toTitle)],['Title',toTitle,1]]}))}
-function pauseCard(){const canTravel=ROOM&&ROOM.kind==='save'&&!lock&&saveRooms().length>1;
+function pauseCard(){if(NET.role==='client'&&coop())return showCard({ey:'Co-op · Kiro',h:'Paused',b:'<p>The game keeps running on the host phone while you are here.</p>',btns:[['Resume',togglePause],...(coop()?[['End co-op',()=>{netLeave(true);togglePause();showBanner('Co-op ended','',1.6)},1]]:[]),['Settings',()=>soundCard(pauseCard),1],['Leave co-op',()=>{G.paused=false;SC.scene.resume();netLeave()},1]]});
+  const canTravel=ROOM&&ROOM.kind==='save'&&!lock&&saveRooms().length>1;
   showCard({ey:LV[G.lv].ch+' · '+LV[G.lv].name+(META.hard?' · Rift Mode':''),h:'Paused',extra:mapCardHTML()+`<p class="tag" style="margin:.4em 0">Map ${Object.keys(META.map).length}/${Object.keys(ROOMS).length} rooms · Items ${completion()}%</p>`+abilitiesHTML(),
   btns:[['Resume',togglePause],...(canTravel?[['Fast travel',travelCard]]:[]),...(ROOM&&ROOM.kind==='save'&&!G.rush?[["Claude's Exchange",()=>exchangeCard()]]:[]),...(loreCount()||META.sable?[['Archive',archiveCard,1]]:[]),['Settings',()=>soundCard(pauseCard),1],['Controls',()=>controls(pauseCard),1],['Quit to title',toTitle,1]]});paintMapCard()}
 function togglePause(){if(G.state!=='play'||!SC)return;G.paused=!G.paused;clearInput();
@@ -96,11 +97,11 @@ const clearP=()=>{for(const k in P)delete P[k]};
 function gameUpdate(dt){if(banner){banner.life-=dt;if(banner.life<=0)banner=null}
   if(TRANS.on){updTrans(dt);clearP();return}
   if(hitStop>0){hitStop-=dt;return}
-  lvT+=dt;rushTick(dt);shake*=Math.pow(.015,dt);if(shake<.4)shake=0;flashT-=dt;
+  lvT+=dt;rushTick(dt);hostProxyTick(dt);shake*=Math.pow(.015,dt);if(shake<.4)shake=0;flashT-=dt;
   updPlayerPre(dt);
   for(const q of spawnQ)q.t-=dt;while(spawnQ.length&&spawnQ[0].t<=0){const q=spawnQ.shift();spawnEnemy(q.type,q.side)}
-  for(const e of en){updEnemy(e,dt);ePush(e)}
-  if(boss&&!boss.dead)updBoss(boss,dt);
+  for(const e of en){const t=nearestPl(e.x,e.y);if(t===pl)updEnemy(e,dt);else withPl(t,()=>updEnemy(e,dt));ePush(e)}   /* robots chase whichever dino is closer */
+  if(boss&&!boss.dead){const t=nearestPl(boss.x,boss.y);if(t===pl)updBoss(boss,dt);else withPl(t,()=>updBoss(boss,dt))}
   plPush();physStep(dt);plPull();
   for(const e of en)ePull(e);
   updPlayerPost(dt);if(G.state!=='play')return;
@@ -137,10 +138,10 @@ class GameScene extends Phaser.Scene{
     const lay=()=>{this.cameras.main.setSize(this.scale.width,this.scale.height).setOrigin(0,0).setZoom(RS);fxResize()};this.scale.on('resize',lay);lay();
     toTitle();initAudio()}
   update(time,delta){const dt=Math.min(.033,Math.max(0,delta/1000));
-    try{if(G.state==='play'&&!G.paused){gameUpdate(dt);perfWatch(dt)}
+    try{if(G.state==='play'&&!G.paused){if(NET.role==='client'&&coop())clientUpdate(dt);else gameUpdate(dt);perfWatch(dt)}
       else if(G.state==='over'){lvT+=dt;shake*=.9;if(pl)pl.deadT=(pl.deadT||0)+dt;if(pl){plPush();physStep(dt);plPull()}}
       else if(G.state==='menu'||G.state==='card'){lvT+=dt;if(G.state==='menu'){cam+=dt*70;if(cam>Math.max(0,RW-W))cam=0}}
-      render(dt)}catch(err){console.error(err)}}}
+      netHostTick(dt);render(dt)}catch(err){console.error(err)}}}
 
 /* music scheduling and the touch-pad rings run from the HUD scene, which keeps ticking while the game scene is paused */
 const _hudUpd=HudScene.prototype.update;HudScene.prototype.update=function(){_hudUpd.call(this);musicTick();syncPad()};

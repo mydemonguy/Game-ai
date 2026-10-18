@@ -14,7 +14,7 @@ class HudScene extends Phaser.Scene{
     HU.g=s.add.graphics();
     HU.name=T(48,34,'TYKO',30,'#ece7ff',FD,'700');HU.hp=T(58,80,'',20,'#ffffff',FU,'600');HU.ae=T(48,142,'',20,'#9d97bd');
     HU.eggs=[];for(let i=0;i<5;i++)HU.eggs.push(s.add.image(0,51,'pk_egg').setScale(.42).setVisible(false));
-    HU.ch=T(0,30,'',18,'#9d97bd',FU,'600').setOrigin(.5,0);HU.rift=T(528,143,'◆ RIFT MODE',18,'#ff4a6a',FU,'700').setOrigin(1,0).setVisible(false);
+    HU.ch=T(0,30,'',18,'#9d97bd',FU,'600').setOrigin(.5,0);HU.p2n=T(560,56,'',20,'#ffc49a',FU,'700').setVisible(false);HU.rift=T(528,143,'◆ RIFT MODE',18,'#ff4a6a',FU,'700').setOrigin(1,0).setVisible(false);
     HU.score=T(0,34,'',34,'#ece7ff').setOrigin(1,0);HU.scl=T(0,74,'SCORE',16,'#9d97bd',FU,'600').setOrigin(1,0);HU.dust=T(0,96,'',22,'#ffd27a',FU,'700').setOrigin(1,0);
     HU.map=s.add.graphics();HU.mapDot=s.add.circle(0,0,5,0xffffff);
     HU.combo=T(0,270,'',64,'#ffd27a',FD,'900').setOrigin(1,0);HU.combo2=T(0,340,'HIT COMBO',24,'#ece7ff').setOrigin(1,0);HU.combo3=T(0,368,'',24,'#5ce1ff').setOrigin(1,0);
@@ -28,14 +28,16 @@ class HudScene extends Phaser.Scene{
   layout(){this.cameras.main.setSize(this.scale.width,this.scale.height).setOrigin(0,0).setZoom(RS);HU.vg.setDisplaySize(W,H);HU.vig.setDisplaySize(W,H);HU.flash.setSize(W,H);HU.dim.setSize(W,H);HU.fade.setSize(W,H);HU.bnBack.setSize(W,190)}
   update(){hudUpdate()}}
 function hudUpdate(){const g=HU.g,p=pl,play=G.state!=='menu'&&!!p&&!!ROOM;g.clear();HU.map.clear();HU.vg.setVisible(FX.quality==='high');
-  const all=[HU.dust,HU.rift,HU.name,HU.hp,HU.ae,HU.ch,HU.score,HU.scl,HU.mapDot,HU.combo,HU.combo2,HU.combo3,HU.bossN,HU.hint,HU.seal,...HU.eggs,...HU.buffs.map(b=>b.i),...HU.buffs.map(b=>b.t)];
+  const all=[HU.p2n,HU.dust,HU.rift,HU.name,HU.hp,HU.ae,HU.ch,HU.score,HU.scl,HU.mapDot,HU.combo,HU.combo2,HU.combo3,HU.bossN,HU.hint,HU.seal,...HU.eggs,...HU.buffs.map(b=>b.i),...HU.buffs.map(b=>b.t)];
   if(!play){for(const o of all)o.setVisible(false);HU.vig.setAlpha(0);shA(HU.flash,0);shA(HU.dim,0);HU.bnBack.setVisible(false);HU.bn.setVisible(false);HU.bs.setVisible(false);shA(HU.fade,TRANS.on?transA():0);return}
   for(const o of[HU.name,HU.hp,HU.ae,HU.ch,HU.score,HU.scl])o.setVisible(true);
   const L=LV[G.lv],bar=(x,y,w,h,v,c1,c2)=>{g.fillStyle(0x05040c,.7);g.fillRect(x-3,y-3,w+6,h+6);const f=clamp(v,0,1);g.fillGradientStyle(c1,c2,c1,c2,1);g.fillRect(x,y,w*f,h);g.lineStyle(2,0xece7ff,.35);g.strokeRect(x-3,y-3,w+6,h+6)};
   bar(48,80,480,24,p.hp/p.max,0xff3d6e,0xff8a4c);tx(HU.hp,Math.ceil(p.hp)+' / '+p.max);
   bar(48,116,480,14,p.en/100,0x3a7cff,0x5ce1ff);g.fillStyle(0xece7ff,.8);g.fillRect(48+239,113,2,20);
   const rdy=p.en>=50&&hasAb('roar');tx(HU.ae,rdy?'✦ STARBURST READY':'AETHER');cc(HU.ae,rdy?'#5ce1ff':'#9d97bd');
-  if(G.rush){tx(HU.rift,'◆ BOSS RUSH  '+fmtT(G.rush.t));HU.rift.setVisible(true)}else{tx(HU.rift,'◆ RIFT MODE');HU.rift.setVisible(!!META.hard)}const nx=48+HU.name.width+30;HU.eggs.forEach((e,i)=>e.setVisible(i<G.lives).setX(nx+i*34));
+  if(G.rush){tx(HU.rift,'◆ BOSS RUSH  '+fmtT(G.rush.t));HU.rift.setVisible(true)}else{tx(HU.rift,'◆ RIFT MODE');HU.rift.setVisible(!!META.hard)}{const c=coop(),o=c?(NET.role==='client'?pRemote:pl2):null;tx(HU.name,c&&NET.role==='client'?'KIRO':'TYKO');HU.p2n.setVisible(!!o);
+    if(o){tx(HU.p2n,(NET.role==='client'?'P1 · TYKO':'P2 · KIRO')+(o.dead?'  ·  DOWN':''));cc(HU.p2n,NET.role==='client'?'#a8ffd0':'#ffc49a');bar(560,84,220,14,(o.hp||0)/(o.max||100),NET.role==='client'?0x3dff9a:0xff8a4c,NET.role==='client'?0xa8ffd0:0xffd08a)}}
+  const nx=48+HU.name.width+30;HU.eggs.forEach((e,i)=>e.setVisible(i<G.lives).setX(nx+i*34));
   tx(HU.ch,L.ch.toUpperCase()+'  ·  '+L.name.toUpperCase()).setX(W/2);
   tx(HU.score,G.score.toLocaleString()).setX(W-(touchy?210:48));HU.scl.setX(W-(touchy?210:48));tx(HU.dust,'◆ '+(META.dust||0)).setVisible(true).setX(W-(touchy?210:48));
   if(!(boss&&!boss.dead))drawMinimap();else HU.mapDot.setVisible(false);

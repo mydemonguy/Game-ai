@@ -2,6 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- short vibrations when you hit, get hit or press a button -->
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- same-Wi-Fi co-op: a direct connection between two phones, plus finding the host on the local network -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <application
         android:label="Aetherfall"
         android:icon="@mipmap/ic_launcher"

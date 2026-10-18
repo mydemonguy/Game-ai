@@ -50,6 +50,8 @@ Arsenal (2.5): ideas from the all-time great side-scrollers, rebuilt for Aetherf
 
 Story (2.7): every shrine guardian and Malakar now speaks before the fight, with portraits and replies from Lyra and Tyko (once per save; skipped in Boss Rush). **Sable of the Ninth Talon**, a raptor knight and former captain of the Starblood's Talon Guard, was hollowed by Malakar until Tyko's roar broke his hold on her. She bursts into your first lockdown arena in Chapter II, then sometimes joins later lockdowns, fighting beside you with a plasma glaive. She also turns up for the final battle. Her story is in Pause → Archive.
 
+Co-op (2.8): two phones on the same Wi-Fi can play together. On the title screen choose **Co-op**. One phone picks **Host a game** (it uses that phone's save) and the other picks **Join a game**; it finds the host by itself, or you can type the address the host shows. Player 2 is **Kiro**, an orange Starblood hatchling. Robots and bosses go after whoever is closest, both players' hits count, pickups go to whoever grabs them (and to the host's save), and a fallen Kiro gets back up near Tyko after a few seconds. The host phone runs the world and streams it to the other phone; each phone moves its own dino locally so the controls stay instant. No internet or accounts needed: the phones talk directly over the local network (TCP port 47890, discovery on UDP 47891).
+
 ## Changing the game
 
 The game's source is in `game/`: `shell.html` (page, menus and touch controls), `vendor/` (Phaser 3.90, arcade build) and the numbered scripts:

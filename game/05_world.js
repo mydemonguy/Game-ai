@@ -21,7 +21,7 @@ const GATEHINT={crack:'Cracked wall. A dash could smash it.',ledge:'Too high to 
   blast:'Blast door. The plate needs a Ground Slam.',crystal:'Void crystal. Claws bounce off it.',secret:'This plating sounds hollow…'};
 const freshMeta=()=>({ab:{},tanks:{},items:{},gates:{},cleared:{},map:{},areas:{},save:null,boss:0,guards:{},mapped:{},dust:0,relics:{},eq:[],arm:-1,met:{}});
 let META=freshMeta();try{const m=JSON.parse(localStorage.getItem('aetherfall_world')||'null');if(m&&m.ab&&m.map)META=Object.assign(freshMeta(),m)}catch(e){}
-function saveMeta(){if(G.rush)return;try{localStorage.setItem('aetherfall_world',JSON.stringify(META))}catch(e){}}
+function saveMeta(){if(G.rush||NET.role==='client')return;try{localStorage.setItem('aetherfall_world',JSON.stringify(META))}catch(e){}}
 const hasAb=id=>!!META.ab[id];
 const tankCount=()=>Object.keys(META.tanks).length;
 const maxHP=()=>100+15*tankCount();

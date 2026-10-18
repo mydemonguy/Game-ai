@@ -83,13 +83,16 @@ function updBossView(b,v){const y=b.y+b.dy+b.hov,p3=b.phase===3,cr=p3?0xff1f4f:0
   v.flI.setPosition(b.x,y-170).setAlpha(b.flash>0?b.flash*3:0);if(st==='dashWind'||st==='slashWind')warnMark(b.x,y-420);lightW(b.x,y-240,420,.95)}
 
 /* ---- Tyko ---- */
-const DV={};
-function mkPlayerView(){const M=DINO,s=SC;DV.spr=s.add.sprite(0,0,'dino',0).setOrigin(M.ax/M.fw,M.ay/M.fh).setDepth(D.player);DV.sh=shadowObj();
-  DV.aura=gI(0,0,220,'#5ce1ff',0).setDepth(D.player-.1);DV.slash=s.add.graphics().setDepth(D.player+.1).setBlendMode('ADD');
-  DV.aegis=s.add.container(0,0,[gI(0,0,1,'#ffb030',.55).setDisplaySize(90,280),s.add.rectangle(0,0,20,220,0xffcc4a,.5).setStrokeStyle(4,0xfff0b0,1),s.add.rectangle(0,0,8,190,0xfff6d0,.8)]).setDepth(D.player+.2).setVisible(false);
-  DV.shield=s.add.circle(0,0,118).setStrokeStyle(5,0x8fc8ff,.55).setFillStyle(0x8fc8ff,.12).setDepth(D.player+.2).setBlendMode('ADD').setVisible(false);
-  DV.ghosts=[];for(let i=0;i<8;i++)DV.ghosts.push(s.add.sprite(0,0,'dino',0).setOrigin(M.ax/M.fw,M.ay/M.fh).setDepth(D.player-.2).setTintFill(0xa58cff).setVisible(false));DV.gi=0}
-V.ghost=p=>{const g=DV.ghosts[DV.gi++%DV.ghosts.length];if(!g)return;g.setFrame(DINO.anims.run[2]).setPosition(p.x,p.y).setScale(p.face,1).setVisible(true).setAlpha(.45);SC.tweens.killTweensOf(g);SC.tweens.add({targets:g,alpha:0,duration:220,onComplete:()=>g.setVisible(false)})};
+const DV={},DV2={};
+/* Tyko (DV) and, in co-op, Kiro (DV2: the same sprite sheet tinted orange) */
+function mkDV(V0,tint,name){const M=DINO,s=SC;V0.tint=tint;V0.spr=s.add.sprite(0,0,'dino',0).setOrigin(M.ax/M.fw,M.ay/M.fh).setDepth(D.player);V0.sh=shadowObj();
+  V0.aura=gI(0,0,220,'#5ce1ff',0).setDepth(D.player-.1);V0.slash=s.add.graphics().setDepth(D.player+.1).setBlendMode('ADD');
+  V0.aegis=s.add.container(0,0,[gI(0,0,1,'#ffb030',.55).setDisplaySize(90,280),s.add.rectangle(0,0,20,220,0xffcc4a,.5).setStrokeStyle(4,0xfff0b0,1),s.add.rectangle(0,0,8,190,0xfff6d0,.8)]).setDepth(D.player+.2).setVisible(false);
+  V0.shield=s.add.circle(0,0,118).setStrokeStyle(5,0x8fc8ff,.55).setFillStyle(0x8fc8ff,.12).setDepth(D.player+.2).setBlendMode('ADD').setVisible(false);
+  V0.tag=s.add.text(0,0,name,{fontFamily:FU,fontStyle:'700',fontSize:'22px',color:tint?'#ffc49a':'#a8ffd0',stroke:INK,strokeThickness:5}).setOrigin(.5,1).setDepth(D.texts).setVisible(false);
+  V0.ghosts=[];for(let i=0;i<8;i++)V0.ghosts.push(s.add.sprite(0,0,'dino',0).setOrigin(M.ax/M.fw,M.ay/M.fh).setDepth(D.player-.2).setTintFill(tint?0xff9a5a:0xa58cff).setVisible(false));V0.gi=0}
+function mkPlayerView(){mkDV(DV,0,'P1 · TYKO');mkDV(DV2,0xffb07a,'P2 · KIRO')}
+V.ghost=p=>{const V0=p.p2?DV2:DV,g=V0.ghosts[V0.gi++%V0.ghosts.length];if(!g)return;g.setFrame(DINO.anims.run[2]).setPosition(p.x,p.y).setScale(p.face,1).setVisible(true).setAlpha(.45);SC.tweens.killTweensOf(g);SC.tweens.add({targets:g,alpha:0,duration:220,onComplete:()=>g.setVisible(false)})};
 function dinoFrame(p){const A=DINO.anims;
   if(p.dead)return A.dead[Math.min(7,Math.floor((p.deadT||0)*12))];
   if(p.atk>0){const q=1-p.atk/.22;return p.combo===3?A.jump[q<.3?2:10]:A.jump[q<.25?3:5]}
@@ -98,16 +101,18 @@ function dinoFrame(p){const A=DINO.anims;
   if(p.landT>0)return A.jump[9+Math.min(2,Math.floor((.15-p.landT)/.05))];
   const v=Math.abs(p.vx);if(v>330)return A.run[Math.floor(p.run*1.1)%8];if(v>40)return A.walk[Math.floor(p.run*1.6)%10];return A.idle[Math.floor(lvT*12)%10]}
 const CLAW=[[-1.25,1.0],[1.05,-1.2],[-1.6,1.4]];
-function updPlayerView(){const p=pl,vis=!!p&&G.state!=='menu';for(const k of['spr','sh','aura','slash'])DV[k].setVisible(vis);if(!vis){DV.shield.setVisible(false);DV.aegis.setVisible(false);return}
-  const lunge=p.atk>0?1+.06*Math.sin((1-p.atk/.22)*Math.PI):1,sx=(1+p.squash*.1)*lunge,sy=1-p.squash*.1;
-  DV.spr.setFrame(dinoFrame(p)).setPosition(p.x,p.y).setScale(p.face*sx,sy).setAlpha(p.inv>0&&p.dashT<=0&&!p.dead&&Math.floor(p.inv*22)%2?.45:1);
-  if(p.fury>0)DV.spr.setTint(0xffd0a0);else DV.spr.clearTint();
-  const sup=p.sup||FY;setShadow(DV.sh,p.x,60*(1-Math.min(.5,(sup-p.y)/600)),sup);
-  DV.aura.setPosition(p.x+p.face*10,p.y-100).setAlpha(p.en>=50&&!p.dead?.18+.08*Math.sin(lvT*5):0);
-  DV.aegis.setVisible(p.aegis>0&&!p.dead).setPosition(p.x+p.face*110,p.y-95).setAlpha(p.aegis<.6&&Math.floor(lvT*16)%2?.3:1);if(p.aegis>0)lightW(p.x+p.face*110,p.y-95,200,.6);
-  DV.shield.setVisible(p.shield>0&&!p.dead).setPosition(p.x,p.y-95).setRadius(118+Math.sin(lvT*6)*4);
-  const g=DV.slash;g.clear();if(p.atk>0){const c=CLAW[(p.combo||1)-1],q=Math.min(1,(1-p.atk/.22)*1.5),a=p.atk/.22,big=p.combo===3,col=big?0xc9a8ff:0x7fe9ff;
-    const a0=c[0],a1=c[0]+(c[1]-c[0])*q;let lo=Math.min(a0,a1),hi=Math.max(a0,a1);if(p.face<0){const l2=Math.PI-hi,h2=Math.PI-lo;lo=l2;hi=h2}
+function updPlayerView(){const c=coop(),P1=NET.role==='client'&&c?pRemote:pl,P2=c?(NET.role==='client'?pl:pl2):null;drawDino(P1,DV,c);drawDino(P2,DV2,c)}
+function drawDino(p,V0,c){const vis=!!p&&G.state!=='menu'&&p.x!=null;for(const k of['spr','sh','aura','slash'])V0[k].setVisible(vis);V0.tag.setVisible(vis&&c);if(!vis){V0.shield.setVisible(false);V0.aegis.setVisible(false);return}
+  const lunge=p.atk>0?1+.06*Math.sin((1-p.atk/.22)*Math.PI):1,sx=(1+(p.squash||0)*.1)*lunge,sy=1-(p.squash||0)*.1;
+  V0.spr.setFrame(dinoFrame(p)).setPosition(p.x,p.y).setScale(p.face*sx,sy).setAlpha(p.inv>0&&p.dashT<=0&&!p.dead&&Math.floor(p.inv*22)%2?.45:1);
+  if(p.fury>0)V0.spr.setTint(0xffd0a0);else if(V0.tint)V0.spr.setTint(V0.tint);else V0.spr.clearTint();
+  if(c)V0.tag.setPosition(p.x,p.y-205);
+  const sup=p.sup||FY;setShadow(V0.sh,p.x,60*(1-Math.min(.5,(sup-p.y)/600)),sup);
+  V0.aura.setPosition(p.x+p.face*10,p.y-100).setAlpha(p.en>=50&&!p.dead?.18+.08*Math.sin(lvT*5):0);
+  V0.aegis.setVisible(p.aegis>0&&!p.dead).setPosition(p.x+p.face*110,p.y-95).setAlpha(p.aegis<.6&&Math.floor(lvT*16)%2?.3:1);if(p.aegis>0)lightW(p.x+p.face*110,p.y-95,200,.6);
+  V0.shield.setVisible(p.shield>0&&!p.dead).setPosition(p.x,p.y-95).setRadius(118+Math.sin(lvT*6)*4);
+  const g=V0.slash;g.clear();if(p.atk>0){const cl=CLAW[(p.combo||1)-1],q=Math.min(1,(1-p.atk/.22)*1.5),a=p.atk/.22,big=p.combo===3,col=big?0xc9a8ff:0x7fe9ff;
+    const a0=cl[0],a1=cl[0]+(cl[1]-cl[0])*q;let lo=Math.min(a0,a1),hi=Math.max(a0,a1);if(p.face<0){const l2=Math.PI-hi,h2=Math.PI-lo;lo=l2;hi=h2}
     const cx=p.x+p.face*(big?90:70),cy=p.y-100;g.lineStyle(big?80:56,col,.2*a+.06);g.beginPath();g.arc(cx,cy,big?150:120,lo,hi);g.strokePath();
     for(let i=0;i<3;i++){g.lineStyle(big?9:7,i===1?0xffffff:col,.75*a);g.beginPath();g.arc(cx,cy,(big?120:96)+i*(big?22:17),lo,hi);g.strokePath()}}
   if(!p.dead)lightW(p.x,p.y-100,280,.7)}
