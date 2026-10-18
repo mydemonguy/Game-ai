@@ -1432,6 +1432,11 @@ func _test_init() -> void:
 func _test_tick(dt: float) -> void:
 	TEST.frame += 1
 	var f: int = TEST.frame
+	if f % 300 == 0 and lock and TEST.get("diag", true):
+		var L = []
+		for e in en:
+			L.append("%s@%d,%d%s" % [e.type, e.x, e.y, "" if e.body == null else "b"])
+		print("LOCK f=", f, " room=", ROOM.id, " wave=", ROOM.arena.i if ROOM.arena != null else -1, " cam=", int(cam), " pl=", int(pl.x), " en=", L, " q=", spawnQ.size())
 	if TEST.get("pausef", 0) == f:
 		togglePause()
 	if TEST.get("god", false) and pl != null:
@@ -1456,7 +1461,7 @@ func _test_tick(dt: float) -> void:
 			img.save_png(s[1])
 			print("shot ", s[1], " state=", G.state, " room=", ROOM.id if ROOM else "-", " hp=", pl.hp if pl else -1, " en=", en.size(), " boss=", boss != null)
 	if TEST.quit > 0 and f >= TEST.quit:
-		print("TEST END net=", NETR, " p2=", [int(pl2.x), int(pl2.y), pl2.ch, pl2.hp] if pl2 != null else null, " me=", [int(pl.x), int(pl.y), pl.ch] if pl != null else null, " frame=", f, " state=", G.state, " room=", ROOM.id if ROOM else "-", " hp=", pl.hp if pl else -1, " score=", G.score, " dust=", META.dust, " lives=", G.lives, " map=", META.map.size(), " guards=", META.guards.keys(), " ab=", META.ab.keys())
+		print("TEST END net=", NETR, " p2=", [int(pl2.x), int(pl2.y), pl2.ch, pl2.hp] if pl2 != null else null, " me=", [int(pl.x), int(pl.y), pl.ch] if pl != null else null, " frame=", f, " state=", G.state, " room=", ROOM.id if ROOM else "-", " hp=", pl.hp if pl else -1, " score=", G.score, " dust=", META.dust, " lives=", G.lives, " map=", META.map.size(), " guards=", META.guards.keys(), " ab=", META.ab.keys(), " cleared=", META.cleared.keys())
 		get_tree().quit()
 
 func _bot(f: int) -> void:

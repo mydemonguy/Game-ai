@@ -30,17 +30,22 @@ func move_body(b: Dictionary, dt: float, use_plats: bool, is_player: bool):
 	var gates_start = rects.size()
 	for g in GATEB:
 		rects.append(g[0])
-	# horizontal
+	# horizontal: push out on the side the body came from (or the shallow side if it was already overlapping)
+	var ox: float = b.x
 	b.x += b.vx * dt
 	for i in rects.size():
 		var r: Rect2 = rects[i]
 		if _ov(b.x, b.y, b.w, b.h, r):
-			var pushL: float = (b.x + b.w) - r.position.x
-			var pushR: float = (r.position.x + r.size.x) - b.x
-			if b.vx > 0 or (b.vx == 0 and pushL < pushR):
-				b.x = r.position.x - b.w
+			var rl: float = r.position.x
+			var rr: float = r.position.x + r.size.x
+			if ox + b.w <= rl + 1:
+				b.x = rl - b.w
+			elif ox >= rr - 1:
+				b.x = rr
 			else:
-				b.x = r.position.x + r.size.x
+				var pushL: float = (b.x + b.w) - rl
+				var pushR: float = rr - b.x
+				b.x = rl - b.w if pushL < pushR else rr
 			b.vx = 0.0
 			if i >= gates_start:
 				hitGate = GATEB[i - gates_start][1]
@@ -55,11 +60,14 @@ func move_body(b: Dictionary, dt: float, use_plats: bool, is_player: bool):
 				b.down = true
 			elif b.vy < 0 and oy >= r.position.y + r.size.y - 2:
 				b.y = r.position.y + r.size.y
-			elif b.vy >= 0:
-				b.y = r.position.y - b.h
-				b.down = true
 			else:
-				b.y = r.position.y + r.size.y
+				var pushU: float = (b.y + b.h) - r.position.y
+				var pushD: float = r.position.y + r.size.y - b.y
+				if pushU <= pushD:
+					b.y = r.position.y - b.h
+					b.down = true
+				else:
+					b.y = r.position.y + r.size.y
 			b.vy = 0.0
 			if i >= gates_start:
 				hitGate = GATEB[i - gates_start][1]

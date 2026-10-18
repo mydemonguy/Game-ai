@@ -329,6 +329,7 @@ func spawnEnemy(type: String, side: float, quiet := false):
 			if sgn(e.x - gx) != sgn(pl.x - gx):
 				e.x = pl.x + (-1 if pl.x < gx else 1) * max(200.0, min(520.0, absf(pl.x - gx) - 80))
 		e.x = clampf(e.x, 80, RW - 80)
+	e.x = clampf(e.x, 60 + e.w / 2.0, RW - 60 - e.w / 2.0)
 	if not fly and type != "c":
 		e.body = mk_body(e.x - e.w / 2.0, e.y - e.h, e.w, e.h)
 	en.append(e)
@@ -347,6 +348,15 @@ func ePull(e) -> void:
 	e.x = b.x + e.w / 2.0
 	e.y = b.y + e.h
 	e.vx = b.vx
+	var lo: float = 45 + e.w / 2.0
+	var hi: float = RW - 45 - e.w / 2.0
+	if e.x < lo or e.x > hi or e.y > RH + 200:
+		e.x = clampf(e.x, lo, hi)
+		if e.y > RH + 200:
+			e.y = FY
+		b.x = e.x - e.w / 2.0
+		b.y = e.y - e.h
+		b.vx = 0.0
 	if lock and touchy:
 		var lim = cam + W - RSAFE + 40
 		if e.x < lim:
