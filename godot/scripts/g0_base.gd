@@ -493,6 +493,7 @@ func exchangeCard(_back = null) -> void: pass
 func rushDone() -> void: pass
 func rushFail() -> void: pass
 func padArms() -> void: pass
+func corpse(_t: String, _x: float, _y: float, _f: int) -> void: pass
 func netSend(_k: String, _a: Array) -> void: pass
 func coopCard() -> void: pass
 func netRoomEntered(_x: float, _y: float, _face: int) -> void: pass

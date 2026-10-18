@@ -17,6 +17,7 @@ var TANKS: Array
 var AREAS: Array = []      # per world: list of room ids
 var TEXMETA: Dictionary
 var BOSSES: Dictionary
+var ROBOTS: Dictionary
 var DINO: Dictionary
 var RUSH: Array
 var font_d: Font
@@ -80,6 +81,8 @@ func _ready() -> void:
 	T.WHO["rook"] = {n="ROOK", c="#7fd8ff"}
 	TEXMETA = _json("res://assets/tex/meta.json")
 	BOSSES = _json("res://assets/bosses/bosses.json")
+	ROBOTS = _json("res://assets/robots/robots.json")
+	ETYPES["r"] = {w=80, h=165, hp=36, spd=210, dmg=9, score=150}
 	DINO = _json("res://assets/dino.json")
 	for a in 6:
 		AREAS.append([])
@@ -121,6 +124,12 @@ func boss_tex(key: String) -> Texture2D:
 	var k := "bs_" + key
 	if not _tex.has(k):
 		_tex[k] = load("res://assets/bosses/%s.png" % key)
+	return _tex[k]
+
+func robot_tex(key: String) -> Texture2D:
+	var k = "rb_" + key
+	if not _tex.has(k):
+		_tex[k] = load("res://assets/robots/%s.png" % key)
 	return _tex[k]
 
 func dino_tex() -> Texture2D:

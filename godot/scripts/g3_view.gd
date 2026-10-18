@@ -1428,16 +1428,126 @@ func updTurretV(e, v) -> Dictionary:
 	v.eye.modulate.a = .7 + .3 * sin(lvT * 30) if aim else .3
 	return {bar=y - 70, ly=y, warn=0.0, wg=null, sh=0.0}
 
+# ---------- the Hollowed robot cast: Ronin, Crusher, Trooper and Volt (sprite sheets) ----------
+const ROBOT_OF := {g="ronin", b="crusher", B="crusher", r="trooper", c="volt"}
+const ROBOT_SC := {g=1.15, b=1.05, B=1.3, r=1.15, c=1.15}
+
+func mkRobot(e) -> Dictionary:
+	var key: String = ROBOT_OF[e.type]
+	var M: Dictionary = DB.ROBOTS[key]
+	var s = Sprite2D.new()
+	s.texture = DB.robot_tex(key)
+	s.hframes = int(M.cols)
+	s.vframes = int(ceil(float(s.texture.get_height()) / M.fh))
+	s.centered = false
+	s.offset = -Vector2(M.ax, M.ay)
+	var core = gI(0, -M.h * .55, 70, "#ff4fd8", .0)
+	var root = Cn(0, 0, [s, core])
+	if e.type == "B":
+		s.self_modulate = C("#ffc0b0")
+	return {root=root, spr=s, core=core, key=key, M=M, sc=ROBOT_SC[e.type]}
+
+func _af(M: Dictionary, anim: String, q: float, loop := false) -> int:
+	var A: Array = M.anims.get(anim, M.anims.idle)
+	var n = A.size()
+	var i = int(floor(q * n))
+	i = posmod(i, n) if loop else clampi(i, 0, n - 1)
+	return int(A[i])
+
+func updRobot(e, v) -> Dictionary:
+	var M: Dictionary = v.M
+	var st: String = e.state
+	var h: float = M.h * v.sc
+	var fr: int
+	var moving: bool = absf(e.vx) > 30
+	var walkF = _af(M, "walk", lvT * 1.3 + e.seed, true) if moving else _af(M, "idle", lvT * .9 + e.seed, true)
+	match e.type:
+		"g":
+			if st == "wind":
+				fr = _af(M, "attack", (1 - e.t / .42) * .35)
+			elif st == "swing":
+				fr = _af(M, "attack", .35 + (1 - e.t / .2) * .65)
+			else:
+				fr = walkF
+		"b", "B":
+			if st == "wind":
+				fr = _af(M, "attack", (1 - e.t / (.75 if e.type == "B" else .62)) * .45)
+			elif st == "swing":
+				fr = _af(M, "attack", .45 + (1 - e.t / .2) * .55)
+			elif st == "shoot":
+				fr = _af(M, "shot", 1 - e.t / .6)
+			else:
+				fr = walkF
+		"r":
+			if st == "shoot":
+				fr = _af(M, "shot", lvT * 2.4, true)
+			elif st == "reload":
+				fr = _af(M, "reload", 1 - e.t / 1.0)
+			else:
+				fr = walkF
+		"c":
+			if e.tp > 0:
+				fr = _af(M, "shutdown", 1 - e.tp / .35)
+			elif e.fade > 0:
+				fr = _af(M, "enabling", 1 - e.fade)
+			elif e.get("shotT", 0.0) > 0:
+				fr = _af(M, "shot", 1 - e.shotT / .5)
+			else:
+				fr = _af(M, "idle", lvT * .9 + e.seed, true)
+			v.root.modulate.a = max(.15, e.tp / .35) if e.tp > 0 else 1.0
+		_:
+			fr = walkF
+	if e.flash > .02 and st in ["walk", "idle"] and not (e.type == "c" and (e.tp > 0 or e.fade > 0)):
+		fr = _af(M, "hurt", 1 - e.flash / .14)
+	v.spr.frame = fr
+	v.core.position.y = -M.h * .55
+	v.core.modulate.a = .25 + .12 * sin(lvT * 4 + e.seed)
+	var wind: bool = st == "wind" or (e.type == "r" and st == "shoot" and e.t > .3) or (e.type == "b" and st == "shoot" and e.t > .3)
+	return {warn=e.y - h - 30 if wind else 0.0, wg=[e.x + e.face * 30, e.y - h * .6, "#ff3d6e"] if st == "wind" else null, bar=e.y - h - 16, sh=M.fw * v.sc * .22}
+
+## a destroyed robot plays its fall, then fades: drawn from a small pool
+var CORPSES: Array = []
+
+func corpseView(dt: float) -> void:
+	for c in CORPSES:
+		c.t += dt
+		var M: Dictionary = DB.ROBOTS[c.key]
+		var anim: String = "dead" if M.anims.has("dead") else "shutdown"
+		c.spr.frame = _af(M, anim, min(1.0, c.t / .55))
+		c.root.modulate.a = 1.0 if c.t < 1.1 else max(0.0, 1 - (c.t - 1.1) / .5)
+		if c.t > 1.6:
+			c.root.queue_free()
+	CORPSES = CORPSES.filter(func(c): return c.t <= 1.6)
+
+func corpse(type: String, x: float, y: float, face: int) -> void:
+	_rec(["corpse", type, x, y, face])
+	if not ROBOT_OF.has(type) or CORPSES.size() > 8:
+		return
+	var key: String = ROBOT_OF[type]
+	var M: Dictionary = DB.ROBOTS[key]
+	var s = Sprite2D.new()
+	s.texture = DB.robot_tex(key)
+	s.hframes = int(M.cols)
+	s.vframes = int(ceil(float(s.texture.get_height()) / M.fh))
+	s.centered = false
+	s.offset = -Vector2(M.ax, M.ay)
+	if type == "B":
+		s.self_modulate = C("#ffc0b0")
+	var root = Cn(x, y, [s])
+	var sc: float = ROBOT_SC[type]
+	root.scale = Vector2(face * sc, sc)
+	root.z_index = zi(D.enemies - .2)
+	act_root.add_child(root)
+	CORPSES.append({key=key, spr=s, root=root, t=0.0})
+
 func mkEnemyView(e) -> Dictionary:
 	var v: Dictionary
 	match e.type:
 		"t": v = mkTurret()
-		"g": v = mkClaw()
-		"b": v = mkGorilla()
-		"B": v = mkWalker()
+		"g", "b", "B", "r", "c": v = mkRobot(e)
 		"h": v = mkHound()
 		"d": v = mkDrone()
-		_: v = mkCaster()
+		_: v = mkRobot(e)
 	v.root.z_index = zi(D.drones if e.type == "d" else D.enemies)
 	act_root.add_child(v.root)
 	v.imgs = imgsOf(v.root, [])
@@ -1452,14 +1562,11 @@ func updEnemyView(e, v) -> void:
 	var r: Dictionary
 	match e.type:
 		"t": r = updTurretV(e, v)
-		"g": r = updClaw(e, v)
-		"b": r = updGorilla(e, v)
-		"B": r = updWalker(e, v)
 		"h": r = updHound(e, v)
 		"d": r = updDrone(e, v)
-		_: r = updCaster(e, v)
+		_: r = updRobot(e, v)
 	v.root.position.x = e.x
-	if not e.fly and e.type != "c":
+	if not e.fly:
 		v.root.position.y = e.y
 	v.root.scale = Vector2(e.face * v.sc, v.sc)
 	flashRig(v, e.flash)
@@ -2064,6 +2171,7 @@ func ovUpdate() -> void:
 func actorsUpdate(dt: float) -> void:
 	FRAME += 1
 	BARS = []; MARKS = []; WGL = []
+	corpseView(dt)
 	updPlayerView(dt)
 	sync(en, mkEnemyView, updEnemyView)
 	if boss != null and not boss.dead:

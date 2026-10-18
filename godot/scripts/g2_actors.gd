@@ -308,6 +308,8 @@ func hurtPlayer(d: float, kx: float) -> void:
 
 # ---------- robots ----------
 func spawnEnemy(type: String, side: float, quiet := false):
+	if type == "g" and G.lv >= 1 and randf() < .35:
+		type = "r"   # some Ronin swap for Trooper gunners from the Armory on
 	var T: Dictionary = DB.ETYPES[type]
 	var fly: bool = T.get("fly", false) == true
 	var x: float = cam - 120 if side < 0 else cam + W + 120
@@ -319,7 +321,7 @@ func spawnEnemy(type: String, side: float, quiet := false):
 	var e = {type=type, x=x, y=(FY - 360 + randf() * 130) if fly else FY, w=float(T.w), h=float(T.h), hp=T.hp * dm(), max=T.hp * dm(),
 		vx=0.0, vy=0.0, face=int(-side), state="walk", t=.6 + randf() * .8, flash=0.0, seed=randf() * 10, heavy=T.get("heavy", false) == true,
 		fly=fly, hy=0.0, score=int(T.score), fade=0.0, tp=0.0, hitP=false, body=null, id=_nid(), v=null, dead=false, guard=null, isBoss=false,
-		la=null, wall=0, n=0, fire=0.0, beep=0, inside=0}
+		la=null, wall=0, n=0, fire=0.0, beep=0, inside=0, ct=1.5 + randf() * 2, shotT=0.0}
 	e.hy = e.y
 	if type == "c":
 		e.x = cam + 260 if side < 0 else cam + W - RSAFE - 60
@@ -406,6 +408,7 @@ func damage(e, d: float, kb: float) -> void:
 				killBoss()
 			return
 		e.dead = true
+		corpse(e.type, e.x, e.y, e.face)
 		G.score += e.score * (1 + min(4, int(floor((pl.hits if pl else 0) / 10.0))))
 		addDust(10 if e.type == "B" else 3 if e.heavy else 1)
 		if pl and hasR("siphon"):
@@ -451,6 +454,7 @@ func updEnemy(e, dt: float) -> void:
 			muzzle(e.x, e.y - 35, "#ff8a3a")
 		return
 	if e.type == "c":
+		e.shotT = max(0.0, e.shotT - dt)
 		e.face = int(sgn(dx)) if dx != 0 else 1
 		e.fade = max(0.0, e.fade - dt * 2)
 		e.x += e.vx * dt
@@ -480,6 +484,7 @@ func updEnemy(e, dt: float) -> void:
 				var a: float = a0 + k * .22
 				shots.append(mk_shot(e.x + e.face * 40, e.y - 120, cos(a) * 520, sin(a) * 520, 17, DB.ETYPES.c.dmg * dm(), false, 3, "#b48cff"))
 			sEnemy("shot", e)
+			e.shotT = .5
 			muzzle(e.x + e.face * 60, e.y - 120, "#b48cff")
 		return
 	if e.type == "h":
@@ -507,8 +512,33 @@ func updEnemy(e, dt: float) -> void:
 			if e.t <= 0:
 				e.state = "walk"; e.t = .5 + randf() * .4
 		return
+	if e.type == "r":
+		updTrooper(e, dt, dx, ad)
+		return
 	var T: Dictionary = DB.ETYPES[e.type]
 	var hv: bool = e.type == "b" or e.type == "B"
+	if e.type == "b":
+		e.ct -= dt
+		if e.state == "walk" and ad > 520 and ad < 1500 and absf(pl.y - e.y) < 400 and e.ct <= 0:
+			e.state = "shoot"; e.t = .6; e.n = 1
+			e.ct = 3.2 + randf() * 1.5
+		if e.state == "shoot":
+			e.face = int(sgn(dx)) if dx != 0 else e.face
+			e.vx *= pow(.01, dt)
+			if e.n > 0 and e.t < .3:
+				e.n = 0
+				var x0: float = e.x + e.face * 40
+				var y0: float = e.y - e.h * .95
+				var T0 = .95
+				var tx: float = pl.x + (randf() - .5) * 160
+				var s = mk_shot(x0, y0, (tx - x0) / T0, (FY - 30 - y0) / T0 - .5 * 1500 * T0, 20, 13 * dm(), false, T0 + .4, "#ffb347")
+				s.g = 1500.0
+				shots.append(s)
+				sEnemy("smash", e)
+				muzzle(x0, y0, "#ffb347")
+			if e.t <= 0:
+				e.state = "walk"; e.t = .6
+			return
 	var rng_: float = 240.0 if e.type == "B" else 200.0 if hv else 130.0
 	if e.state == "walk":
 		e.face = int(sgn(dx)) if dx != 0 else 1
@@ -546,6 +576,46 @@ func updEnemy(e, dt: float) -> void:
 			e.t = (1.6 if e.type == "B" else 1.3 if hv else .8) + randf() * .7
 	if e.state != "walk":
 		e.vx *= pow(.05, dt)
+
+## Trooper: keeps its distance, fires a three-round burst, then has to reload (free hits!)
+func updTrooper(e, dt: float, dx: float, ad: float) -> void:
+	if e.state != "shoot":
+		e.face = int(sgn(dx)) if dx != 0 else 1
+	if e.state == "walk":
+		var want = 0.0
+		if ad > 820:
+			want = sgn(dx)
+		elif ad < 420:
+			want = -sgn(dx)
+		e.vx += (want * 230 * (1 + G.lv * .04) - e.vx) * min(1.0, dt * 5)
+		if lock:
+			var lo = cam + 120
+			var hi = cam + W - RSAFE
+			if e.x < lo and e.vx < 0 or e.x > hi and e.vx > 0:
+				e.vx = 0.0
+		if e.t <= 0 and ad < 1400 and absf(pl.y - e.y) < 500:
+			e.state = "shoot"; e.t = .62; e.n = 3; e.fire = .12
+			sEnemy("lock", e)
+	elif e.state == "shoot":
+		e.vx *= pow(.01, dt)
+		e.fire -= dt
+		if e.fire <= 0 and e.n > 0:
+			e.fire = .16
+			e.n -= 1
+			var x0: float = e.x + e.face * 95
+			var y0: float = e.y - e.h * .52
+			var a = atan2(pl.y - 90 - y0, pl.x - x0)
+			a = clampf(a, -.5, .5) if e.face > 0 else (a if absf(a) > PI - .5 else (PI - .5 if a > 0 else -PI + .5))
+			var v = 900.0 + G.lv * 30
+			shots.append(mk_shot(x0, y0, cos(a) * v, sin(a) * v, 12, DB.ETYPES.r.dmg * dm(), false, 2.4, "#7fe9ff"))
+			sEnemy("shot", e)
+			muzzle(x0, y0, "#7fe9ff")
+		if e.t <= 0:
+			e.state = "reload"; e.t = 1.0
+	elif e.state == "reload":
+		e.vx *= pow(.01, dt)
+		if e.t <= 0:
+			e.state = "walk"; e.t = 1.4 + randf() * 1.0
 
 ## wall turret: swivels toward Tyko, paints him with a laser sight, then fires a three-shot burst
 func updTurret(e, dt: float) -> void:
