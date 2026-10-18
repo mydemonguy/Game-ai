@@ -917,17 +917,18 @@ func build_theme() -> void:
 	if fr:
 		fr.fallbacks = [load("res://assets/fonts/symbols-dejavu-bold.ttf"), ThemeDB.fallback_font]
 	THEME.default_font = fr
-	THEME.default_font_size = 34
+	var bs = 42 if touchy else 34
+	THEME.default_font_size = bs
 	THEME.set_font("bold_font", "RichTextLabel", DB.font_u)
 	THEME.set_font("normal_font", "RichTextLabel", fr)
 	THEME.set_font("italics_font", "RichTextLabel", fr)
-	THEME.set_font_size("normal_font_size", "RichTextLabel", 34)
-	THEME.set_font_size("bold_font_size", "RichTextLabel", 34)
-	THEME.set_font_size("italics_font_size", "RichTextLabel", 34)
+	THEME.set_font_size("normal_font_size", "RichTextLabel", bs)
+	THEME.set_font_size("bold_font_size", "RichTextLabel", bs)
+	THEME.set_font_size("italics_font_size", "RichTextLabel", bs)
 	THEME.set_color("default_color", "RichTextLabel", C("#d6d0f2"))
 	THEME.set_constant("line_separation", "RichTextLabel", 6)
 	THEME.set_font("font", "Button", DB.font_u)
-	THEME.set_font_size("font_size", "Button", 32)
+	THEME.set_font_size("font_size", "Button", 40 if touchy else 32)
 	THEME.set_font("font", "Label", DB.font_u)
 	for v in [["Button", "#5ce1ff", Color(92 / 255.0, 225 / 255.0, 1, .12)], ["AltButton", "#b48cff", Color(180 / 255.0, 140 / 255.0, 1, .08)]]:
 		if v[0] == "AltButton":
@@ -1016,8 +1017,7 @@ func showCard(o: Dictionary) -> void:
 		c.queue_free()
 	var wmax: float = min(1700.0, W - 120)
 	if o.has("ey"):
-		var l = labelN(card_box, String(o.ey).to_upper(), 28, "#5ce1ff", DB.font_u6)
-		l.label_settings.font_size = 28
+		var l = labelN(card_box, String(o.ey).to_upper(), 34 if touchy else 28, "#5ce1ff", DB.font_u6)
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var big: bool = o.get("big", false)
 	var h = labelN(card_box, o.h, 150 if big else 76, "#ffffff", DB.font_d9 if big else DB.font_d, 0)
@@ -1059,7 +1059,7 @@ func showCard(o: Dictionary) -> void:
 		rt.text = o.b
 		if o.has("fs"):
 			for k in ["normal_font_size", "bold_font_size", "italics_font_size"]:
-				rt.add_theme_font_size_override(k, o.fs)
+				rt.add_theme_font_size_override(k, int(o.fs * (1.2 if touchy else 1.0)))
 		rt.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		rt.mouse_filter = Control.MOUSE_FILTER_PASS
 		row.add_child(rt)
