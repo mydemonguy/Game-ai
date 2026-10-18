@@ -6,6 +6,7 @@ on:
   workflow_dispatch:
 permissions:
   contents: write
+  pages: write
 env:
   GODOT_VERSION: 4.6.3
 jobs:
@@ -89,3 +90,5 @@ jobs:
           git add -A
           git commit -qm "Web build ${GITHUB_RUN_NUMBER}"
           git push -f origin gh-pages
+          # turn GitHub Pages on for the gh-pages branch (only works if the token is allowed to; otherwise enable it once in Settings → Pages)
+          gh api -X POST "repos/$GITHUB_REPOSITORY/pages" -f "source[branch]=gh-pages" -f "source[path]=/" > /dev/null 2>&1 && echo "Pages enabled" || gh api "repos/$GITHUB_REPOSITORY/pages" -q '"Pages: " + .html_url + " " + .status' || echo "::warning::GitHub Pages is not enabled yet: Settings → Pages → Deploy from branch gh-pages"
