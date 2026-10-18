@@ -41,11 +41,15 @@ Abilities: Comet Dash (I), Sky Scales double jump (II), Starburst Roar (III), Gr
 
 Secrets (2.3): every world's climbing shaft has a plate that sounds hollow. Claw it, dash into it or roar at it to open a Starblood Vault holding a Starblood Fang (claws +10% damage each) and a data tablet with a page of clan history (re-read them under Pause → Archive). Wall turrets in the shafts paint you with a laser sight before firing a three-shot burst; swipe the shots back at them. Pausing at a save station you can Fast Travel to any other station you've visited. Beating Malakar unlocks **Rift Mode**, a harder new game: robots hit 45% harder and take more punishment, and the guardians and Malakar have much more health.
 
+Bosses (2.4): every guardian and Malakar is a hand-shaded pixel-art sprite with its own weapon and moveset. Foreman Krell lunges with a hydraulic claw, charges with a drill (and gets stuck if he hits the wall) and sprays rivets. Bulwark blocks every frontal hit with his tower shield, shield-bashes and pounds the floor. The Alpha Hound pounces, spins its bladed tail and sprints on thrusters that leave burning trails. Crucible lobs slag that leaves fire puddles and breathes fire, then overheats and takes double damage while it vents. The Null Seraph blinks beside you for lance thrusts, fires crystal feathers and a halo nova. Malakar adds crescent sword slashes that skim the floor.
+
+Claude (2.4): a friendly archive automaton waits at every save station. Meet him in each world for a short chat and a gift; walk up to him any time for a hint about what to do next (guardian tactics, hidden walls, Energy Tanks, eggs).
+
 ## Changing the game
 
 The game's source is in `game/`: `shell.html` (page, menus and touch controls), `vendor/` (Phaser 3.90, arcade build) and the numbered scripts:
 `01_core` input and data · `02_audio` music and sound · `03_art`/`04_textures` art baked into GPU textures · `05_world`/`06_rooms` room layouts, physics bodies, doors and saves ·
-`07_actors` player, robots, boss, combat · `08_fx` particles, lights, weather, post-processing · `09_view_room`/`10_view_actors` Phaser display objects · `11_hud` HUD scene · `13_guardians` shrine bosses · `12_flow` screens, game loop and Phaser config.
+`07_actors` player, robots, boss, combat · `08_fx` particles, lights, weather, post-processing · `09_view_room`/`10_view_actors` Phaser display objects · `11_hud` HUD scene · `13_guardians` shrine bosses · `14_bossart` boss pixel art · `15_npc` Claude · `12_flow` screens, game loop and Phaser config.
 Run `game/build.sh` to assemble everything into `app/src/main/assets/index.html` (fonts and Phaser embedded for offline play), then push; GitHub builds a new APK and publishes it under **Releases**.
 
 Builds are signed with `app/aetherfall-debug.keystore`, so each new APK installs as an update over the old one. It is a debug key for this hobby project, not for a Play Store release.

@@ -57,6 +57,8 @@ function enterRoom(id,how){const o=genRoom(ROOMS[id]);setArea(o.a);ROOM=o;RW=o.R
   if(pl)for(const s of o.spawns){if(o.waves||(o.kind==='shrine'&&!gDone(o.a)))break;if(Math.abs(s.x-px)<700&&Math.abs(s.y-py)<400)continue;const e=spawnEnemy(s.t,1,true);ePlace(e,s.x,s.y);e.hy=s.y;e.fade=s.t==='c'?1:0}
   if(G.state!=='menu'){META.map[o.id]=1;META.areas[o.a]=1;saveMeta()}
   cam=clamp(px-W*.4,0,Math.max(0,RW-W));camY=clamp(py-H*.66,0,Math.max(0,RH-H));
+  npc=o.kind==='save'&&o.station?{x:o.station.x-460,y:GY-50,face:1,lt:0,line:'',near:0,cool:.6,seed:1}:null;
+  if(G.state!=='menu'){if(o.kind==='shrine'&&o.a<5&&!gDone(o.a))bossTex(GUARD[o.a].art);else if(o.kind==='boss'&&!META.boss)bossTex('malakar');if(npc)bossTex('claude')}
   killAllViews();V.room(o);padAbilities();musicFor()}
 
 /* ---- per-frame world logic ---- */

@@ -73,23 +73,14 @@ function updEnemyView(e,v){const r=RIG[e.type][1](e,v);v.root.x=e.x;if(!e.fly&&e
   if(r.warn)warnMark(e.x,r.warn);if(r.wg)OV.glows.push(r.wg);if(e.hp<e.max)OV.bars.push(e,r.bar);lightW(e.x,(r.ly||e.y)-e.h*.6,e.fly?170:130,.55)}
 
 /* ---- Malakar ---- */
-function mkBoss(){const wings=[];for(const sd of[-1,1])for(let i=0;i<5;i++){const w=SC.add.image(sd*30,-300,'wing').setOrigin(0,.5).setBlendMode('ADD');w.sd=sd;w.i=i;wings.push(w)}
-  const armF=Cn(64,-326,[rbI('mk_arm')]),aura=gI(0,-200/.82,580/.82,'#ff3d6e',.2),spikes=[];for(let i=0;i<7;i++)spikes.push(SC.add.image(0,0,'spike').setTint(i%2?0xe8b85a:0xff3d6e).setOrigin(.5,.85));
-  const P={tails:rbI('mk_tails').setPosition(0,-186),armB:rbI('mk_arm',1).setPosition(-60,-330),legB:rbI('mk_leg',1).setPosition(-26,-160).setRotation(.06),legF:rbI('mk_leg').setPosition(24,-160).setRotation(-.04),
-    body:rbI('mk_body').setPosition(0,-150),paulB:rbI('mk_paul',1).setPosition(-58,-334).setRotation(-.2),head:rbI('mk_head').setPosition(4,-336),paulF:rbI('mk_paul').setPosition(62,-334).setRotation(.2)};
-  const orb=SC.add.circle(0,0,10,0xffe0e8),og=gI(0,0,88,'#ff3d6e',1),eyes=[gI(18,-386,32,'#ff3d6e',1),gI(-8,-386,24,'#ff3d6e',.8)],heart=gI(0,-250,120,'#ff3d6e',.5);
-  const root=Cn(0,0,[aura,...wings,P.tails,P.armB,P.legB,P.legF,P.body,P.paulB,P.head,P.paulF,armF,...spikes,heart,...eyes]).setDepth(D.boss);
-  const sh=shadowObj(),flI=gI(0,0,440,'#ffffff',0).setDepth(D.boss+.5);og.setDepth(D.boss+.4);orb.setDepth(D.boss+.4);
-  const v={root,wings,armF,aura,spikes,P,orb,og,heart,sh,flI,sc:.82,objs:[root,sh,flI,orb,og]};v.imgs=imgsOf(root);return v}
-function updBossView(b,v){const y=b.y+b.dy+b.hov,p3=b.phase===3,cr=p3?0xff1f4f:0xff3d6e,up=b.state==='barrage'||b.state==='cast',sway=Math.sin(lvT*2.2)*.05;
-  v.root.setPosition(b.x,y).setScale(b.face*v.sc,v.sc);setShadow(v.sh,b.x,120,b.y);
-  v.aura.setTint(cr).setAlpha((p3?.34:.2)+Math.sin(lvT*3)*.05+(b.state==='dashWind'||b.state==='dash'?.3:0));
-  for(const w of v.wings){let th=-.15-w.i*.3+Math.sin(lvT*2+w.i)*.05;if(w.sd<0)th=Math.PI-th;w.setRotation(th).setScale((200+w.i*36)/400,1).setAlpha(.12+w.i*.05).setTint(cr)}
-  v.P.tails.rotation=sway;v.P.armB.rotation=up?.3:.18+sway;v.P.head.rotation=Math.sin(lvT*1.4)*.04;v.armF.rotation=up?-2.6:-.15;
-  v.spikes.forEach((s,i)=>{const a=-2.65+i*.36+Math.sin(lvT*1.5+i)*.05,r=78+Math.sin(lvT*3+i)*5;s.setPosition(4+Math.cos(a)*r,-420+Math.sin(a)*r).setRotation(a+1.57).setScale(1,i===3?1.3:1)});
-  v.heart.setTint(cr).setAlpha(.5+.2*Math.sin(lvT*4));
-  const ox=b.x+b.face*(up?64+Math.sin(2.6)*140:64+Math.sin(.15)*140)*v.sc,oy=y+(-326+(up?Math.cos(2.6):Math.cos(.15))*140)*v.sc;v.orb.setPosition(ox,oy).setRadius(up?16:10);v.og.setPosition(ox,oy).setTint(cr).setDisplaySize(up?160:88,up?160:88);
-  v.flI.setPosition(b.x,y-170).setAlpha(b.flash>0?b.flash*3:0);flashRig(v,b.flash);lightW(b.x,y-240,420,.95)}
+function mkBoss(){const spr=bossSprite('malakar',2.8,D.boss),aura=gI(0,0,620,'#ff3d6e',.2).setDepth(D.boss-.5),sh=shadowObj(),flI=gI(0,0,440,'#ffffff',0).setDepth(D.boss+.5),
+    core=gI(0,0,140,'#ff3d6e',.5).setDepth(D.boss+.2);return{spr,aura,sh,flI,core,objs:[spr,aura,sh,flI,core]}}
+function updBossView(b,v){const y=b.y+b.dy+b.hov,p3=b.phase===3,cr=p3?0xff1f4f:0xff3d6e,st=b.state;
+  const fr=st==='dashWind'||st==='slashWind'?'wind':st==='dash'?'swing':st==='slash'?'slash':st==='barrage'||st==='cast'?'cast':st==='enter'?'idle0':idleFrame(b,Math.abs(b.mv||0)>40);
+  v.spr.setFrame(fr).setPosition(b.x,y).setFlipX(b.face<0);if(b.flash>.06)v.spr.setTintFill(0xffffff);else if(p3)v.spr.setTint(0xffd0d8);else v.spr.clearTint();setShadow(v.sh,b.x,120,b.y);
+  v.aura.setPosition(b.x,y-200).setTint(cr).setAlpha((p3?.34:.2)+Math.sin(lvT*3)*.05+(st==='dashWind'||st==='dash'||st==='slashWind'?.3:0));
+  v.core.setPosition(b.x+b.face*4,y-260).setTint(cr).setAlpha(.35+.2*Math.sin(lvT*4));
+  v.flI.setPosition(b.x,y-170).setAlpha(b.flash>0?b.flash*3:0);if(st==='dashWind'||st==='slashWind')warnMark(b.x,y-420);lightW(b.x,y-240,420,.95)}
 
 /* ---- Tyko ---- */
 const DV={};
@@ -120,9 +111,9 @@ function updPlayerView(){const p=pl,vis=!!p&&G.state!=='menu';for(const k of['sp
   if(!p.dead)lightW(p.x,p.y-100,280,.7)}
 
 /* ---- shots, pickups, crates ---- */
-function mkShotView(s){if(s.wave){const c=SC.add.image(0,0,'crescent').setOrigin(.2,.5).setBlendMode('ADD').setDepth(D.shots).setTint(hexC(s.col)),g=gI(0,0,300,s.col,.6).setDepth(D.shots);return{c,g,objs:[c,g]}}
+function mkShotView(s){if(s.wave||s.cres){const c=SC.add.image(0,0,'crescent').setOrigin(.2,.5).setBlendMode('ADD').setDepth(D.shots).setTint(hexC(s.col)),g=gI(0,0,300,s.col,.6).setDepth(D.shots);return{c,g,objs:[c,g]}}
   const g=gI(0,0,s.r*6.4,s.col,.9).setDepth(D.shots),core=SC.add.circle(0,0,s.r*.6,0xffffff).setDepth(D.shots+.5);return{g,core,col:s.col,objs:[g,core]}}
-function updShotView(s,v){if(s.wave){const a=Math.min(1,s.life*2);v.c.setPosition(s.x-Math.sign(s.vx)*40,s.y).setScale(Math.sign(s.vx)*(s.r+30)/100,(s.r+30)/100).setAlpha(a);v.g.setPosition(s.x,s.y).setAlpha(a*.6);lightW(s.x,s.y,340,.9);return}
+function updShotView(s,v){if(s.wave||s.cres){if(v.col!==s.col){v.col=s.col;v.c.setTint(hexC(s.col));v.g.setTint(hexC(s.col))}const a=Math.min(1,s.life*2);v.c.setPosition(s.x-Math.sign(s.vx)*40,s.y).setScale(Math.sign(s.vx)*(s.r+30)/100,(s.r+30)/100).setAlpha(a);v.g.setPosition(s.x,s.y).setAlpha(a*.6);lightW(s.x,s.y,340,.9);return}
   if(v.col!==s.col){v.col=s.col;v.g.setTint(hexC(s.col))}v.g.setPosition(s.x,s.y);v.core.setPosition(s.x,s.y);lightW(s.x,s.y,150,.9)}
 function mkPickView(k){const big=k.type==='sfang'||k.type==='lore',i=SC.add.image(0,0,'pk_'+k.type).setDepth(D.picks).setScale(big?1.5:1);let ring=null;if(k.type!=='coin'&&k.float){ring=SC.add.circle(0,0,34).setStrokeStyle(2.5,0xffffff,.55).setDepth(D.picks).setScale(big?1.5:1)}
   const objs=ring?[i,ring]:[i];if(big)objs.push(gI(k.x,k.y,240,PICK[k.type].col,.35).setDepth(D.picks-.1));return{i,ring,big,objs}}
@@ -146,6 +137,8 @@ function ovUpdate(){const g=OV.g;g.clear();for(let i=0;i<OV.bars.length;i+=2){co
   const hg=OV.hz,ha=OV.hzA;hg.clear();ha.clear();let ti=0;
   for(const l of OV.lines){ha.lineStyle(10,0xff3d5a,l[4]*.35);ha.lineBetween(l[0],l[1],l[2],l[3]);ha.lineStyle(3,0xffd0d8,l[4]);ha.lineBetween(l[0],l[1],l[2],l[3])}OV.lines=[];
   for(const h of hz){if(h.kind==='rock'){if(h.t>0){hg.fillStyle(0xff8a3a,.22+.2*Math.sin(lvT*24));hg.fillEllipse(h.x,FY+4,150,30);if(h.t<.4){const y=FY-30-(h.t/.4)*900;hg.fillStyle(0x5a4c44,1);hg.fillCircle(h.x,y,30);hg.lineStyle(4,0x1a1418,1);hg.strokeCircle(h.x,y,30);hg.fillStyle(0x8a7a6a,1);hg.fillCircle(h.x-8,y-8,10)}}continue}
+    if(h.kind==='fire'){const a=Math.min(1,h.act*1.5);ha.fillStyle(0xff6418,.35*a);ha.fillEllipse(h.x,FY-4,h.w*1.2,34);hg.fillStyle(0xffb040,.85*a);
+      for(let i=0;i<3;i++){const fx=h.x-h.w*.35+i*h.w*.35,fh=(26+Math.sin(lvT*14+i*2+h.x)*10)*a;hg.fillTriangle(fx-12,FY,fx+12,FY,fx,FY-fh)}lightW(h.x,FY-30,180,.6*a);continue}
     if(h.kind==='quake'){const a=Math.min(1,h.act*2);ha.fillStyle(0xffb347,.5*a);ha.fillEllipse(h.x,FY-20,140,80);hg.fillStyle(0xfff0c8,a);hg.beginPath();hg.moveTo(h.x-34,FY);
       for(let i=0;i<5;i++)hg.lineTo(h.x-34+i*17,FY-(i%2?46:18));hg.lineTo(h.x+34,FY);hg.closePath();hg.fillPath();lightW(h.x,FY-20,180,.8);continue}
     if(h.kind==='pillar'){if(h.t>0){hg.fillStyle(0xff3d6e,.25+.25*Math.sin(lvT*30));hg.fillEllipse(h.x,GY+6,h.w,36)}else{const a=Math.min(1,h.act/.2);ha.fillStyle(0xff3d6e,.35*a);ha.fillRect(h.x-h.w/2,0,h.w,GY);ha.fillStyle(0xffd0dc,.8*a);ha.fillRect(h.x-h.w*.18,0,h.w*.36,GY);lightW(h.x,GY-300,420,1)}continue}
@@ -157,5 +150,5 @@ function ovUpdate(){const g=OV.g;g.clear();for(let i=0;i<OV.bars.length;i+=2){co
 /* ---- the whole actor pass, once per rendered frame ---- */
 function actorsUpdate(){FRAME++;updPlayerView();
   sync(en,mkEnemyView,updEnemyView);if(boss&&!boss.dead){if(boss.guard!=null)sync([boss],mkGuardView,updGuardView);else sync([boss],mkBoss,updBossView)}
-  sync(shots,mkShotView,updShotView);sync(picks,mkPickView,updPickView);sync(boxes,mkBoxView,updBoxView);sweepViews();ovUpdate()}
+  if(npc&&G.state!=='menu')sync([npc],mkNPCView,updNPCView);sync(shots,mkShotView,updShotView);sync(picks,mkPickView,updPickView);sync(boxes,mkBoxView,updBoxView);sweepViews();ovUpdate()}
 </script>
