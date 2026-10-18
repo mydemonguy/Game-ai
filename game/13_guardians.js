@@ -121,11 +121,13 @@ function updGuardian(b,dt){const D0=GUARD[b.guard];b.flash-=dt;b.t-=dt;b.fadeT=M
 /* shields and weak spots: called from damage() before a hit lands */
 function guardHit(e,d){if(e.guarding&&pl&&Math.sign(pl.x-e.x)===e.face){if(!e.blkT||e.blkT<lvT){e.blkT=lvT+.25;sfxBlock();sparks(e.x+e.face*110,e.y-e.h*.55,'#ffcc4a',10,e.face);ftext(e.x+e.face*80,e.y-e.h-20,'Blocked','#ffcc4a')}return 0}
   return e.weak?d*e.weak:d}
-function guardianDown(b){const a=b.guard,D0=GUARD[a];b.dead=true;boss=null;lock=false;camLock=null;if(!META.guards)META.guards={};META.guards[a]=1;saveMeta();G.score+=3000;
+const ownArmBefore=a=>!!(META.guards&&META.guards[a]);
+function guardianDown(b){const a=b.guard,D0=GUARD[a],had=ownArmBefore(a);b.dead=true;boss=null;lock=false;camLock=null;if(!META.guards)META.guards={};saveMeta();G.score+=3000;
   hz=[];shots=shots.filter(s=>s.friend);for(const e of en){e.dead=true;burst(e.x,e.y-e.h/2,'#ff4fd8',16);eKill(e)}en=[];spawnQ=[];
   const x=b.x,y=b.y;shake=26;camKick(.06);S.boom();sfxGateBreak();explode({x,y,w:b.w,h:b.h,heavy:1});
   for(let i=0;i<5;i++)setTimeout(()=>{if(!ROOM||ROOM.kind!=='shrine')return;burst(x+(Math.random()-.5)*b.w*2,y-Math.random()*b.h,i%2?D0.glow:'#ffd27a',30,900);S.boom();shake=14},180+i*220);
-  showBanner(D0.name+' defeated','The shrine awakens',2.6);
+  META.guards[a]=1;saveMeta();addDust(40,x,y-b.h-40);const newArm=!had;showBanner(D0.name+' defeated',G.rush?'':'The shrine awakens',2.6);if(G.rush)G.rush.next=3;
+  if(newArm){META.arm=a;padArms();setTimeout(()=>{if(G.state==='play')showBanner('Guardian Arm: '+ARMS[a].name,(touchy?'Tap ◈ to fire, tap its label to switch':'U to fire, I to switch')+' · '+ARMS[a].how,3.6)},2900)}
   picks.push({x:gClamp(x),y:FY-130,type:'core',id:'core'+a,float:1},{x:x+80,y:y-b.h/2,vx:160,vy:-600,type:'med',life:14});musicFor()}
 
 /* ---- view: the boss's sprite sheet ---- */

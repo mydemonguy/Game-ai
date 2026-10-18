@@ -7,7 +7,7 @@ const PICK={
  shard: {name:'Aether Shard',col:'#5ce1ff',txt:'+35 Aether'},
  shield:{name:'Shield Bubble',col:'#8fc8ff',txt:'Shield ×3'},
  fang:  {name:'Fury Fang',   col:'#ffb347',txt:'Fury: double damage'},
- coin:  {name:'Stardust',    col:'#ffd27a',txt:'+250'},
+ coin:  {name:'Stardust',    col:'#ffd27a',txt:'+250 · ◆2'},
  egg:   {name:'Golden Egg',  col:'#ffe08a',txt:'+1 Life'}};
 const PROPK={hangar:['generator','locker','crate','reactor','console'],armory:['pod','turret','crate','locker','generator'],station:['console','pipes','reactor','locker','turret'],
   cargo:['tank','crate','tank','pipes','generator'],citadel:['reactor','console','locker','turret'],core:['reactor','generator','pipes','tank']};
@@ -19,9 +19,9 @@ const ABIL=[
  {id:'plasma',name:'Plasma Claws',   how:'Your claws burn hotter. Claw void-crystal walls to break them.',col:'#ff5ad8',gate:'crystal'}];
 const GATEHINT={crack:'Cracked wall. A dash could smash it.',ledge:'Too high to climb. Maybe with a double jump?',laser:'Laser gate. Only a Starburst roar melts it.',
   blast:'Blast door. The plate needs a Ground Slam.',crystal:'Void crystal. Claws bounce off it.',secret:'This plating sounds hollow…'};
-const freshMeta=()=>({ab:{},tanks:{},items:{},gates:{},cleared:{},map:{},areas:{},save:null,boss:0,guards:{},mapped:{}});
+const freshMeta=()=>({ab:{},tanks:{},items:{},gates:{},cleared:{},map:{},areas:{},save:null,boss:0,guards:{},mapped:{},dust:0,relics:{},eq:[],arm:-1,met:{}});
 let META=freshMeta();try{const m=JSON.parse(localStorage.getItem('aetherfall_world')||'null');if(m&&m.ab&&m.map)META=Object.assign(freshMeta(),m)}catch(e){}
-function saveMeta(){try{localStorage.setItem('aetherfall_world',JSON.stringify(META))}catch(e){}}
+function saveMeta(){if(G.rush)return;try{localStorage.setItem('aetherfall_world',JSON.stringify(META))}catch(e){}}
 const hasAb=id=>!!META.ab[id];
 const tankCount=()=>Object.keys(META.tanks).length;
 const maxHP=()=>100+15*tankCount();
@@ -32,7 +32,7 @@ PICK.lore={name:'Data Tablet',col:'#ffe08a',txt:'Data tablet recovered'};
 const coreCount=()=>[0,1,2,3,4].filter(a=>META.items['core'+a]).length;
 const fangCount=()=>[0,1,2,3,4,5].filter(a=>META.items['sfang'+a]).length;
 const loreCount=()=>[0,1,2,3,4,5].filter(a=>META.items['lore'+a]).length;
-const AG=()=>1+.2*coreCount();
+const AG=()=>(1+.2*coreCount())*(hasR('battery')?1.4:1);
 /* completion: 12 energy tanks, 6 golden eggs, 5 abilities, 5 guardians, 5 Aether cores, 6 Starblood fangs */
 function completion(){const n=tankCount()+[0,1,2,3,4,5].filter(a=>META.items['egg'+a]).length+Object.keys(META.ab).length+[0,1,2,3,4].filter(a=>META.guards&&META.guards[a]).length+coreCount()+fangCount();return Math.round(n/39*100)}
 /* data tablets hidden in the secret rooms: the clan's history, one page per world */

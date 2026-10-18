@@ -33,6 +33,7 @@ It runs fully offline, in landscape, with the system bars hidden. Since version 
 - » Dash (you can't be hit while dashing), unlocked in Chapter I
 - Pull the stick down to drop through catwalks; down + strike in the air is the Ground Slam (Chapter IV)
 
+- ◈ Guardian Arm (tap the label above it to switch weapons)
 - II pause and map (also has Sound settings)
 
 Walk into the blue hatches at a room's edge to move to the next room; red hatches stay sealed until the room's lockdown waves are beaten. Green stations save the game. Elevators link the worlds both ways.
@@ -44,6 +45,8 @@ Secrets (2.3): every world's climbing shaft has a plate that sounds hollow. Claw
 Bosses (2.4): every guardian and Malakar is a hand-shaded pixel-art sprite with its own weapon and moveset. Foreman Krell lunges with a hydraulic claw, charges with a drill (and gets stuck if he hits the wall) and sprays rivets. Bulwark blocks every frontal hit with his tower shield, shield-bashes and pounds the floor. The Alpha Hound pounces, spins its bladed tail and sprints on thrusters that leave burning trails. Crucible lobs slag that leaves fire puddles and breathes fire, then overheats and takes double damage while it vents. The Null Seraph blinks beside you for lance thrusts, fires crystal feathers and a halo nova. Malakar adds crescent sword slashes that skim the floor.
 
 Claude (2.4): a friendly archive automaton waits at every save station. Meet him in each world for a short chat and a gift; walk up to him any time for a hint about what to do next (guardian tactics, hidden walls, Energy Tanks, eggs).
+
+Arsenal (2.5): ideas from the all-time great side-scrollers, rebuilt for Aetherfall. **Guardian Arms** (Mega Man style): every guardian you beat gives Tyko its weapon. Rivet Spray, Aegis Shield (eats enemy shots), Thruster Dash, Slag Mortar and Crystal Feathers fire from the new ◈ button and cost Aether; tap the label above it to switch. **Starblood Relics** (Hollow Knight style charms) are sold at **Claude's Exchange** (Shovel Knight style shop) for Stardust, which you earn from coins, robots, arenas and guardians. Equip three at a save station: Lodestone, Swift Talons, Long Claws, Soul Siphon, Stone Scales, Aether Battery, Thorn Hide, Comet Tail, Fury Heart, Lucky Egg. **Boss Rush** (unlocked by beating Malakar): all five guardians and Malakar back to back against the clock, with your relics, on a separate save.
 
 ## Changing the game
 

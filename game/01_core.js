@@ -14,7 +14,7 @@ addEventListener('resize',fit);
 
 /* ---------- input ---------- */
 const K={left:0,right:0,jump:0,attack:0,special:0,dash:0,down:0},P={};
-const KEYMAP={ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',ArrowUp:'jump',KeyW:'jump',Space:'jump',KeyJ:'attack',KeyX:'attack',KeyK:'special',KeyC:'special',KeyL:'dash',ShiftLeft:'dash',ShiftRight:'dash',ArrowDown:'down',KeyS:'down'};
+const KEYMAP={ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',ArrowUp:'jump',KeyW:'jump',Space:'jump',KeyJ:'attack',KeyX:'attack',KeyK:'special',KeyC:'special',KeyL:'dash',ShiftLeft:'dash',ShiftRight:'dash',KeyU:'arm',KeyV:'arm',KeyI:'armc',ArrowDown:'down',KeyS:'down'};
 addEventListener('keydown',e=>{const k=KEYMAP[e.code];if(k&&G.state==='play'){if(!K[k])P[k]=1;K[k]=1;e.preventDefault()}
   if((e.code==='Escape'||e.code==='KeyP')&&!e.repeat)togglePause();});
 addEventListener('keyup',e=>{const k=KEYMAP[e.code];if(k)K[k]=0});

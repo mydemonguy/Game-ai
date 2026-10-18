@@ -22,6 +22,8 @@ function paintMapCard(){const c=document.getElementById('mapc');if(!c)return;con
 function abilitiesHTML(){return `<div class="keys">${ABIL.map(a=>`<kbd style="color:${hasAb(a.id)?a.col:'#55507a'}">${hasAb(a.id)?'◆':'◇'} ${a.name}</kbd><span>${hasAb(a.id)?a.how:'Not found yet'}</span>`).join('')}
   <kbd style="color:#ff5ad8">Energy Tanks</kbd><span>${tankCount()} of 12 found · max health ${maxHP()}</span>
   <kbd style="color:#7fe9ff">Aether Cores</kbd><span>${coreCount()} of 5 · beat the shrine guardians · Aether charges ${Math.round((AG()-1)*100)}% faster</span>
+  <kbd style="color:#ffd27a">Stardust</kbd><span>◆ ${META.dust||0} · relics: ${(META.eq||[]).map(id=>RELICS.find(r=>r.id===id).name).join(', ')||'none equipped'}</span>
+  <kbd style="color:#ffcc4a">Guardian Arms</kbd><span>${ARMS.filter((_,i)=>ownArm(i)).map(A=>A.name).join(', ')||'Beat a shrine guardian to take its weapon'}</span>
   <kbd style="color:#ff7a5a">Starblood Fangs</kbd><span>${fangCount()} of 6 · hidden behind hollow walls · claws +${fangCount()*10}% damage</span></div>`}
 /* lore tablets: shown when found, and re-readable from the pause menu */
 function showLore(a){if(G.state!=='play')return;G.state='card';padShow(false);clearInput();const L=LORE[a];
@@ -48,11 +50,11 @@ function showCard(o){card.innerHTML=(o.ey?`<p class="eyebrow">${o.ey}</p>`:'')+(
 function story(pages,i,done){const p=pages[i];showCard({ey:p.ey,h:p.h,b:p.b,btns:[[i<pages.length-1?'Continue':'Onward',()=>i<pages.length-1?story(pages,i+1,done):done()],...(i<pages.length-1?[['Skip',done,1]]:[])]})}
 function beginSaga(hard){goFull();hard=hard===true;story(STORY.intro,0,()=>{G.state='card';showCard({ey:LV[0].ch+(hard?' · Rift Mode':''),h:LV[0].name,b:STORY.brief[0],btns:[['Fight',()=>newRun(hard)]]})})}
 const startNew=()=>riftOpen?modeCard():beginSaga(false);
-function toTitle(){G.state='menu';if(G.paused&&SC)SC.scene.resume();G.paused=false;TRANS.on=0;padShow(false);menuBG();musicFor();
+function toTitle(){rushEnd();G.state='menu';if(G.paused&&SC)SC.scene.resume();G.paused=false;TRANS.on=0;padShow(false);menuBG();musicFor();
   const sv=META.save,found=Object.keys(META.map).length,tot=Object.keys(ROOMS).length;
   showCard({ey:'A Starblood Saga · Six Worlds',h:'Aetherfall',big:1,tag:'One small dino. One stolen sky. One very big Rift.',
     b:(sv?`<p>Save: ${LV[ROOMS[sv.room].a].name}${META.hard?' · <b style="color:#ff4a6a">Rift Mode</b>':''} · Map ${Math.round(found/tot*100)}% · Items ${completion()}%</p>`:'')+(G.best?`<p>Best score ${G.best.toLocaleString()}</p>`:''),
-    btns:[...(sv?[['Continue',()=>{goFull();continueGame()}]]:[]),[sv?'New game':'Begin the Saga',sv?confirmNew:startNew,!!sv],['Controls',controls,1],['Settings',soundCard,1]]})}
+    btns:[...(sv?[['Continue',()=>{goFull();continueGame()}]]:[]),[sv?'New game':'Begin the Saga',sv?confirmNew:startNew,!!sv],...(riftOpen?[['Boss Rush',startRush,1]]:[]),['Controls',controls,1],['Settings',soundCard,1]]})}
 function confirmNew(){showCard({ey:'New game',h:'Start over?',b:'<p>This erases your map, abilities and energy tanks.</p>',btns:[['Start over',startNew],['Back',toTitle,1]]})}
 function soundCard(back){back=typeof back==='function'?back:toTitle;const sl=(id,lab,v)=>`<label class="vol"><span>${lab}</span><input type="range" id="${id}" min="0" max="100" value="${Math.round(v*100)}"></label>`;
   const gq=`<label class="vol"><span>Graphics</span><span class="gq">${['high','balanced','fast'].map(q=>`<button class="btn ${FX.quality===q?'':'alt'}" data-q="${q}">${QUAL[q].name}</button>`).join(' ')}</span></label>`;
@@ -65,17 +67,18 @@ function controls(back){back=typeof back==='function'?back:toTitle;showCard({ey:
   <kbd>⚔ / J / X</kbd><span>Claw strike. Tap three times for a combo; the third hit is a heavy bite. Swipe enemy orbs to send them back</span>
   <kbd>» / L / Shift</kbd><span>Comet Dash (once found). You can't be hit while dashing</span>
   <kbd>✦ / K / C</kbd><span>Starburst roar (once found). Costs half your Aether bar, which fills as you land hits</span>
-  <kbd>II / Esc / P</kbd><span>Pause and open the map</span></div>`,b:`<p>Each world is a maze of rooms. Walk through the blue hatches at the edges to move between them; red hatches are sealed until the room is clear. Shrines grant new powers that open blocked paths, so come back to places you could not reach before. Green stations save your game. Stand on an elevator to ride to the next world.</p>`,btns:[['Back',back]]})}
-function gameOver(){G.state='over';if(pl){pl.dead=1;pl.deadT=0;pl.vx=0}G.best=Math.max(G.best,G.score);saveProg();padShow(false);clearInput();sfxGameOver();musicStop(1.5);
+  <kbd>◈ / U</kbd><span>Fire your Guardian Arm, the weapon of a guardian you beat. Costs Aether. Tap its label (or I) to switch arms</span>
+  <kbd>II / Esc / P</kbd><span>Pause and open the map. At a save station: fast travel and Claude's Exchange (relics)</span></div>`,b:`<p>Each world is a maze of rooms. Walk through the blue hatches at the edges to move between them; red hatches are sealed until the room is clear. Shrines grant new powers that open blocked paths, so come back to places you could not reach before. Green stations save your game. Stand on an elevator to ride to the next world.</p>`,btns:[['Back',back]]})}
+function gameOver(){if(G.rush){G.state='over';if(pl){pl.dead=1;pl.deadT=0}padShow(false);clearInput();sfxGameOver();musicStop(1.5);rushFail();return}G.state='over';if(pl){pl.dead=1;pl.deadT=0;pl.vx=0}G.best=Math.max(G.best,G.score);saveProg();padShow(false);clearInput();sfxGameOver();musicStop(1.5);
   const rid=ROOM?ROOM.id:'0-0',ent=ROOM&&ROOM.entry?{x:ROOM.entry.x,y:ROOM.entry.y}:{x:300,y:GY};
   setTimeout(()=>showCard({ey:'Tyko is down',h:'The Light Fades',
   b:`<p><span class="who">LYRA:</span> "Not yet, little one. Get up. I won't let the dark have you."</p>`,btns:[...(META.save?[['Continue from save',()=>continueGame()]]:[]),['Retry this room',()=>{G.lives=3;startGame(rid,ent)},1],['Title',toTitle,1]]}),900)}
-function victory(){G.state='card';padShow(false);clearInput();G.score+=Math.round(pl.hp*50);unlocked=6;saveProg();const wasRift=!!META.hard,newRift=!riftOpen;riftOpen=true;try{localStorage.setItem('aetherfall_rift','1')}catch(e){}G.best=Math.max(G.best,G.score);musicPlay('victory');
+function victory(){if(G.rush)return rushDone();G.state='card';padShow(false);clearInput();G.score+=Math.round(pl.hp*50);unlocked=6;saveProg();const wasRift=!!META.hard,newRift=!riftOpen;riftOpen=true;try{localStorage.setItem('aetherfall_rift','1')}catch(e){}G.best=Math.max(G.best,G.score);musicPlay('victory');
   const found=Object.keys(META.map).length,tot=Object.keys(ROOMS).length;
   story(STORY.ending,0,()=>showCard({ey:'The saga is complete',h:'Ithra Is Free',big:0,b:`<p>Final score <b>${G.score.toLocaleString()}</b></p><p>Items collected <b>${completion()}%</b> · Map explored ${Math.round(found/tot*100)}%</p><p>Energy tanks ${tankCount()}/12 · Eggs ${[0,1,2,3,4,5].filter(a=>META.items['egg'+a]).length}/6 · Aether cores ${coreCount()}/5 · Guardians ${[0,1,2,3,4].filter(a=>gDone(a)).length}/5</p>${wasRift?'<p><b style="color:#ff4a6a">Rift Mode conquered.</b> The Starblood would be proud.</p>':newRift?'<p><b style="color:#ff4a6a">Rift Mode unlocked.</b> Start a new game to face a harder Ithra.</p>':''}<p>Thank you for playing Aetherfall.</p>`,btns:[['Play again',()=>modeCard(toTitle)],['Title',toTitle,1]]}))}
 function pauseCard(){const canTravel=ROOM&&ROOM.kind==='save'&&!lock&&saveRooms().length>1;
   showCard({ey:LV[G.lv].ch+' · '+LV[G.lv].name+(META.hard?' · Rift Mode':''),h:'Paused',extra:mapCardHTML()+`<p class="tag" style="margin:.4em 0">Map ${Object.keys(META.map).length}/${Object.keys(ROOMS).length} rooms · Items ${completion()}%</p>`+abilitiesHTML(),
-  btns:[['Resume',togglePause],...(canTravel?[['Fast travel',travelCard]]:[]),...(loreCount()?[['Archive',archiveCard,1]]:[]),['Settings',()=>soundCard(pauseCard),1],['Controls',()=>controls(pauseCard),1],['Quit to title',toTitle,1]]});paintMapCard()}
+  btns:[['Resume',togglePause],...(canTravel?[['Fast travel',travelCard]]:[]),...(ROOM&&ROOM.kind==='save'&&!G.rush?[["Claude's Exchange",()=>exchangeCard()]]:[]),...(loreCount()?[['Archive',archiveCard,1]]:[]),['Settings',()=>soundCard(pauseCard),1],['Controls',()=>controls(pauseCard),1],['Quit to title',toTitle,1]]});paintMapCard()}
 function togglePause(){if(G.state!=='play'||!SC)return;G.paused=!G.paused;clearInput();
   if(G.paused){padShow(false);sfxPause(1);musicDuck(1);SC.scene.pause();pauseCard()}
   else{hideCard();padShow(true);sfxPause(0);musicDuck(0);SC.scene.resume()}}
@@ -93,7 +96,7 @@ const clearP=()=>{for(const k in P)delete P[k]};
 function gameUpdate(dt){if(banner){banner.life-=dt;if(banner.life<=0)banner=null}
   if(TRANS.on){updTrans(dt);clearP();return}
   if(hitStop>0){hitStop-=dt;return}
-  lvT+=dt;shake*=Math.pow(.015,dt);if(shake<.4)shake=0;flashT-=dt;
+  lvT+=dt;rushTick(dt);shake*=Math.pow(.015,dt);if(shake<.4)shake=0;flashT-=dt;
   updPlayerPre(dt);
   for(const q of spawnQ)q.t-=dt;while(spawnQ.length&&spawnQ[0].t<=0){const q=spawnQ.shift();spawnEnemy(q.type,q.side)}
   for(const e of en){updEnemy(e,dt);ePush(e)}

@@ -75,6 +75,8 @@ h2{margin:0;font-family:var(--display);font-weight:700;font-size:clamp(24px,4vw,
 .jmp{width:min(16vh,76px);height:min(16vh,76px);right:calc(var(--sr) + min(27.5vh,130px));bottom:min(2.5vh,12px)}
 .dsh{width:min(13.5vh,64px);height:min(13.5vh,64px);right:calc(var(--sr) + min(25vh,118px));bottom:min(21vh,100px);--glow:rgba(180,140,255,.85);color:#ddd0ff}
 .sp{width:min(14.5vh,68px);height:min(14.5vh,68px);right:calc(var(--sr) + min(6vh,28px));bottom:min(28.5vh,136px);color:#c8f6ff;--glow:rgba(92,225,255,.85)}
+.arm{width:min(13.5vh,64px);height:min(13.5vh,64px);right:calc(var(--sr) + min(46vh,216px));bottom:min(8vh,38px)}
+.armc{pointer-events:auto;position:absolute;right:calc(var(--sr) + min(41vh,194px));bottom:min(23vh,108px);padding:5px 11px;border-radius:12px;border:2px solid rgba(236,231,255,.4);background:rgba(12,10,30,.66);font:700 12px/1.2 var(--ui);letter-spacing:.06em;white-space:nowrap;touch-action:none}
 .sp::before,.dsh::before{display:block}
 .sp::before{background:conic-gradient(#5ce1ff calc(var(--e,0)*1turn),rgba(236,231,255,.13) 0)}
 .dsh::before{background:conic-gradient(#b48cff calc(var(--c,1)*1turn),rgba(236,231,255,.13) 0)}
@@ -95,6 +97,8 @@ h2{margin:0;font-family:var(--display);font-weight:700;font-size:clamp(24px,4vw,
   <button class="act sp" data-k="special" aria-label="Starburst"><svg viewBox="0 0 24 24"><path d="M12 2.5l2.3 6.6H21l-5.4 4.1 2.1 6.6L12 15.8l-5.7 4 2.1-6.6L3 9.1h6.7Z"/></svg></button>
   <button class="act dsh" data-k="dash" aria-label="Dash"><svg viewBox="0 0 24 24"><path d="M5 6l6 6-6 6"/><path d="M12 6l6 6-6 6"/></svg></button>
   <button class="act atk" data-k="attack" aria-label="Attack"><svg viewBox="0 0 24 24"><path d="M19.5 3h1.5v1.5L10 15.5 8.5 14Z"/><path d="M5.5 12.5l6 6"/><path d="M7.8 16.2L4 20"/></svg></button>
+  <button class="act arm" data-k="arm" aria-label="Guardian Arm" hidden><svg viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6Z"/></svg></button>
+  <button class="armc" hidden>Arm</button>
   <button class="act jmp" data-k="jump" aria-label="Jump"><svg viewBox="0 0 24 24"><path d="M6 13l6-6 6 6"/><path d="M6 18.5l6-6 6 6" opacity=".55"/></svg></button>
   <button class="ps" id="pauseBtn" aria-label="Pause">II</button>
 </div>

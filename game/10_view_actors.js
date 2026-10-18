@@ -86,6 +86,7 @@ function updBossView(b,v){const y=b.y+b.dy+b.hov,p3=b.phase===3,cr=p3?0xff1f4f:0
 const DV={};
 function mkPlayerView(){const M=DINO,s=SC;DV.spr=s.add.sprite(0,0,'dino',0).setOrigin(M.ax/M.fw,M.ay/M.fh).setDepth(D.player);DV.sh=shadowObj();
   DV.aura=gI(0,0,220,'#5ce1ff',0).setDepth(D.player-.1);DV.slash=s.add.graphics().setDepth(D.player+.1).setBlendMode('ADD');
+  DV.aegis=s.add.container(0,0,[gI(0,0,1,'#ffb030',.55).setDisplaySize(90,280),s.add.rectangle(0,0,20,220,0xffcc4a,.5).setStrokeStyle(4,0xfff0b0,1),s.add.rectangle(0,0,8,190,0xfff6d0,.8)]).setDepth(D.player+.2).setVisible(false);
   DV.shield=s.add.circle(0,0,118).setStrokeStyle(5,0x8fc8ff,.55).setFillStyle(0x8fc8ff,.12).setDepth(D.player+.2).setBlendMode('ADD').setVisible(false);
   DV.ghosts=[];for(let i=0;i<8;i++)DV.ghosts.push(s.add.sprite(0,0,'dino',0).setOrigin(M.ax/M.fw,M.ay/M.fh).setDepth(D.player-.2).setTintFill(0xa58cff).setVisible(false));DV.gi=0}
 V.ghost=p=>{const g=DV.ghosts[DV.gi++%DV.ghosts.length];if(!g)return;g.setFrame(DINO.anims.run[2]).setPosition(p.x,p.y).setScale(p.face,1).setVisible(true).setAlpha(.45);SC.tweens.killTweensOf(g);SC.tweens.add({targets:g,alpha:0,duration:220,onComplete:()=>g.setVisible(false)})};
@@ -97,12 +98,13 @@ function dinoFrame(p){const A=DINO.anims;
   if(p.landT>0)return A.jump[9+Math.min(2,Math.floor((.15-p.landT)/.05))];
   const v=Math.abs(p.vx);if(v>330)return A.run[Math.floor(p.run*1.1)%8];if(v>40)return A.walk[Math.floor(p.run*1.6)%10];return A.idle[Math.floor(lvT*12)%10]}
 const CLAW=[[-1.25,1.0],[1.05,-1.2],[-1.6,1.4]];
-function updPlayerView(){const p=pl,vis=!!p&&G.state!=='menu';for(const k of['spr','sh','aura','slash'])DV[k].setVisible(vis);if(!vis){DV.shield.setVisible(false);return}
+function updPlayerView(){const p=pl,vis=!!p&&G.state!=='menu';for(const k of['spr','sh','aura','slash'])DV[k].setVisible(vis);if(!vis){DV.shield.setVisible(false);DV.aegis.setVisible(false);return}
   const lunge=p.atk>0?1+.06*Math.sin((1-p.atk/.22)*Math.PI):1,sx=(1+p.squash*.1)*lunge,sy=1-p.squash*.1;
   DV.spr.setFrame(dinoFrame(p)).setPosition(p.x,p.y).setScale(p.face*sx,sy).setAlpha(p.inv>0&&p.dashT<=0&&!p.dead&&Math.floor(p.inv*22)%2?.45:1);
   if(p.fury>0)DV.spr.setTint(0xffd0a0);else DV.spr.clearTint();
   const sup=p.sup||FY;setShadow(DV.sh,p.x,60*(1-Math.min(.5,(sup-p.y)/600)),sup);
   DV.aura.setPosition(p.x+p.face*10,p.y-100).setAlpha(p.en>=50&&!p.dead?.18+.08*Math.sin(lvT*5):0);
+  DV.aegis.setVisible(p.aegis>0&&!p.dead).setPosition(p.x+p.face*110,p.y-95).setAlpha(p.aegis<.6&&Math.floor(lvT*16)%2?.3:1);if(p.aegis>0)lightW(p.x+p.face*110,p.y-95,200,.6);
   DV.shield.setVisible(p.shield>0&&!p.dead).setPosition(p.x,p.y-95).setRadius(118+Math.sin(lvT*6)*4);
   const g=DV.slash;g.clear();if(p.atk>0){const c=CLAW[(p.combo||1)-1],q=Math.min(1,(1-p.atk/.22)*1.5),a=p.atk/.22,big=p.combo===3,col=big?0xc9a8ff:0x7fe9ff;
     const a0=c[0],a1=c[0]+(c[1]-c[0])*q;let lo=Math.min(a0,a1),hi=Math.max(a0,a1);if(p.face<0){const l2=Math.PI-hi,h2=Math.PI-lo;lo=l2;hi=h2}

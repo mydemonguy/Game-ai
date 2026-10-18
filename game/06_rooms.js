@@ -52,6 +52,7 @@ function enterRoom(id,how){const o=genRoom(ROOMS[id]);setArea(o.a);ROOM=o;RW=o.R
   if(how.side){const d=o.doors.find(dd=>dd.side===how.side&&dd.row===how.row)||o.doors.find(dd=>dd.side===how.side)||o.doors[0];
     px=d.side==='L'?150:RW-150;py=d.row*H+GY;face=d.side==='L'?1:-1}else{px=how.x;py=how.y}
   if(o.lift){o.lift.armed=0;o.lift.hold=0}
+  if(pl&&hasR('battery'))pl.en=Math.max(pl.en,50);
   if(pl){plTeleport(px,py);pl.face=face;pl.ground=true;pl.dashT=0;pl.slam=0;pl.sup=py}
   o.entry={x:px,y:py};
   if(pl)for(const s of o.spawns){if(o.waves||(o.kind==='shrine'&&!gDone(o.a)))break;if(Math.abs(s.x-px)<700&&Math.abs(s.y-py)<400)continue;const e=spawnEnemy(s.t,1,true);ePlace(e,s.x,s.y);e.hy=s.y;e.fade=s.t==='c'?1:0}
@@ -62,12 +63,13 @@ function enterRoom(id,how){const o=genRoom(ROOMS[id]);setArea(o.a);ROOM=o;RW=o.R
   killAllViews();V.room(o);padAbilities();musicFor()}
 
 /* ---- per-frame world logic ---- */
-function startTrans(act){if(TRANS.on)return;TRANS.on=1;TRANS.t=0;TRANS.phase=0;TRANS.act=act;clearInput();if(act.lift)sfxLift(act.lift.dir);else if(act.travel){sfxSave();teleFx(pl.x,pl.y,170)}else sfxDoor()}
-const transDur=()=>TRANS.act&&(TRANS.act.lift||TRANS.act.travel)?.7:.22;
+function startTrans(act){if(TRANS.on)return;TRANS.on=1;TRANS.t=0;TRANS.phase=0;TRANS.act=act;clearInput();if(act.lift)sfxLift(act.lift.dir);else if(act.travel||act.rush!=null){sfxSave();teleFx(pl.x,pl.y,170)}else sfxDoor()}
+const transDur=()=>TRANS.act&&(TRANS.act.lift||TRANS.act.travel||TRANS.act.rush!=null)?.7:.22;
 function updTrans(dt){TRANS.t+=dt;const dur=transDur();
   if(TRANS.phase===0&&TRANS.t>=dur){TRANS.phase=1;TRANS.t=0;const a=TRANS.act;
     if(a.lift){const to=ROOMS[a.lift.to],first=!META.areas[to.a],prev=G.lv;genRoom(to);const lx=to.lift?to.lift.x:300;enterRoom(to.id,{x:lx,y:GY});
       if(first){META.save={room:to.id,x:lx+170,score:G.score};saveMeta();areaIntro(prev,to.a)}}
+    else if(a.rush!=null){const id=RUSH[a.rush];enterRoom(id,{x:id==='5-8'?600:W*.72,y:GY});pl.hp=Math.min(pl.max,pl.hp+pl.max*.4);pl.en=Math.max(pl.en,50);showBanner('Boss Rush','Fight '+(a.rush+1)+' of 6',1.8)}
     else if(a.travel){const to=genRoom(ROOMS[a.travel]);enterRoom(to.id,{x:to.station.x+110,y:GY});pl.face=-1;META.save={room:to.id,x:to.station.x,score:G.score};saveMeta();
       showBanner(LV[to.a].name,'Fast travel',1.8);teleFx(pl.x,pl.y,170);ring(pl.x,pl.y-90,'#7dffb0',220)}
     else{const tgt=ROOMS[a.door.to],pd=partnerDoor(ROOM,a.door);enterRoom(tgt.id,{side:pd?pd.side:(a.door.side==='L'?'R':'L'),row:pd?pd.row:0})}}
@@ -80,7 +82,7 @@ function updWorld(dt){const p=pl,o=ROOM;hintT-=dt;if(!p||!o)return;
   /* lockdown arena */
   const A=o.arena;if(A){if(A.i<0&&!lock&&p.x>440&&p.x<RW-440){lock=true;A.i=0;spawnWave(o.waves[0]);showBanner('Lockdown','Wave 1 of '+o.waves.length,1.4);S.warn();sfxAlarm()}
     else if(lock&&A.i>=0&&!spawnQ.length&&!en.length){A.i++;if(A.i<o.waves.length){spawnWave(o.waves[A.i]);showBanner('Wave '+(A.i+1)+' of '+o.waves.length,'',1.2);S.warn()}
-      else{lock=false;o.arena=null;META.cleared[o.id]=1;saveMeta();G.score+=500;showBanner('Room clear','Doors unlocked',1.6);sfxClear();
+      else{lock=false;o.arena=null;META.cleared[o.id]=1;addDust(10);saveMeta();G.score+=500;showBanner('Room clear','Doors unlocked',1.6);sfxClear();
         picks.push({x:p.x+120,y:p.y-200,vx:120,vy:-600,type:'fruit',life:14},{x:p.x-120,y:p.y-200,vx:-120,vy:-600,type:'shard',life:14})}}}
   if(lock&&!PHY.plugs.length)makePlugs();else if(!lock&&PHY.plugs.length)clearBodies(PHY.plugs);
   /* boss chamber */
@@ -116,7 +118,7 @@ function grantAbility(id){const A=ABIL.find(a=>a.id===id);META.ab[id]=1;saveMeta
 function useStation(st){st.t=8;const p=pl;p.hp=p.max;p.en=Math.max(p.en,50);META.save={room:ROOM.id,x:st.x,score:G.score};const first=!META.mapped[ROOM.a];META.mapped[ROOM.a]=1;saveMeta();sfxSave();
   if(first){setTimeout(()=>{if(G.state==='play')showBanner('Map data downloaded','Every room of this world is on your map',2.2)},1700);sfxPick('shard')}
   ring(st.x,GY-110,'#7dffb0',200);burst(st.x,GY-120,'#7dffb0',24,500);showBanner('Progress saved','Health restored',1.6)}
-function padAbilities(){const d=document.querySelector('.act.dsh'),s=document.querySelector('.act.sp');if(d)d.hidden=!hasAb('dash');if(s)s.hidden=!hasAb('roar')}
+function padAbilities(){const d=document.querySelector('.act.dsh'),s=document.querySelector('.act.sp');if(d)d.hidden=!hasAb('dash');if(s)s.hidden=!hasAb('roar');padArms()}
 function newRun(hard){META=freshMeta();if(hard===true)META.hard=1;META.save={room:'0-0',x:210,score:0};saveMeta();G.score=0;G.lives=3;startGame('0-0',{x:300,y:GY})}
 function startGame(room,how){pl=newPlayer();lvT=0;hitStop=0;shake=0;doneT=0;G.respawnT=0;TRANS.on=0;G.state='play';enterRoom(room,how);pl.max=maxHP();pl.hp=pl.max;
   G.paused=false;hideCard();padShow(true);clearInput();showBanner(LV[G.lv].ch,LV[G.lv].name,2.4);musicFor()}

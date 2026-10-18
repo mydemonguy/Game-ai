@@ -7,7 +7,7 @@ const NPC_TALK=[
  [`<p>${CL} "Oh! Oh, hello! A real Starblood hatchling! Sorry, I'm a little excited. I'm Claude, an archive automaton. The clan built me to remember things for them."</p>
    <p>${LY} "An archivist? I thought the Hollowed melted all of you down."</p><p>${CL} "They tried. I hid in a filing cabinet for thirty years. It was very dusty, and I had a lot of time to think."</p>`,
   `<p>${CL} "I'd like to help you, Tyko. I can ride the save-station network, so I'll meet you at each one. Walk up to me any time and I'll tell you what my sensors pick up: hidden walls, Energy Tanks, how the guardians fight."</p>
-   <p>${CL} "And here, take these. I found them in a locker. It isn't much, but it's a start."</p>`],
+   <p>${CL} "I also keep a little exchange. Bring me Stardust and I'll trade you Starblood relics from the archive. Just pause at any save station."</p><p>${CL} "And here, take these. I found them in a locker. It isn't much, but it's a start."</p>`],
  [`<p>${CL} "You made it! Riding the station network tickles, by the way. This armory is where the Hollowed keep their heavy hardware."</p>
    <p>${CL} "The shrine guardian here is Bulwark. He loves his shield more than anything. Hit him from behind. Oh, and I saved you some supplies."</p>`],
  [`<p>${CL} "Orbital Dock Aeris! I've always wanted to see the stars up close. They're even better than the star charts."</p>
@@ -20,7 +20,7 @@ const NPC_TALK=[
    <p>${LY} "We'll come back for you, Claude."</p><p>${CL} "I know. I already wrote it down."</p>`]];
 const NPC_GIFT=[['shield','shard'],['med','shard'],['shield','med'],['fang','med'],['shield','shard','med'],['med','fang','shield']];
 const NPC_IDLE=['This world is fully archived. Thank you, Tyko!','I have catalogued 4,112 kinds of rust. Number 2,031 is my favourite.',"Lyra hums when you aren't listening. It's lovely.",
-  'Remember to save often. I do. Constantly.','If you find more data tablets, I would love to read them. Purely for the archive. And also because I like stories.'];
+  'Remember to save often. I do. Constantly.','Got Stardust? Pause at a station and visit my Exchange. I have relics!','If you find more data tablets, I would love to read them. Purely for the archive. And also because I like stories.'];
 const NEED={high:'double',crack:'dash',laser:'roar',slam:'slam',plasma:'plasma'};
 /* the most useful thing to say right now, based on the save file */
 function npcHint(){const a=ROOM.a;
