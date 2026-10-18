@@ -36,7 +36,7 @@ function gateClamp(e){e.x=clamp(e.x,70,RW-70);for(const s of solidRects()){if((e
 /* ---- entering a room ---- */
 function setArea(a){if(G.lv===a&&ROOM&&ROOM.a===a)return;G.lv=a;themeTex(a)}
 function enterRoom(id,how){const o=genRoom(ROOMS[id]);setArea(o.a);ROOM=o;RW=o.RW;RH=o.RH;FY=o.FY;
-  clearEnemies();shots=[];hz=[];spawnQ=[];picks=[];boxes=[];lock=false;camLock=null;clearBodies(PHY.plugs);boss=null;bossDone=!!META.boss;o.arena=null;o.bossT=1.4;
+  clearEnemies();shots=[];hz=[];spawnQ=[];picks=[];boxes=[];lock=false;camLock=null;ally=null;clearBodies(PHY.plugs);boss=null;bossDone=!!META.boss;o.arena=null;o.bossT=1.4;
   o.gates.forEach((g,i)=>{g.broken=META.gates[o.id+':g'+i]?1:0});o.cages.forEach((c,i)=>{c.broken=META.gates[o.id+':c'+i]?1:0;c.hp=c.kind==='plasma'?3:1});
   clearBodies(PHY.solids);clearBodies(PHY.plats);clearBodies(PHY.gates);
   for(const s of o.solids)sBody(s.x,s.y,s.w,s.h,PHY.solids);
@@ -80,13 +80,13 @@ function updWorld(dt){const p=pl,o=ROOM;hintT-=dt;if(!p||!o)return;
     for(const d of o.doors)if(d.row===row&&((d.side==='L'&&p.x<70)||(d.side==='R'&&p.x>RW-70))){startTrans({door:d});break}}
   if(o.lift&&!p.dead&&!TRANS.on&&!lock){const on=p.ground&&Math.abs(p.x-o.lift.x)<95&&p.y>FY-6;if(!on)o.lift.armed=1;o.lift.hold=on&&o.lift.armed?(o.lift.hold||0)+dt:0;if(on&&o.lift.armed&&(o.lift.hold>1.1||P.down))startTrans({lift:o.lift})}
   /* lockdown arena */
-  const A=o.arena;if(A){if(A.i<0&&!lock&&p.x>440&&p.x<RW-440){lock=true;A.i=0;spawnWave(o.waves[0]);showBanner('Lockdown','Wave 1 of '+o.waves.length,1.4);S.warn();sfxAlarm()}
-    else if(lock&&A.i>=0&&!spawnQ.length&&!en.length){A.i++;if(A.i<o.waves.length){spawnWave(o.waves[A.i]);showBanner('Wave '+(A.i+1)+' of '+o.waves.length,'',1.2);S.warn()}
+  const A=o.arena;if(A){if(A.i<0&&!lock&&p.x>440&&p.x<RW-440){lock=true;A.i=0;spawnWave(o.waves[0]);showBanner('Lockdown','Wave 1 of '+o.waves.length,1.4);S.warn();sfxAlarm();allyArena(o,0)}
+    else if(lock&&A.i>=0&&!spawnQ.length&&!en.length){A.i++;if(A.i<o.waves.length){spawnWave(o.waves[A.i]);showBanner('Wave '+(A.i+1)+' of '+o.waves.length,'',1.2);S.warn();allyArena(o,A.i)}
       else{lock=false;o.arena=null;META.cleared[o.id]=1;addDust(10);saveMeta();G.score+=500;showBanner('Room clear','Doors unlocked',1.6);sfxClear();
         picks.push({x:p.x+120,y:p.y-200,vx:120,vy:-600,type:'fruit',life:14},{x:p.x-120,y:p.y-200,vx:-120,vy:-600,type:'shard',life:14})}}}
   if(lock&&!PHY.plugs.length)makePlugs();else if(!lock&&PHY.plugs.length)clearBodies(PHY.plugs);
   /* boss chamber */
-  if(o.kind==='boss'&&!META.boss&&!boss&&!bossDone){o.bossT-=dt;if(o.bossT<=0)startBoss()}
+  if(o.kind==='boss'&&!META.boss&&!boss&&!bossDone){o.bossT-=dt;if(o.bossT<=0)malakarIntro()}
   if(bossDone&&doneT>0){doneT-=dt;if(doneT<=0){META.boss=1;saveMeta();victory();return}}
   /* abilities, gates, saves */
   if(p.dead)return;
@@ -94,7 +94,7 @@ function updWorld(dt){const p=pl,o=ROOM;hintT-=dt;if(!p||!o)return;
     o.cages.forEach((c,i)=>{if(!c.broken&&c.kind==='crack'&&Math.abs(c.x-p.x)<110&&p.y>GY-200)breakCage(c,i)})}
   for(const s of shots)if(s.friend&&s.wave){o.gates.forEach((g,i)=>{if(!g.broken&&(g.kind==='laser'||(g.kind==='secret'&&s.y>g.top-60&&s.y<g.bot+60))&&Math.abs(s.x-g.x)<s.r+40)breakGate(g,i)});o.cages.forEach((c,i)=>{if(!c.broken&&c.kind==='laser'&&Math.abs(s.x-c.x)<s.r+60)breakCage(c,i)})}
   /* the shrine's guardian wakes when Tyko walks into the arena */
-  if(o.kind==='shrine'&&!gDone(o.a)&&!boss&&!lock&&p.x<W*.8)startGuardian(o.a);
+  if(o.kind==='shrine'&&!gDone(o.a)&&!boss&&!lock&&p.x<W*.8)guardianIntro(o.a);
   const sh=o.shrine;if(sh&&sh.ab&&gDone(o.a)&&!hasAb(sh.ab)&&Math.abs(p.x-sh.x)<90)grantAbility(sh.ab);
   const st=o.station;if(st){st.t-=dt;if(!lock&&st.t<=0&&Math.abs(p.x-st.x)<70&&p.ground)useStation(st)}}
 function updCamera(dt){const tx=camLock!=null?camLock:clamp(pl.x-W*.4,0,Math.max(0,RW-W)),ty=clamp(pl.y-H*.66,0,Math.max(0,RH-H));cam+=(tx-cam)*Math.min(1,dt*7);camY+=(ty-camY)*Math.min(1,dt*6)}

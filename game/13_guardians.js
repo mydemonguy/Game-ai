@@ -20,7 +20,7 @@ const gClamp=x=>clamp(x,cam+180,cam+W-RSAFE-120);
 /* ---- baked boss sprite sheets: one canvas per boss, frames named after poses, sampled with nearest filtering ---- */
 const BTX={};
 function bossTex(key){const tk='bs_'+key;if(BTX[key]&&TX.exists(tk))return BTX[key];
-  for(const k in BTX)if(k!==key&&k!=='claude'&&TX.exists('bs_'+k)){TX.remove('bs_'+k);delete BTX[k]}   /* keep GPU memory to one boss at a time */
+  const BIG=['krell','bulwark','hound','crucible','seraph','malakar'];if(BIG.includes(key))for(const k in BTX)if(k!==key&&BIG.includes(k)&&TX.exists('bs_'+k)){TX.remove('bs_'+k);delete BTX[k]}   /* keep GPU memory to one boss at a time (Claude and Sable stay) */
   const b=bakeBoss(key),n=b.frames.length,cols=Math.min(n,4),rows=Math.ceil(n/cols),[c,g]=mkC(cols*b.fw,rows*b.fh);
   b.frames.forEach((f,i)=>g.drawImage(f,(i%cols)*b.fw,Math.floor(i/cols)*b.fh));if(TX.exists(tk))TX.remove(tk);TX.addCanvas(tk,c);const T=TX.get(tk);
   b.names.forEach((nm,i)=>T.add(nm,0,(i%cols)*b.fw,Math.floor(i/cols)*b.fh,b.fw,b.fh));T.setFilter(Phaser.Textures.FilterMode.NEAREST);

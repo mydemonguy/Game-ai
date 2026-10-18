@@ -26,7 +26,8 @@ const RAMP={
  nv:['#1a1230','#3a2c62','#6a56a4','#b8a2e8'],      /* sovereign navy-violet */
  fe:['#18141e','#383040','#62586e','#a49ab4'],
  cl:['#5a2414','#b8562e','#e48a5c','#fbd0b0'],      /* clay (Claude) */
- cm:['#7a6a58','#d8c8b0','#f4ecdc','#ffffff']};     /* cream */     /* forged iron */     /* crimson */
+ cm:['#7a6a58','#d8c8b0','#f4ecdc','#ffffff'],
+ tl:['#0c3038','#1c6a72','#3cb0b0','#b8f4ee']};     /* talon teal (Sable) */     /* cream */     /* forged iron */     /* crimson */
 const BA_PAL=(()=>{const L=[BA_INK];for(const k in RAMP)L.push(...RAMP[k]);return L.map(h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)])})();
 const P2=d=>new Path2D(d);
 const TR=(M,x,y,r)=>{let n=M.translate(x,y);if(r)n=n.rotate(r*57.29578);return n};
@@ -223,6 +224,26 @@ BOSSES.seraph={w:220,h:200,gy:194,frames:BIP_FR.concat(['thrust','nova','cast'])
     (g,m)=>{const L=TR(m,0,15,-(ua+ea)+(sw?-1.57:wind?2.4:nova?-2.6:-2.95));sp(g,L,'M-2 -22 L2 -22 L2 14 L-2 14Z','au');sp(g,L,'M-5 14 L5 14 L0 56Z','cy',{l:1,d:1.5});ln(g,L,'M0 17 L0 50','#ffffff');sp(g,L,'M-6 11 L6 11 L6 16 L-6 16Z','vo')});
   sp(g,TR(B,12,-35,ua*.2),'M-11 6 Q-12 -8 0 -10 Q12 -8 11 4 L8 8 L-8 8Z','pw',{l:2,d:2.5});ln(g,TR(B,12,-35,ua*.2),'M-10 4 Q0 -2 10 3','#ffcc4a',1.4);
 }};
+/* --- Sable of the Ninth Talon: raptor knight, half machine, plasma glaive (the hero ally) --- */
+BOSSES.sable={w:200,h:170,gy:162,frames:BIP_FR,draw(g,f){const fl=f==='idle1'?1:f.startsWith('walk')?+f[4]:f==='swing'?3:0;
+  knight(g,f,{cx:96,gy:162,s:.82,bw:.86,ab:.95,hs:1,a:'tl',b:'gm',t:'pw',e:'cy',
+  pose:(P,f)=>{if(f==='swing'){P.uf=-1.35;P.ef=-.1}},
+  shin:(g,q)=>ln(g,q,'M0 6 L0 20','#3cb0b0',1.2),
+  back:(g,B,B0)=>{/* scarf */const sw=Math.sin(fl*1.4)*4,cs=f==='swing'||f.startsWith('walk')?10:f==='leap'?-8:0;
+    sp(g,B,`M-10 -54 L10 -54 L8 -46 Q-16 -40 ${-40-cs} ${-30+sw} L${-54-cs} ${-18+sw} L${-46-cs} ${-28+sw} Q${-28-cs} -36 -14 -44Z`,'cr',{l:1.5,d:2});
+    /* tail */let tm=TR(B0,-10,2,-1.25);for(let i=0;i<6;i++){const w=5.5-i*.8;sp(g,tm,`M${-w} 0 L${w} 0 L${w-.6} 12 L${.6-w} 12Z`,i%2?'gm':'tl',{l:1,d:1.2});tm=TR(tm,0,11,.16+Math.sin(fl+i)*.06)}
+    sp(g,tm,'M-3 0 L3 0 L0 9Z','cr',{l:.8,d:.8})},
+  chest:(g,B)=>{sp(g,B,'M-6 -42 L6 -42 L5 -30 L0 -25 L-5 -30Z','gm');sp(g,B,ell(0,-34,2.8,2.8),'cy',{ink:false});ln(g,B,'M-18 -24 L-8 -36 M18 -24 L8 -36','#b8f4ee',1.1);
+    ln(g,B,'M-14 -18 L-4 -14 L-12 -8','#3c4458',1.4)},
+  handB:(g,q)=>{sp(g,q,'M-6 15 L6 15 L7 23 L-7 23Z','gm');for(const x of[-4,0,4])sp(g,q,`M${x-1.6} 22 L${x+1.6} 22 L${x} 29Z`,'pw',{ink:false})},
+  handF:(g,q,m,P)=>{const ga=f==='swing'?-1.55:f==='wind'?2.5:f==='leap'?-2.3:-2.95,G2=TR(m,0,22*.82,-(P.uf+P.ef)+ga).scale(.95,.95);sp(g,q,'M-6 15 L6 15 L7 23 L-7 23Z','gm');
+    sp(g,G2,'M-2 -28 L2 -28 L2 12 L-2 12Z','gm',{l:.8,d:1});sp(g,G2,'M-3 -12 L3 -12 L3 -8 L-3 -8Z','pw',{flat:1,ink:false});
+    sp(g,G2,'M-5 12 L5 12 L5 16 L-5 16Z','pw');sp(g,G2,'M-4 16 L4 16 L7 30 L0 50 L-3 30Z','cy',{l:1,d:1.4});ln(g,G2,'M0 19 L0 44','#ffffff',1);sp(g,G2,'M-3 -28 L3 -28 L0 -35Z','pw')},
+  head:(g,H,P,f)=>{/* crest feathers */for(const [x,a,l] of[[-6,-.9,14],[-2,-.6,16],[2,-.35,12]]){const c=TR(H,x,-14,a);sp(g,c,`M-2 0 L2 0 L0 ${-l}Z`,'cr',{l:.8,d:1})}
+    sp(g,H,'M-10 0 L8 0 L28 -4 L30 -8 L12 -15 L-6 -18 L-12 -9Z','tl',{l:2,d:2.5});const J=TR(H,6,-2,f==='swing'||f==='wind'?.25:0);sp(g,J,'M-6 -2 L22 -2 L20 2 L-6 3Z','gm');
+    for(let x=0;x<20;x+=4.5)sp(g,J,`M${x} -2 L${x+1.6} -5 L${x+3.2} -2Z`,'cm',{ink:false});
+    sp(g,H,'M2 -12 L16 -10 L15 -7 L2 -8Z','gm',{flat:1});px(g,H,8,-11,5,2,'#a8f0ff');px(g,H,11,-11,2,2,'#ffffff');
+    sp(g,H,'M-11 -8 L-3 -8 L-3 -2 L-11 -2Z','gm',{l:.8,d:1});px(g,H,-8,-6,2,2,'#22b8f0');px(g,H,-4,-17,7,1.4,'#b8f4ee')}})}};
 /* --- Claude: a floating archive automaton who helps Tyko (the NPC) --- */
 BOSSES.claude={w:84,h:110,gy:104,frames:['idle0','idle1','talk0','talk1'],draw(g,f){const t=f.startsWith('talk'),k=+f[f.length-1],R=BM().translate(42,62+(f==='idle1'?2:0));
   /* thruster glow */

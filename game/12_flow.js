@@ -29,7 +29,7 @@ function abilitiesHTML(){return `<div class="keys">${ABIL.map(a=>`<kbd style="co
 function showLore(a){if(G.state!=='play')return;G.state='card';padShow(false);clearInput();const L=LORE[a];
   showCard({ey:'Data tablet · '+LV[a].ch,h:L.h,b:L.b,btns:[['Continue',()=>{G.state='play';hideCard();padShow(true)}]]})}
 function archiveCard(){const got=LORE.map((L,a)=>META.items['lore'+a]?a:-1).filter(a=>a>=0);
-  showCard({ey:'Starblood archive',h:'Data Tablets',tag:`${got.length} of 6 recovered`,b:got.length?got.map(a=>`<h3 style="margin:.9em 0 .3em;color:#ffe08a">${LV[a].ch} · ${LORE[a].h}</h3>${LORE[a].b}`).join(''):'<p>No tablets yet. The Starblood hid their records well.</p>',btns:[['Back',pauseCard]]})}
+  showCard({ey:'Starblood archive',h:'Data Tablets',tag:`${got.length} of 6 recovered`,b:(META.sable?`<h3 style="margin:.4em 0 .3em;color:#5ce1d8">Allies · Sable of the Ninth Talon</h3>${SABLE_BIO}`:'')+(got.length?got.map(a=>`<h3 style="margin:.9em 0 .3em;color:#ffe08a">${LV[a].ch} · ${LORE[a].h}</h3>${LORE[a].b}`).join(''):'<p>No tablets yet. The Starblood hid their records well.</p>'),btns:[['Back',pauseCard]]})}
 /* fast travel between save stations you have visited */
 const saveRooms=()=>AREAS.map(r=>r.find(o=>o.kind==='save')).filter(o=>META.map[o.id]);
 function travelCard(){const list=saveRooms().filter(o=>o.id!==ROOM.id);
@@ -78,7 +78,7 @@ function victory(){if(G.rush)return rushDone();G.state='card';padShow(false);cle
   story(STORY.ending,0,()=>showCard({ey:'The saga is complete',h:'Ithra Is Free',big:0,b:`<p>Final score <b>${G.score.toLocaleString()}</b></p><p>Items collected <b>${completion()}%</b> · Map explored ${Math.round(found/tot*100)}%</p><p>Energy tanks ${tankCount()}/12 · Eggs ${[0,1,2,3,4,5].filter(a=>META.items['egg'+a]).length}/6 · Aether cores ${coreCount()}/5 · Guardians ${[0,1,2,3,4].filter(a=>gDone(a)).length}/5</p>${wasRift?'<p><b style="color:#ff4a6a">Rift Mode conquered.</b> The Starblood would be proud.</p>':newRift?'<p><b style="color:#ff4a6a">Rift Mode unlocked.</b> Start a new game to face a harder Ithra.</p>':''}<p>Thank you for playing Aetherfall.</p>`,btns:[['Play again',()=>modeCard(toTitle)],['Title',toTitle,1]]}))}
 function pauseCard(){const canTravel=ROOM&&ROOM.kind==='save'&&!lock&&saveRooms().length>1;
   showCard({ey:LV[G.lv].ch+' · '+LV[G.lv].name+(META.hard?' · Rift Mode':''),h:'Paused',extra:mapCardHTML()+`<p class="tag" style="margin:.4em 0">Map ${Object.keys(META.map).length}/${Object.keys(ROOMS).length} rooms · Items ${completion()}%</p>`+abilitiesHTML(),
-  btns:[['Resume',togglePause],...(canTravel?[['Fast travel',travelCard]]:[]),...(ROOM&&ROOM.kind==='save'&&!G.rush?[["Claude's Exchange",()=>exchangeCard()]]:[]),...(loreCount()?[['Archive',archiveCard,1]]:[]),['Settings',()=>soundCard(pauseCard),1],['Controls',()=>controls(pauseCard),1],['Quit to title',toTitle,1]]});paintMapCard()}
+  btns:[['Resume',togglePause],...(canTravel?[['Fast travel',travelCard]]:[]),...(ROOM&&ROOM.kind==='save'&&!G.rush?[["Claude's Exchange",()=>exchangeCard()]]:[]),...(loreCount()||META.sable?[['Archive',archiveCard,1]]:[]),['Settings',()=>soundCard(pauseCard),1],['Controls',()=>controls(pauseCard),1],['Quit to title',toTitle,1]]});paintMapCard()}
 function togglePause(){if(G.state!=='play'||!SC)return;G.paused=!G.paused;clearInput();
   if(G.paused){padShow(false);sfxPause(1);musicDuck(1);SC.scene.pause();pauseCard()}
   else{hideCard();padShow(true);sfxPause(0);musicDuck(0);SC.scene.resume()}}
@@ -107,7 +107,7 @@ function gameUpdate(dt){if(banner){banner.life-=dt;if(banner.life<=0)banner=null
   for(const e of en)if(e.dead)eKill(e);en=en.filter(e=>!e.dead);
   for(let i=0;i<en.length;i++)for(let j=i+1;j<en.length;j++){const a=en[i],b=en[j];if(a.fly!==b.fly||Math.abs(a.y-b.y)>200)continue;const d=b.x-a.x,m=(a.w+b.w)*.45;
     if(Math.abs(d)<m){const push=(m-Math.abs(d))*.5*(d<0?-1:1);a.x-=push;b.x+=push;if(a.body)a.body.x-=push;if(b.body)b.body.x+=push}}
-  updShots(dt);updHz(dt);updPicks(dt);updBoxes(dt);updAtmos(dt);updWorld(dt);updNPC(dt);if(G.state!=='play'||TRANS.on){clearP();return}
+  updShots(dt);updHz(dt);updPicks(dt);updBoxes(dt);updAtmos(dt);updWorld(dt);updNPC(dt);updAlly(dt);if(G.state!=='play'||TRANS.on){clearP();return}
   if(pl.dead&&G.respawnT>0){G.respawnT-=dt;pl.deadT+=dt;if(G.respawnT<=0){const e=ROOM.entry;pl.dead=0;plTeleport(e.x,e.y);pl.hp=pl.max;pl.inv=2.5;pl.en=Math.max(pl.en,50);pl.hits=0;
     if(lock){const rx=clamp(pl.x,cam+200,cam+W-RSAFE-200);plTeleport(rx,FY)}showBanner('Back on your feet','Lives left: '+G.lives,1.6);ring(pl.x,pl.y-90,'#ffe08a',220);burst(pl.x,pl.y-90,'#ffe08a',30,700);sfxRevive()}}
   if(boss&&boss.state==='enter'&&boss.guard==null){cam+=(arenaCam()-cam)*Math.min(1,dt*3);camY+=(Math.max(0,RH-H)-camY)*Math.min(1,dt*3)}else updCamera(dt);

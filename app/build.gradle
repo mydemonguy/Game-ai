@@ -6,8 +6,8 @@ android {
         applicationId 'com.aetherfall.game'
         minSdk 24
         targetSdk 34
-        versionCode 15
-        versionName '2.6'
+        versionCode 16
+        versionName '2.7'
     }
     // fixed key so every new build installs as an update over the previous one
     signingConfigs {

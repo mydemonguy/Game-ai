@@ -48,6 +48,8 @@ Claude (2.4): a friendly archive automaton waits at every save station. Meet him
 
 Arsenal (2.5): ideas from the all-time great side-scrollers, rebuilt for Aetherfall. **Guardian Arms** (Mega Man style): every guardian you beat gives Tyko its weapon. Rivet Spray, Aegis Shield (eats enemy shots), Thruster Dash, Slag Mortar and Crystal Feathers fire from the new ◈ button and cost Aether; tap the label above it to switch. **Starblood Relics** (Hollow Knight style charms) are sold at **Claude's Exchange** (Shovel Knight style shop) for Stardust, which you earn from coins, robots, arenas and guardians. Equip three at a save station: Lodestone, Swift Talons, Long Claws, Soul Siphon, Stone Scales, Aether Battery, Thorn Hide, Comet Tail, Fury Heart, Lucky Egg. **Boss Rush** (unlocked by beating Malakar): all five guardians and Malakar back to back against the clock, with your relics, on a separate save.
 
+Story (2.7): every shrine guardian and Malakar now speaks before the fight, with portraits and replies from Lyra and Tyko (once per save; skipped in Boss Rush). **Sable of the Ninth Talon**, a raptor knight and former captain of the Starblood's Talon Guard, was hollowed by Malakar until Tyko's roar broke his hold on her. She bursts into your first lockdown arena in Chapter II, then sometimes joins later lockdowns, fighting beside you with a plasma glaive. She also turns up for the final battle. Her story is in Pause → Archive.
+
 ## Changing the game
 
 The game's source is in `game/`: `shell.html` (page, menus and touch controls), `vendor/` (Phaser 3.90, arcade build) and the numbered scripts:

@@ -20,7 +20,7 @@ const NPC_TALK=[
    <p>${LY} "We'll come back for you, Claude."</p><p>${CL} "I know. I already wrote it down."</p>`]];
 const NPC_GIFT=[['shield','shard'],['med','shard'],['shield','med'],['fang','med'],['shield','shard','med'],['med','fang','shield']];
 const NPC_IDLE=['This world is fully archived. Thank you, Tyko!','I have catalogued 4,112 kinds of rust. Number 2,031 is my favourite.',"Lyra hums when you aren't listening. It's lovely.",
-  'Remember to save often. I do. Constantly.','Got Stardust? Pause at a station and visit my Exchange. I have relics!','If you find more data tablets, I would love to read them. Purely for the archive. And also because I like stories.'];
+  'Remember to save often. I do. Constantly.','The archive says Sable of the Ninth Talon was the bravest knight the clan ever had. If you see her, say hello for me.','Got Stardust? Pause at a station and visit my Exchange. I have relics!','If you find more data tablets, I would love to read them. Purely for the archive. And also because I like stories.'];
 const NEED={high:'double',crack:'dash',laser:'roar',slam:'slam',plasma:'plasma'};
 /* the most useful thing to say right now, based on the save file */
 function npcHint(){const a=ROOM.a;

@@ -139,7 +139,7 @@ function chooseAttack(b){let o=['dash','barrage','rift','slash'];if(b.phase>=2)o
   else if(a==='summon'){b.state='cast';b.t=.9;spawnEnemy('d',-1);spawnEnemy('d',1);if(b.phase===3)spawnEnemy('c',1)}}
 function updBoss(b,dt){if(b.guard!=null)return updGuardian(b,dt);b.flash-=dt;b.t-=dt;
   const r=b.hp/b.max,ph=r<.25?3:r<.55?2:1;
-  if(ph!==b.phase&&b.state!=='enter'){b.phase=ph;showBanner(ph===2?'Malakar Unleashed':'The Void Consumes',ph===2?'He calls the Hollowed to his side':'Final phase',1.8);
+  if(ph!==b.phase&&b.state!=='enter'){b.phase=ph;if(ph===2&&META.sable&&!G.rush)setTimeout(()=>{if(boss&&!boss.dead&&G.state==='play'){allyJoin('boss');if(ally){ally.line='Malakar! You owe me a soul.';ally.lt=3}}},1400);showBanner(ph===2?'Malakar Unleashed':'The Void Consumes',ph===2?'He calls the Hollowed to his side':'Final phase',1.8);
     shake=22;S.boom();sfxBossRoar();camKick(.05);b.state='idle';b.t=1.2;burst(b.x,b.y-170,'#ff3d6e',40,1000);ring(b.x,b.y-170,'#ff3d6e',400);hz=hz.filter(h=>h.kind!=='beam')}
   if(b.state==='enter'){b.dy+=(0-b.dy)*Math.min(1,dt*2.2);if(b.t<=0){b.state='idle';b.t=1;b.dy=0}return}
   b.hov=Math.sin(lvT*2)*16;

@@ -152,5 +152,5 @@ function ovUpdate(){const g=OV.g;g.clear();for(let i=0;i<OV.bars.length;i+=2){co
 /* ---- the whole actor pass, once per rendered frame ---- */
 function actorsUpdate(){FRAME++;updPlayerView();
   sync(en,mkEnemyView,updEnemyView);if(boss&&!boss.dead){if(boss.guard!=null)sync([boss],mkGuardView,updGuardView);else sync([boss],mkBoss,updBossView)}
-  if(npc&&G.state!=='menu')sync([npc],mkNPCView,updNPCView);sync(shots,mkShotView,updShotView);sync(picks,mkPickView,updPickView);sync(boxes,mkBoxView,updBoxView);sweepViews();ovUpdate()}
+  if(npc&&G.state!=='menu')sync([npc],mkNPCView,updNPCView);if(ally)sync([ally],mkAllyView,updAllyView);sync(shots,mkShotView,updShotView);sync(picks,mkPickView,updPickView);sync(boxes,mkBoxView,updBoxView);sweepViews();ovUpdate()}
 </script>
