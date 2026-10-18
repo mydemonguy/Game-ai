@@ -1,6 +1,6 @@
 # Aetherfall – Android project
 
-A 1080p sci-fi fantasy action-explorer: six worlds of connected rooms (Super Metroid-style map), abilities that open new paths, and a final boss fight against Malakar, the Void Sovereign. Synthesised music for every world with a combat layer during lockdowns, plus layered sound effects.
+A 1080p sci-fi fantasy action-explorer: six worlds of connected rooms (Super Metroid-style map), abilities that open new paths, and a final boss fight against Malakar, the Void Sovereign. An orchestral and electronic soundtrack (a track per world, guardian and final boss themes) and layered sound effects.
 It runs fully offline, in landscape, with the system bars hidden. Since version 2.0 it runs on the **Phaser 3** game engine (WebGL): Arcade physics, GPU particles for weather and impacts, a real-time light map, bloom and vignette post-processing, and cut-out robot rigs animated as Phaser containers. Settings has a Graphics switch: High draws at full screen resolution, Balanced (default) and Fast draw fewer pixels and let the screen stretch them up. The game steps down by itself if the frame rate dips, and asks Android for a 60 Hz display mode so 90/120 Hz screens don't double the work.
 
 ## Option A: Build on GitHub (no computer setup needed)
@@ -62,3 +62,5 @@ Builds are signed with `app/aetherfall-debug.keystore`, so each new APK installs
 - Dino sprite: the free dino sprite pack supplied by the project owner (frames packed into `game/sprites/dino.webp` by `game/sprites/make_atlas.py`).
 - Fonts: Cinzel and Chakra Petch (SIL Open Font License, see `game/fonts/`).
 - Engine: Phaser 3.90 by Phaser Studio (MIT License, see `game/vendor/PHASER-LICENSE.md`).
+- Music: Tanner Helland, [free-music](https://github.com/tannerhelland/free-music), CC BY 4.0 (track list in `app/src/main/assets/music/CREDITS.md`).
+- Sound effects: Kenney ([kenney.nl](https://kenney.nl)), CC0, layered with the game's own synthesised effects.

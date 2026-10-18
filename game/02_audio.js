@@ -25,9 +25,14 @@ function initAudio(){if(AC){if(AC.state==='suspended'&&!document.hidden)AC.resum
   const lfo=AC.createOscillator(),lg=AC.createGain();lfo.frequency.value=.13;lg.gain.value=0;lfo.connect(lg);lg.connect(af.frequency);lfo.start();
   as.connect(af);af.connect(ag);ag.connect(sfx);as.start();
   const hum=AC.createOscillator(),hg=AC.createGain(),hf=AC.createBiquadFilter();hum.type='sawtooth';hum.frequency.value=55;hf.type='lowpass';hf.frequency.value=160;hg.gain.value=0;hum.connect(hf);hf.connect(hg);hg.connect(sfx);hum.start();
-  AU={master,comp,rev,revG,mus,sfx,echo,noise:nb,duck:1,amb:{f:af,g:ag,lg,hg,hum},ambKey:null,cd:{},vt:[],cur:null};
-  musicFor()}
-function audioSuspend(on){if(!AC)return;try{if(on)AC.suspend();else AC.resume()}catch(e){}}
+  AU={master,comp,rev,revG,mus,sfx,echo,noise:nb,duck:1,amb:{f:af,g:ag,lg,hg,hum},ambKey:null,cd:{},vt:[],cur:null,smp:{}};
+  loadSamples();musicFor()}
+/* recorded one-shots (Kenney, CC0), decoded once from the embedded data */
+function loadSamples(){if(typeof SFXB==='undefined')return;for(const k in SFXB){try{const b=atob(SFXB[k]),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);
+  AC.decodeAudioData(u.buffer,buf=>{AU.smp[k]=buf},()=>{})}catch(e){}}}
+function smp(k,o){if(!AU||AC.state!=='running'||!AU.smp[k])return false;o=o||{};const s=AC.createBufferSource();s.buffer=AU.smp[k];s.playbackRate.value=o.rate||1;const g=AC.createGain();g.gain.value=(o.v==null?.5:o.v);
+  let n=g;if(o.pan&&AC.createStereoPanner){const p=AC.createStereoPanner();p.pan.value=o.pan;g.connect(p);n=p}s.connect(g);n.connect(AU.sfx);s.start(AC.currentTime+.003);return true}
+function audioSuspend(on){if(MS.cur){if(on)MS.cur.a.pause();else{const p=MS.cur.a.play();if(p&&p.catch)p.catch(()=>{})}}if(!AC)return;try{if(on)AC.suspend();else AC.resume()}catch(e){}}
 
 /* ---- voice building blocks (at = absolute AudioContext time) ---- */
 function vEnd(at,src,o,dest){let node=src;
@@ -183,21 +188,46 @@ function stepSched(c,step,at){AU.vm=1;const T=c.T,sd=60/T.bpm/4,n=T.prog.length,
   if(c.cOn||AC.currentTime<c.cUntil){if(CMB.k[s]==='x')mDrum(at,'k',cg,1);if(CMB.s[s]==='x')mDrum(at,'s',cg,1.1);if(s%2===1)mDrum(at,'h',cg,.7);
     if(CMB.st[s]==='x')[0,2,4].forEach(k=>tone(at,{f:N(root+k,1),d:.2,v:.035,w:'sawtooth',ft:'lowpass',ff:2600,ff2:500,q:1.5},cg));
     if(CMB.b[s]==='o')mBass(at,T,N(root,-1),sd*.8,cg,.8)}}
-function musicPlay(name){if(!AU)return;const cur=AU.cur;if(cur&&cur.name===name&&!cur.dead)return;const n=AC.currentTime;
+/* ---- recorded soundtrack: streamed <audio> elements (music by Tanner Helland, CC-BY 4.0); the synth tracks below stay as a fallback ---- */
+const MREC={title:1,a0:1,a1:1,a2:1,a3:1,a4:1,a5:1,guard:1,boss:1,rush:1,victory:1};
+const MS={el:{},cur:null,fading:[],bad:{},duckT:0,t:0};
+function recPlay(name){if(!MREC[name]||MS.bad[name])return false;let a=MS.el[name];
+  if(!a){try{a=new Audio()}catch(e){MS.bad[name]=1;return false}a.src='music/'+name+'.ogg';a.loop=name!=='victory';a.preload='auto';a.volume=0;
+    a.onerror=()=>{MS.bad[name]=1;if(MS.cur&&MS.cur.a===a){MS.cur=null;synthPlay(name)}};MS.el[name]=a}
+  if(MS.cur&&MS.cur.name===name&&!MS.cur.out)return true;if(MS.cur){MS.cur.out=1;MS.fading.push(MS.cur)}
+  MS.fading=MS.fading.filter(f=>f.a!==a);try{a.currentTime=0}catch(e){}a.volume=0;const p=a.play();if(p&&p.catch)p.catch(()=>{});MS.cur={name,a,v:0};return true}
+function recStop(fade){if(MS.cur){MS.cur.out=1;MS.cur.rate=1/Math.max(.2,fade||1);MS.fading.push(MS.cur);MS.cur=null}}
+/* fades and ducking, every frame (runs even while the game is paused) */
+function recTick(){const now=performance.now(),dt=Math.min(.1,MS.t?(now-MS.t)/1000:0);MS.t=now;MS.duckT=Math.max(0,MS.duckT-dt);
+  const tgt=VOL.music*(AU?AU.duck:1)*(MS.duckT>0?.25:1);if(MS.cur){const c=MS.cur;c.v+=(tgt-c.v)*Math.min(1,dt*2.5);c.a.volume=Math.max(0,Math.min(1,c.v))}
+  for(const f of MS.fading){f.v-=dt*(f.rate||1.4)*Math.max(.3,f.v);if(f.v<=.01){f.v=0;f.a.pause()}f.a.volume=Math.max(0,Math.min(1,f.v))}MS.fading=MS.fading.filter(f=>f.v>0)}
+function musicPlay(name){if(recPlay(name)){if(AU&&AU.cur)synthStop(.8);return}recStop(.8);synthPlay(name)}
+function synthPlay(name){if(!AU)return;const cur=AU.cur;if(cur&&cur.name===name&&!cur.dead)return;const n=AC.currentTime;
   if(cur){cur.dead=1;cur.g.gain.setTargetAtTime(0,n,.35);const old=cur;setTimeout(()=>{try{old.g.disconnect()}catch(e){}},3000)}
   const T=TRK[name];if(!T){AU.cur=null;return}const g=AC.createGain(),cg=AC.createGain();g.gain.setValueAtTime(0,n);g.gain.setTargetAtTime(1,n+.05,.4);cg.gain.value=T.combat?1:0;cg.connect(g);g.connect(AU.mus);
   AU.echo.delayTime.setValueAtTime(60/T.bpm*.75,n);AU.cur={name,T,g,cg,step:0,next:n+.12,cOn:T.combat?1:0,cUntil:0};genMelody(T)}
-function musicStop(fade){if(!AU||!AU.cur)return;const c=AU.cur;c.dead=1;c.g.gain.setTargetAtTime(0,AC.currentTime,(fade||1)/3);setTimeout(()=>{try{c.g.disconnect()}catch(e){}},(fade||1)*1000+1500);AU.cur=null}
+function musicStop(fade){recStop(fade);synthStop(fade)}
+function synthStop(fade){if(!AU||!AU.cur)return;const c=AU.cur;c.dead=1;c.g.gain.setTargetAtTime(0,AC.currentTime,(fade||1)/3);setTimeout(()=>{try{c.g.disconnect()}catch(e){}},(fade||1)*1000+1500);AU.cur=null}
 function musicDuck(on){if(!AU)return;AU.duck=on?.35:1;AU.mus.gain.setTargetAtTime(VOL.music*AU.duck,AC.currentTime,.12)}
-function musicDuckFor(sec){if(!AU)return;AU.mus.gain.setTargetAtTime(VOL.music*.2,AC.currentTime,.08);clearTimeout(AU.dt);AU.dt=setTimeout(()=>{if(AU)AU.mus.gain.setTargetAtTime(VOL.music*AU.duck,AC.currentTime,.5)},sec*1000)}
-function musicFor(){if(!AU)return;let n;if(G.state==='menu')n='title';else if(boss&&boss.guard!=null&&!boss.dead)n='guard';else if(ROOM&&ROOM.kind==='boss'&&!META.boss)n='boss';else n='a'+Math.max(0,Math.min(5,G.lv));musicPlay(n)}
+function musicDuckFor(sec){MS.duckT=sec;if(!AU)return;AU.mus.gain.setTargetAtTime(VOL.music*.2,AC.currentTime,.08);clearTimeout(AU.dt);AU.dt=setTimeout(()=>{if(AU)AU.mus.gain.setTargetAtTime(VOL.music*AU.duck,AC.currentTime,.5)},sec*1000)}
+function musicFor(){let n;if(G.state==='menu')n='title';else if(G.rush)n='rush';else if(boss&&boss.guard!=null&&!boss.dead)n='guard';else if(ROOM&&ROOM.kind==='boss'&&!META.boss)n='boss';else n='a'+Math.max(0,Math.min(5,G.lv));musicPlay(n)}
 const AMBS={rain:{t:'bandpass',f:2600,q:.5,v:.05},rain2:{t:'bandpass',f:2200,q:.6,v:.032},hum:{t:'lowpass',f:220,q:1,v:.05,hum:.035},rumble:{t:'lowpass',f:320,q:1.2,v:.07,hum:.02},wind:{t:'bandpass',f:650,q:2.5,v:.06,lfo:380}};
 function ambienceTick(){const want=G.state==='menu'?'menu':G.state==='play'||G.state==='card'?(TRK['a'+G.lv]||{}).amb||'none':'none',key=want+G.lv+(AU.cur?AU.cur.name:'');if(key===AU.ambKey)return;AU.ambKey=key;
   const n=AC.currentTime,A=AMBS[want]||{t:'lowpass',f:400,q:1,v:want==='menu'?.015:0},a=AU.amb;a.f.type=A.t;a.f.frequency.setTargetAtTime(A.f,n,.3);a.f.Q.value=A.q;
   a.g.gain.setTargetAtTime(A.v,n,.8);a.lg.gain.setTargetAtTime(A.lfo||0,n,.5);a.hg.gain.setTargetAtTime(A.hum||0,n,.8);
   const T=AU.cur&&AU.cur.T;AU.revG.gain.setTargetAtTime(T?T.rev*.8:.3,n,.5)}
 /* called every frame: schedule notes a little ahead of time */
-function musicTick(){if(!AU||AC.state!=='running')return;ambienceTick();const c=AU.cur;if(!c)return;const n=AC.currentTime;
+function musicTick(){recTick();if(!AU||AC.state!=='running')return;ambienceTick();const c=AU.cur;if(!c)return;const n=AC.currentTime;
   const want=c.T.combat?1:(lock&&G.state==='play'&&!G.paused?1:0);if(want!==c.cOn){c.cOn=want;c.cUntil=want?1e9:n+2.5;c.cg.gain.setTargetAtTime(want,n,want?.15:.7)}
   if(c.next<n-.25)c.next=n+.05;const sd=60/c.T.bpm/4;let k=0;while(c.next<n+.14&&k++<8){const sw=c.step%2===1?sd*.06:0;stepSched(c,c.step,c.next+sw);c.next+=sd;c.step++}}
+</script>
+<script>
+/* layer the recorded one-shots over the synth effects (falls back to synth alone until they're decoded) */
+{const J=sfxJump;sfxJump=n=>{if(!smp('jump',{v:.5,rate:n===2?1.22:R(.94,1.06)})||n===2)J(n)}}
+{const L=sfxLand;sfxLand=vy=>{if(vy<500)return;if(!smp('land',{v:.35+.45*Math.min(1,vy/2200),rate:R(.9,1.05)})||vy>1400)L(vy)}}
+{const P=sfxPick;sfxPick=t=>{if(t==='coin'){if(smp('coin',{v:.42,rate:R(.96,1.1)}))return}P(t)}}
+{const C=sfxCrate;sfxCrate=b=>{if(b)smp('break',{v:.6,rate:R(.9,1.1)});C(b)}}
+{const D=sfxEnemyDie;sfxEnemyDie=e=>{const P=e&&e.x!=null?sp(e.x,e.y):{pan:0,g:1};smp('enemy_destroy',{v:.42*P.g,pan:P.pan,rate:R(.92,1.08)*(e&&e.heavy?.8:1)});D(e)}}
+{const H=sfxHit;sfxHit=(d,e)=>{const P=e?sp(e.x,e.y):{pan:0,g:1};smp('enemy_hurt',{v:(d>=30?.45:.3)*P.g,pan:P.pan,rate:R(.92,1.1)});H(d,e)}}
+{const E=sfxEnemy;sfxEnemy=(k,e)=>{if(k==='swipe'){const P=e?sp(e.x,e.y):{pan:0,g:1};if(P.g>.2)smp('enemy_attack',{v:.3*P.g,pan:P.pan,rate:R(.95,1.1)})}E(k,e)}}
 </script>

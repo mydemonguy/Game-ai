@@ -5,3 +5,5 @@ local.properties
 .idea/
 game/aetherfall.html
 game/sprites.gen.js
+game/sfx.gen.js
+game/music
