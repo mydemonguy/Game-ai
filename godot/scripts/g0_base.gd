@@ -102,7 +102,7 @@ func _init() -> void:
 
 static func fresh_meta() -> Dictionary:
 	return {ab={}, tanks={}, items={}, gates={}, cleared={}, map={}, areas={}, save=null, boss=0, guards={}, mapped={}, dust=0,
-		relics={}, eq=[], arm=-1, met={}, talk={}, sable=0, hard=0}
+		relics={}, eq=[], arm=-1, met={}, talk={}, sable=0, hard=0, seed=0}
 
 # ---------- small helpers ----------
 func R(a: float, b: float) -> float:
@@ -153,6 +153,12 @@ static func hstr(s: String) -> int:
 	return (h % 2147483646) + 1
 
 ## Park–Miller generator, same sequence as the original JS rng(seed)
+## the tile set the current room is drawn in (random worlds mix several per world)
+func curTh() -> String:
+	if ROOM != null and ROOM.has("th"):
+		return ROOM.th
+	return DB.LV[clampi(G.lv, 0, 5)].theme
+
 class Rng:
 	var s: int
 	func _init(seed: int) -> void:
@@ -361,7 +367,7 @@ func sparkle(x: float, y: float, col) -> void:
 
 func debris(x: float, y: float, kind: String) -> void:
 	_rec(["debris", x, y, kind])
-	var Pa: Dictionary = DB.PAL[DB.LV[G.lv].theme]
+	var Pa: Dictionary = DB.PAL[curTh()]
 	var cols: Array
 	if kind == "laser":
 		cols = ["#ff6a5a", "#ffd0c0"]

@@ -165,6 +165,7 @@ func rollDrop(r: Rng) -> String:
 	return "fruit" if v < .3 else "shard" if v < .54 else "coin" if v < .7 else "fang" if v < .8 else "shield" if v < .9 else "med"
 
 func enterRoom(id: String, how: Dictionary) -> void:
+	var prevZone: String = ROOM.get("zn", "") if ROOM != null else ""
 	var o: Dictionary = DB.ROOMS[id].duplicate(true)
 	G.lv = o.a
 	ROOM = o
@@ -265,6 +266,9 @@ func enterRoom(id: String, how: Dictionary) -> void:
 	roomView(o)
 	padAbilities()
 	musicFor()
+	# walking into a new district of a random world
+	if how.has("side") and prevZone != "" and o.get("zn", "") != prevZone and G.state == "play":
+		showBanner(o.zn, DB.LV[o.a].ch, 2.0)
 
 func _nid() -> int:
 	eid += 1

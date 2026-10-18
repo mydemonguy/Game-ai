@@ -33,7 +33,7 @@ var bolt_node: Node2D
 var marks: Array[Label] = []
 var hzT: Array[Label] = []
 var ftl: Array[Label] = []
-var VW = {bgA=-1, bgW=0.0}
+var VW = {bgA="", bgW=0.0}
 var BGV = {}
 var RV = {}
 var VIEWS = {}
@@ -252,14 +252,15 @@ func stripAt(list: Array, px: float, y: float) -> void:
 	for k in list.size():
 		list[k].position = Vector2(round(-off + k * 2048), y)
 
-func buildBG(a: int) -> void:
+func buildBG(_a: int) -> void:
 	clear_children(bg_root)
 	clear_children(fg_root)
-	var L: Dictionary = DB.LV[a]
-	var t: String = L.theme
+	var t: String = curTh()
+	var L: Dictionary = DB.THL[t]
 	var A: Dictionary = DB.AMB[t]
 	var r = Rng.new(int(L.len) * 11 + 7)
-	VW.bgA = a; VW.bgW = W
+	VW.bgA = t; VW.bgW = W
+	DB.flush_themes(t)
 	BGV = {sky=null, stars=[], clouds=[], rays=[], ships=[], search=[], far=[], mid=[], fgb=[], fgt=[], fogs=[], fog=null, theme=t}
 	BGV.sky = spr(bg_root, "sky_" + t, -60, -60)
 	for i in 34:
@@ -311,15 +312,14 @@ func buildBG(a: int) -> void:
 			var d = {x=rf.next() * 3200, y=GY - 60 - rf.next() * 160, w=380 + rf.next() * 420, v=10 + rf.next() * 25}
 			f.scale = Vector2(d.w * 2 / 128.0, d.w * .4 / 128.0)
 			BGV.fogs.append([f, d])
-	buildWeather(a)
+	buildWeather(_a)
 
 func bgUpdate(dt: float) -> void:
-	if VW.bgW != W or VW.bgA != G.lv:
+	if VW.bgW != W or VW.bgA != curTh():
 		buildBG(G.lv)
 		if ROOM:
 			roomView(ROOM)
-	var L: Dictionary = DB.LV[G.lv]
-	var A: Dictionary = DB.AMB[L.theme]
+	var A: Dictionary = DB.AMB[curTh()]
 	var vy: float = -min(140.0, camY * .06)
 	BGV.sky.position = Vector2(-60 - min(260.0, cam * .02), -60 + vy * .3 + (sin(lvT * 2.2) * 2 if A.has("heat") else 0.0))
 	for s in BGV.stars:
@@ -358,8 +358,8 @@ func bgUpdate(dt: float) -> void:
 # ---------- weather: screen-space particles drawn in one pass ----------
 var WEA = {kind="", rain=false, list=[], motes=[], acc=0.0, macc=0.0, embers=[], eacc=0.0}
 
-func buildWeather(a: int) -> void:
-	var t: String = DB.LV[a].theme
+func buildWeather(_a: int) -> void:
+	var t: String = curTh()
 	WEA = {kind=DB.AMB[t].weather, heavy=DB.AMB[t].get("heavy", 0) == 1, rain=DB.AMB[t].weather == "rain", list=[], motes=[], acc=0.0, macc=0.0, embers=[], eacc=0.0,
 		mote=DB.MOTE[t], theme=t}
 
@@ -467,7 +467,7 @@ func _draw_bolt() -> void:
 			n.draw_texture_rect(dt_, Rect2(p.x - s / 2, p.y - s / 2, s, s), false, mc)
 	if ATM.bolt != null and ATM.bolt.t > 0:
 		var b: Dictionary = ATM.bolt
-		var col = C(DB.AMB[DB.LV[G.lv].theme].get("lightning", "#ffffff"))
+		var col = C(DB.AMB[curTh()].get("lightning", "#ffffff"))
 		for q in [[14.0, .25], [5.0, .9]]:
 			col.a = q[1] * min(1.0, b.t * 8)
 			n.draw_polyline(PackedVector2Array(b.pts), col, q[0])
@@ -488,10 +488,10 @@ func roomView(o) -> void:
 	clear_children(cols_root)
 	clear_children(top_room)
 	RV = {lamps=[], ems=[], wems=[], doors=[], fans=[], signs=[], cols=[], gateV=[], cageV=[], lift=null, shrine=null, station=null, conv=null, vault=null}
-	if VW.bgA != o.a or VW.bgW != W:
+	if VW.bgA != curTh() or VW.bgW != W:
 		buildBG(o.a)
-	var L: Dictionary = DB.LV[o.a]
-	var t: String = L.theme
+	var t: String = curTh()
+	var L: Dictionary = DB.THL[t]
 	var Pa: Dictionary = DB.PAL[t]
 	var A: Dictionary = DB.AMB[t]
 	var TM: Dictionary = DB.TEXMETA.themes[t]
@@ -929,7 +929,7 @@ func steam(dt: float) -> void:
 				sfx("vent", v.x, null, .8, .3)
 
 func updAtmos(dt: float) -> void:
-	var A: Dictionary = DB.AMB[DB.LV[G.lv].theme]
+	var A: Dictionary = DB.AMB[curTh()]
 	ATM.flash *= pow(.015, dt)
 	if ATM.bolt != null:
 		ATM.bolt.t -= dt
@@ -955,7 +955,7 @@ func updAtmos(dt: float) -> void:
 	steam(dt)
 
 func drawSkyFx() -> void:
-	var A: Dictionary = DB.AMB[DB.LV[G.lv].theme]
+	var A: Dictionary = DB.AMB[curTh()]
 	var fl: bool = ATM.flash > .02
 	flash_rect.visible = fl
 	if fl:
@@ -966,7 +966,7 @@ func drawSkyFx() -> void:
 
 # ---------- light map ----------
 func applyLighting() -> void:
-	var A: Dictionary = DB.AMB[DB.LV[G.lv].theme]
+	var A: Dictionary = DB.AMB[curTh()]
 	var alarm: float = .5 + .5 * sin(lvT * 6) if lock else 0.0
 	var a: float = A.a * (1 - min(.92, ATM.flash))
 	var c1 = C(A.col)
@@ -1960,7 +1960,7 @@ func updPickView(k, v) -> void:
 	lightW(k.x, k.y, 110, .55)
 
 func mkBoxView(b) -> Dictionary:
-	var t: String = DB.LV[G.lv].theme
+	var t: String = curTh()
 	var i = spr(act_root, "crate_" + t, b.x, FY + 2, .5, 1, D.crates)
 	var g = gI(b.x, FY - 62, 60, "#5ce1ff", .5); g.z_index = zi(D.crates + .5); act_root.add_child(g)
 	var cr = Line2D.new()

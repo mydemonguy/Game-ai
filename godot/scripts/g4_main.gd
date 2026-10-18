@@ -211,6 +211,9 @@ func newRun(hard := false) -> void:
 	META = fresh_meta()
 	if hard:
 		META.hard = 1
+	# every new game rolls its own world layout
+	META.seed = randi_range(1, 2000000000)
+	DB.set_world(int(META.seed))
 	META.save = {room="0-0", x=210, score=0}
 	save_meta()
 	G.score = 0
@@ -240,6 +243,9 @@ func continueGame() -> void:
 		return
 	G.lives = 3
 	G.score = int(s.get("score", 0))
+	DB.set_world(int(META.get("seed", 0)))
+	if not DB.ROOMS.has(s.room):
+		s.room = "0-0"
 	startGame(s.room, {x=float(s.x) + 90, y=GY})
 
 func areaIntro(prev: int, a: int) -> void:
@@ -262,6 +268,7 @@ func menuBG() -> void:
 	pl = null
 	shots = []; hz = []; picks = []; boxes = []; boss = null; banner = null; shake = 0.0; lock = false; ally = null
 	var a: int = min(unlocked, 6) - 1
+	DB.set_world(0)
 	enterRoom(str(a) + "-6", {x=300.0, y=GY})
 	cam = 0.0
 	camY = 0.0
@@ -276,10 +283,10 @@ func toTitle() -> void:
 	musicFor()
 	var sv = META.save
 	var found: int = META.map.size()
-	var tot: int = DB.ROOMS.size()
+	var tot: int = max(1, DB.rooms_of(int(META.get("seed", 0))).size())
 	var b = ""
 	if sv != null:
-		b += "Save: %s%s · Map %d%% · Items %d%%\n" % [DB.LV[DB.ROOMS[sv.room].a].name, " · [color=#ff4a6a][b]Rift Mode[/b][/color]" if META.hard else "", round(found * 100.0 / tot), completion()]
+		b += "Save: %s%s · Map %d%% · Items %d%%\n" % [DB.LV[clampi(int(String(sv.room).get_slice("-", 0)), 0, 5)].name, " · [color=#ff4a6a][b]Rift Mode[/b][/color]" if META.hard else "", round(found * 100.0 / tot), completion()]
 	if G.best:
 		b += "Best score %s" % _fmt(G.best)
 	var btns = []
@@ -583,7 +590,7 @@ func pauseCard() -> void:
 	var mp = MapView.new()
 	mp.g = self
 	mp.custom_minimum_size = Vector2(min(780.0, W * .34), 380)
-	showCard({ey=DB.LV[G.lv].ch + " · " + DB.LV[G.lv].name + (" · Rift Mode" if META.hard else ""), h="Paused", left=mp, fs=27,
+	showCard({ey=DB.LV[G.lv].ch + " · " + String(ROOM.get("zn", DB.LV[G.lv].name) if ROOM != null else DB.LV[G.lv].name) + (" · Rift Mode" if META.hard else ""), h="Paused", left=mp, fs=27,
 		b="[color=#9d97bd]Map %d/%d rooms · Items %d%%[/color]\n" % [META.map.size(), DB.ROOMS.size(), completion()] + abilitiesBB(), btns=btns})
 
 class MapView extends Control:
@@ -687,7 +694,7 @@ func travelCard() -> void:
 		if id == ROOM.id:
 			continue
 		var o: Dictionary = DB.ROOMS[id]
-		btns.append([DB.LV[o.a].ch + " · " + DB.LV[o.a].name, func():
+		btns.append([DB.LV[o.a].ch + " · " + String(o.get("zn", DB.LV[o.a].name)), func():
 			G.paused = false
 			hideCard()
 			padShow(true)
@@ -878,6 +885,7 @@ func startRush() -> void:
 		m.met[str(a)] = 1
 	m.arm = -1
 	META = m
+	DB.set_world(0)
 	G.rush = {i=0, t=0.0, next=0.0}
 	G.score = 0
 	G.lives = 3
@@ -1207,7 +1215,7 @@ func hudUpdate() -> void:
 	for i in HU.eggs.size():
 		HU.eggs[i].visible = i < G.lives
 		HU.eggs[i].position = Vector2(nx + i * 34 + 10, 51)
-	_tx(HU.ch, String(L.ch).to_upper() + "  ·  " + String(L.name).to_upper()); place(HU.ch, W / 2.0, 22, .5, 0)
+	_tx(HU.ch, String(L.ch).to_upper() + "  ·  " + String(ROOM.get("zn", L.name) if ROOM != null else L.name).to_upper()); place(HU.ch, W / 2.0, 22, .5, 0)
 	var rx: float = W - (210.0 if touchy else 48.0)
 	_tx(HU.score, _fmt(G.score)); place(HU.score, rx, 34, 1, 0)
 	_tx(HU.scl, "SCORE"); place(HU.scl, rx, 76, 1, 0)
@@ -1394,9 +1402,28 @@ func _test_init() -> void:
 		var k: String = kv[0]
 		var v: String = kv[1] if kv.size() > 1 else ""
 		match k:
+			"seed":
+				DB.set_world(int(v))
+			"gendump":
+				var parts2 := v.split("@")
+				DB.set_world(int(parts2[0]))
+				var out = {}
+				for id in DB.ROOMS:
+					var o = DB.ROOMS[id]
+					out[id] = {a=o.a, gx=o.gx, gy=o.gy, w=o.w, h=o.h, kind=o.kind, th=o.get("th", ""), zn=o.get("zn", ""), doors=o.doors, items=o.items.map(func(it): return it.type), gates=o.gates.map(func(g): return g.kind), sp=o.spawns.size()}
+				var f = FileAccess.open(parts2[1], FileAccess.WRITE)
+				f.store_string(JSON.stringify(out))
+				f.close()
+				get_tree().quit()
+				return
+			"gencheck":
+				_genCheck(int(v))
+				get_tree().quit()
+				return
 			"room":
 				var parts := v.split(":")
 				META = fresh_meta()
+				META.seed = DB.WORLD_SEED
 				if parts.size() > 1:
 					for ab in parts[1].split(","):
 						if ab != "":
@@ -1428,6 +1455,88 @@ func _test_init() -> void:
 				TEST.god = true
 			"pausef":
 				TEST.pausef = int(v)
+			"mapall":
+				for id in DB.ROOMS:
+					META.map[id] = 1
+			"liftf":
+				TEST.liftf = int(v)
+
+## build many random worlds and check each one is well-formed and beatable
+func _genCheck(n: int) -> void:
+	var bad = 0
+	var tot = 0
+	var cells = 0
+	var t0 = Time.get_ticks_msec()
+	for sd in range(1, n + 1):
+		DB.set_world(sd * 7919)
+		var errs = []
+		for a in 6:
+			var ids: Array = DB.AREAS[a]
+			var occ = {}
+			var cnt = {}
+			var mw = 0
+			var mh = 0
+			for id in ids:
+				var o: Dictionary = DB.ROOMS[id]
+				cnt[o.kind] = cnt.get(o.kind, 0) + 1
+				mw = max(mw, o.gx + o.w); mh = max(mh, o.gy + o.h)
+				if o.gx < 0 or o.gy < 0:
+					errs.append("%s negative grid" % id)
+				for x in range(o.gx, o.gx + o.w):
+					for y in range(o.gy, o.gy + o.h):
+						if occ.has(Vector2i(x, y)):
+							errs.append("%s overlaps %s" % [id, occ[Vector2i(x, y)]])
+						occ[Vector2i(x, y)] = id
+				for d in o.doors:
+					var t: Dictionary = DB.ROOMS[d.to]
+					var adj = t.gx == o.gx + o.w if d.side == "R" else t.gx + t.w == o.gx
+					var pd = DB.partner_door(o, d)
+					if not adj or pd == null or pd.side == d.side or t.gy + pd.row != o.gy + d.row or pd.to != id:
+						errs.append("%s door %s%d -> %s broken" % [id, d.side, d.row, d.to])
+				if o.lift != null and not DB.ROOMS.has(o.lift.to):
+					errs.append("%s lift to missing %s" % [id, o.lift.to])
+			tot += ids.size()
+			cells += mw * mh
+			var need = {start=1, save=3, item=2, secret=1, arena=2, gate=1}
+			need["liftDown" if a < 5 else "boss"] = 1
+			if a < 5:
+				need.shrine = 1
+			for kk in need:
+				if cnt.get(kk, 0) != need[kk]:
+					errs.append("world %d has %d %s" % [a, cnt.get(kk, 0), kk])
+			# reachability: without passing the gate room's ability gate, the shrine must be reachable and the exit must not
+			var gate = ""
+			for id in ids:
+				if DB.ROOMS[id].kind == "gate":
+					gate = id
+			var reach = func(block: bool) -> Dictionary:
+				var seen = {str(a) + "-0": 1}
+				var q = [str(a) + "-0"]
+				while q.size():
+					var id = q.pop_back()
+					if block and id == gate:
+						continue
+					for d in DB.ROOMS[id].doors:
+						if not seen.has(d.to):
+							seen[d.to] = 1
+							q.append(d.to)
+				return seen
+			var r0: Dictionary = reach.call(true)
+			var r1: Dictionary = reach.call(false)
+			if r1.size() != ids.size():
+				errs.append("world %d: %d of %d rooms reachable" % [a, r1.size(), ids.size()])
+			for id in ids:
+				var o: Dictionary = DB.ROOMS[id]
+				if o.kind == "shrine" and not r0.has(id):
+					errs.append("world %d shrine behind its gate" % a)
+				if (o.kind == "liftDown" or o.kind == "boss") and r0.has(id) and a < 5:
+					errs.append("world %d exit reachable without the gate" % a)
+		if errs.size():
+			bad += 1
+			if bad < 6:
+				print("seed ", sd * 7919, ": ", errs.slice(0, 4))
+	print("GENCHECK seeds=%d bad=%d rooms/world=%.1f cells/world=%.1f ms/seed=%.1f" % [n, bad, tot / (6.0 * n), cells / (6.0 * n), (Time.get_ticks_msec() - t0) / float(n)])
+	DB.set_world(0)
 
 func _test_tick(dt: float) -> void:
 	TEST.frame += 1
@@ -1439,6 +1548,11 @@ func _test_tick(dt: float) -> void:
 		print("LOCK f=", f, " room=", ROOM.id, " wave=", ROOM.arena.i if ROOM.arena != null else -1, " cam=", int(cam), " pl=", int(pl.x), " en=", L, " q=", spawnQ.size())
 	if TEST.get("pausef", 0) == f:
 		togglePause()
+	if TEST.get("liftf", 0) == f and ROOM != null and ROOM.lift != null:
+		print("LIFT from ", ROOM.id, " to ", ROOM.lift.to)
+		startTrans({lift=ROOM.lift})
+	if TEST.get("liftf", 0) > 0 and f == TEST.liftf + 120:
+		print("AFTER LIFT room=", ROOM.id, " state=", G.state, " pl=", int(pl.x), ",", int(pl.y), " th=", curTh())
 	if TEST.get("god", false) and pl != null:
 		pl.hp = float(pl.max)
 	if TEST.has("rooms") and f % 45 == 0 and G.state == "play":
@@ -1461,7 +1575,7 @@ func _test_tick(dt: float) -> void:
 			img.save_png(s[1])
 			print("shot ", s[1], " state=", G.state, " room=", ROOM.id if ROOM else "-", " hp=", pl.hp if pl else -1, " en=", en.size(), " boss=", boss != null)
 	if TEST.quit > 0 and f >= TEST.quit:
-		print("TEST END net=", NETR, " p2=", [int(pl2.x), int(pl2.y), pl2.ch, pl2.hp] if pl2 != null else null, " me=", [int(pl.x), int(pl.y), pl.ch] if pl != null else null, " frame=", f, " state=", G.state, " room=", ROOM.id if ROOM else "-", " hp=", pl.hp if pl else -1, " score=", G.score, " dust=", META.dust, " lives=", G.lives, " map=", META.map.size(), " guards=", META.guards.keys(), " ab=", META.ab.keys(), " cleared=", META.cleared.keys())
+		print("TEST END seed=", DB.WORLD_SEED, " net=", NETR, " p2=", [int(pl2.x), int(pl2.y), pl2.ch, pl2.hp] if pl2 != null else null, " me=", [int(pl.x), int(pl.y), pl.ch] if pl != null else null, " frame=", f, " state=", G.state, " room=", ROOM.id if ROOM else "-", " hp=", pl.hp if pl else -1, " score=", G.score, " dust=", META.dust, " lives=", G.lives, " map=", META.map.size(), " guards=", META.guards.keys(), " ab=", META.ab.keys(), " cleared=", META.cleared.keys())
 		get_tree().quit()
 
 func _bot(f: int) -> void:

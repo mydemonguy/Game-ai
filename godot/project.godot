@@ -6,7 +6,7 @@ config_version=5
 
 config/name="Aetherfall"
 config/description="A Starblood saga: one small dino, six worlds, one very big Rift."
-config/version="3.2"
+config/version="4.0"
 run/main_scene="res://main.tscn"
 config/features=PackedStringArray("4.6", "GL Compatibility")
 config/icon="res://icon.png"
@@ -51,3 +51,10 @@ gdscript/warnings/narrowing_conversion=0
 gdscript/warnings/return_value_discarded=0
 gdscript/warnings/unused_private_class_variable=0
 gdscript/warnings/confusable_local_declaration=0
+
+[importer_defaults]
+
+texture={
+"compress/lossy_quality": 0.82,
+"compress/mode": 1
+}

@@ -384,7 +384,7 @@
   {
    "id": "dash",
    "name": "Comet Dash",
-   "how": "Tap Â» to dash. Dash into cracked walls to smash them.",
+   "how": "Tap » to dash. Dash into cracked walls to smash them.",
    "col": "#b48cff",
    "gate": "crack"
   },
@@ -454,7 +454,7 @@
   "coin": {
    "name": "Stardust",
    "col": "#ffd27a",
-   "txt": "+250 Â· â—†2"
+   "txt": "+250 · ◆2"
   },
   "egg": {
    "name": "Golden Egg",

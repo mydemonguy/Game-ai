@@ -20,6 +20,13 @@ var BOSSES: Dictionary
 var ROBOTS: Dictionary
 var DINO: Dictionary
 var RUSH: Array
+var THEMES2: Array = []    # the 20 extra tile sets, in pack order
+var THL: Dictionary = {}   # theme -> sky / glow colours and display name (like an LV entry)
+var MACH: Dictionary = {}  # theme -> machine kinds that can stand in its rooms
+var CLASSIC: Dictionary    # the hand-shaped six worlds from rooms.json (boss rush, title screen, old saves)
+var CLASSIC_AREAS: Array = []
+var WORLD_SEED: int = 0
+var _gen_cache := {}
 var font_d: Font
 var font_u: Font
 var font_u6: Font
@@ -94,10 +101,76 @@ func _ready() -> void:
 		for d in o.doors:
 			d.row = int(d.row)
 		AREAS[o.a].append(id)
+	CLASSIC = ROOMS
+	CLASSIC_AREAS = AREAS
+	_load_themes()
 	font_d = _font("res://assets/fonts/cinzel-latin-700-normal.ttf")
 	font_d9 = _font("res://assets/fonts/cinzel-latin-900-normal.ttf")
 	font_u = _font("res://assets/fonts/chakra-petch-latin-700-normal.ttf")
 	font_u6 = _font("res://assets/fonts/chakra-petch-latin-600-normal.ttf")
+
+## every theme gets an LV-like entry, palette, ambience, motes and texture metadata
+func _load_themes() -> void:
+	for a in LV.size():
+		var L: Dictionary = LV[a]
+		THL[L.theme] = L
+		MACH[L.theme] = T.PROPK[L.theme]
+	var X = _json("res://data/themes2.json")
+	if typeof(X) != TYPE_DICTIONARY:
+		return
+	for k in X.order:
+		var q: Dictionary = X.themes[k]
+		THEMES2.append(k)
+		THL[k] = q.lv
+		MACH[k] = q.lv.machines
+		PAL[k] = q.pal
+		AMB[k] = q.amb
+		MOTE[k] = q.mote
+		TEXMETA.themes[k] = q.meta
+
+## switch the world map: 0 = the classic layout, anything else = a random layout from that seed
+func set_world(seed: int) -> void:
+	if seed == WORLD_SEED and (seed != 0 or is_same(ROOMS, CLASSIC)):
+		return
+	WORLD_SEED = seed
+	if seed == 0:
+		ROOMS = CLASSIC
+		AREAS = CLASSIC_AREAS
+		return
+	if not _gen_cache.has(seed):
+		_gen_cache.clear()
+		var W = load("res://scripts/mapgen.gd").new().build(seed, self)
+		if W.is_empty():
+			ROOMS = CLASSIC
+			AREAS = CLASSIC_AREAS
+			return
+		_gen_cache[seed] = W
+	ROOMS = _gen_cache[seed].rooms
+	AREAS = _gen_cache[seed].areas
+
+## rooms of a given seed without switching to it (title screen save summary)
+func rooms_of(seed: int) -> Dictionary:
+	if seed == 0:
+		return CLASSIC
+	var keep = WORLD_SEED
+	set_world(seed)
+	var r = ROOMS
+	set_world(keep)
+	return r
+
+## drop cached textures of every theme except the one on screen (each theme is ~30 MB of GPU memory)
+func flush_themes(keep: String) -> void:
+	for key in _tex.keys():
+		var k: String = key
+		var t: String
+		if k.begins_with("m_"):
+			t = k.split("_")[1]
+		elif k.begins_with("wl_"):
+			t = k.substr(3, k.length() - 4)
+		else:
+			t = k.substr(k.rfind("_") + 1)
+		if t != keep and THL.has(t):
+			_tex.erase(key)
 
 func _font(p: String) -> Font:
 	var f = load(p)

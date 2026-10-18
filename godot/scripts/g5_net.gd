@@ -357,6 +357,8 @@ func _clientEv(k: String, a: Array) -> void:
 			if typeof(m) == TYPE_DICTIONARY:
 				for key in m:
 					META[key] = m[key]
+			# the host's world layout
+			DB.set_world(int(META.get("seed", 0)))
 			NETR = "client"
 			NET.hostCh = a[4]
 			NET.lobby = ""

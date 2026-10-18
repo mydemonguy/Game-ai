@@ -1580,7 +1580,7 @@ func hitBox(b) -> void:
 	sparks(b.x, FY - 50, "#fff3c4", 6, sgn(b.x - pl.x) if b.x != pl.x else 1.0)
 	if b.hp <= 0:
 		shake = max(shake, 5.0)
-		burst(b.x, FY - 50, DB.PAL[DB.LV[G.lv].theme].metal, 22, 700)
+		burst(b.x, FY - 50, DB.PAL[curTh()].metal, 22, 700)
 		debris(b.x, FY - 90, "crate")
 		ring(b.x, FY - 50, "#ffd27a", 140)
 		sfx("crate1", b.x, FY, 1.0, .04)
