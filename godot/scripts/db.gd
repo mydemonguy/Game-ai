@@ -100,7 +100,7 @@ func _font(p: String) -> Font:
 	var f = load(p)
 	if f is FontFile:
 		# fall back to the engine font for symbols the game fonts lack (◆ ★ ▲ ...)
-		f.fallbacks = [ThemeDB.fallback_font]
+		f.fallbacks = [load("res://assets/fonts/symbols-dejavu-bold.ttf"), ThemeDB.fallback_font]
 	return f
 
 func _json(p: String):

@@ -915,7 +915,7 @@ func build_theme() -> void:
 	THEME = Theme.new()
 	var fr = load("res://assets/fonts/chakra-petch-latin-400-normal.ttf") as FontFile
 	if fr:
-		fr.fallbacks = [ThemeDB.fallback_font]
+		fr.fallbacks = [load("res://assets/fonts/symbols-dejavu-bold.ttf"), ThemeDB.fallback_font]
 	THEME.default_font = fr
 	THEME.default_font_size = 34
 	THEME.set_font("bold_font", "RichTextLabel", DB.font_u)

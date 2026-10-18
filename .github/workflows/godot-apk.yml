@@ -29,7 +29,7 @@ jobs:
           unzip -q godot.zip && mv Godot_v${GODOT_VERSION}-stable_linux.x86_64 godot && chmod +x godot
           curl -sSL -o tpl.tpz "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
           mkdir -p "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
-          unzip -q tpl.tpz 'templates/android_*' 'templates/version.txt'
+          unzip -q tpl.tpz 'templates/android_*' 'templates/web_nothreads_release.zip' 'templates/version.txt'
           mv templates/* "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable/"
           rm tpl.tpz
           mkdir -p "$HOME/.config/godot"
@@ -48,10 +48,14 @@ jobs:
           "$RUNNER_TEMP/godot" --headless --export-debug "Android" export/Aetherfall-Godot.apk 2>&1 | tee export.log
           ls -la export
           test -s export/Aetherfall-Godot.apk
+          mkdir -p export/web
+          "$RUNNER_TEMP/godot" --headless --export-release "Web" export/web/index.html 2>&1 | tail -5
+          test -s export/web/index.wasm
       - name: Project zip for the Godot app on a phone
         run: |
           cd godot
           zip -qr ../Aetherfall-Godot-project.zip . -x '.godot/*' 'export/*' 'export.log' '*.import'
+          (cd export/web && zip -qr ../../../Aetherfall-web.zip .)
       - uses: actions/upload-artifact@v4
         with:
           name: Aetherfall-Godot
@@ -64,7 +68,7 @@ jobs:
         run: |
           cp godot/export/Aetherfall-Godot.apk Aetherfall-Godot.apk
           TAG="godot-${GITHUB_RUN_NUMBER}"
-          gh release create "$TAG" Aetherfall-Godot.apk Aetherfall-Godot-project.zip --title "Aetherfall · Godot edition (build ${GITHUB_RUN_NUMBER})" --notes "Aetherfall rebuilt in Godot 4.6. Aetherfall-Godot.apk installs next to the original game. Aetherfall-Godot-project.zip opens in the Godot 4 editor (Project Manager → Import)." --latest=false
+          gh release create "$TAG" Aetherfall-Godot.apk Aetherfall-Godot-project.zip Aetherfall-web.zip --title "Aetherfall · Godot edition (build ${GITHUB_RUN_NUMBER})" --notes "Aetherfall rebuilt in Godot 4.6. Aetherfall-Godot.apk installs next to the original game. Aetherfall-Godot-project.zip opens in the Godot 4 editor (Project Manager → Import)." --latest=false
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout --orphan apk-godot
@@ -72,3 +76,16 @@ jobs:
           git add -f Aetherfall-Godot.apk
           git commit -qm "Godot APK from build ${GITHUB_RUN_NUMBER}"
           git push -f origin apk-godot
+          # the public web page: landing page at the root, the browser build under /play/
+          rm -rf /tmp/site && mkdir -p /tmp/site/play
+          cp -r "$GITHUB_WORKSPACE/godot/web/." /tmp/site/ 2>/dev/null || true
+          rm -f /tmp/site/.gdignore
+          cp -r "$GITHUB_WORKSPACE/godot/export/web/." /tmp/site/play/
+          touch /tmp/site/.nojekyll
+          git checkout -q --orphan gh-pages
+          git rm -rfq --cached . > /dev/null
+          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -r /tmp/site/. .
+          git add -A
+          git commit -qm "Web build ${GITHUB_RUN_NUMBER}"
+          git push -f origin gh-pages

@@ -29,6 +29,9 @@ func coop() -> bool:
 
 # ---------- lobby cards ----------
 func coopCard() -> void:
+	if OS.has_feature("web"):
+		showCard({ey="Two phones · same Wi-Fi", h="Co-op", b="Co-op runs between two Android phones on the same Wi-Fi, so it isn't available in the browser version.\n\nGet the Android app from the Aetherfall page to play with a friend as Zeph or Rook.", btns=[["Back", toTitle]]})
+		return
 	showCard({ey="Two phones · same Wi-Fi", h="Co-op", b="One phone [b]hosts[/b] and plays as Tyko, on its own save. The other phone [b]joins[/b] as one of Tyko's new friends, Zeph or Rook.\n\nBoth phones need to be on the same Wi-Fi network (or one phone's hotspot).",
 		btns=[["Host a game", hostStart], ["Join a game", charCard], ["Back", toTitle, true]]})
 
