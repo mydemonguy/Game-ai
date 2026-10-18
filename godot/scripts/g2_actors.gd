@@ -37,14 +37,20 @@ func sItem() -> void:
 	Sfx.duck_for(3.2)
 
 # ---------- player ----------
-func newPlayer() -> Dictionary:
-	var mh = maxHP()
-	return {x=300.0, y=GY, vx=0.0, vy=0.0, face=1, hp=float(mh), max=mh, slam=0, dropT=0.0, sup=GY, en=30.0, ground=true, jumps=0,
+func newPlayer(ch := "tyko") -> Dictionary:
+	var mh = maxHP(ch)
+	return {ch=ch, remote=false, body=mk_body(258, GY - 168, 84, 168, 3200, 3200), x=300.0, y=GY, vx=0.0, vy=0.0, face=1, hp=float(mh), max=mh, slam=0, dropT=0.0, sup=GY, en=30.0, ground=true, jumps=0,
 		atk=0.0, atkCD=0.0, combo=0, comboT=0.0, inv=0.0, hurtT=0.0, hitDone={}, run=0.0, dashT=0.0, dashCD=0.0, squash=0.0, landT=0.0,
 		dead=0, deadT=0.0, shield=0, shieldT=0.0, fury=0.0, hits=0, hitsT=0.0, ghostT=0.0, armCD=0.0, aegis=0.0, thr=0, thrHit={}, dashHit={},
 		_wg=true, _vy=0.0, id=_nid()}
 
 func roarFx(p) -> void:
+	if NETR == "client":
+		netSend("roar", [])
+		sfx("roar", null, null, 1.0, .2)
+		buzz(30); shake = 10
+		ring(p.x + p.face * 60, p.y - 85, "#5ce1ff", 220)
+		return
 	shots.append(mk_shot(p.x + p.face * 70, p.y - 85, p.face * 1600, 0, 70, 48 * pdm(), true, .85, "#5ce1ff", {pierce=true, wave=true}))
 	sfx("roar", null, null, 1.0, .2)
 	buzz(30); shake = 10
@@ -92,7 +98,7 @@ func updPlayerPre(dt: float) -> void:
 	if ax != 0 and p.atk <= 0:
 		p.face = int(sgn(ax))
 	if p.hurtT <= 0:
-		var tgt = ax * 640
+		var tgt = ax * 640 * float(CH().spd)
 		p.vx += (tgt - p.vx) * min(1.0, dt * (14.0 if p.ground else 7.0))
 	p.dropT -= dt
 	if P.has("down") and p.ground and onPlatform(p):
@@ -104,18 +110,18 @@ func updPlayerPre(dt: float) -> void:
 		ring(p.x, p.y - 90, "#ffb347", 120)
 	if P.has("jump") and p.hurtT <= 0:
 		if p.ground:
-			p.vy = -1300.0; p.ground = false; p.jumps = 1
+			p.vy = -1300.0 * float(CH().jump); p.ground = false; p.jumps = 1
 			sfx("jump1", null, null, 1.0, .05, R(.94, 1.06))
 			dust(p.x, p.y)
 		elif p.jumps < 2 and hasAb("double"):
-			p.vy = -1100.0; p.jumps = 2
+			p.vy = -1100.0 * float(CH().jump); p.jumps = 2
 			sfx("jump2", null, null, 1.0, .05)
 			burst(p.x, p.y - 40, "#5ce1ff", 12, 350)
 			ring(p.x, p.y - 20, "#5ce1ff", 90)
 	if P.has("attack") and p.atkCD <= 0 and p.hurtT <= 0:
 		p.combo = (p.combo % 3) + 1 if p.comboT > 0 else 1
 		p.comboT = .6; p.atk = .22
-		p.atkCD = (.36 if p.combo == 3 else .17) * (.75 if hasR("swift") else 1.0)
+		p.atkCD = (.36 if p.combo == 3 else .17) * (.75 if hasR("swift") else 1.0) * float(CH().cd)
 		p.hitDone = {}
 		sfx("swing3" if p.combo == 3 else "swing1", null, null, 1.0, .04, R(.9, 1.15))
 		p.vx += p.face * (420 if p.combo == 3 else 160)
@@ -149,17 +155,17 @@ func updPlayerPre(dt: float) -> void:
 	p._vy = p.vy
 
 func plPush() -> void:
-	PB.vx = pl.vx; PB.vy = pl.vy
-	PB.grav = not (pl.dashT > 0)
+	pl.body.vx = pl.vx; pl.body.vy = pl.vy
+	pl.body.grav = not (pl.dashT > 0)
 
 func plPull() -> void:
-	pl.x = PB.x + 42; pl.y = PB.y + 168
-	pl.vx = PB.vx; pl.vy = PB.vy
-	pl.ground = PB.down
+	pl.x = pl.body.x + 42; pl.y = pl.body.y + 168
+	pl.vx = pl.body.vx; pl.vy = pl.body.vy
+	pl.ground = pl.body.down
 
 func physStep(dt: float) -> void:
 	plPush()
-	var g = move_body(PB, dt, not (pl.dropT > 0 or pl.dead), true)
+	var g = move_body(pl.body, dt, not (pl.dropT > 0 or pl.dead), true)
 	if g != null:
 		gateTouch(g)
 	plPull()
@@ -193,19 +199,22 @@ func updPlayerPost(dt: float) -> void:
 	if lock:
 		mn = cam + 60
 		mx = cam + W - ((RSAFE + 80) if touchy else 60.0)
+	if NETR == "client":
+		mn = max(mn, 70.0)
+		mx = min(mx, RW - 70)
 	if p.x < mn or p.x > mx:
 		var nx = clampf(p.x, mn, mx)
-		PB.x = nx - 42; p.x = nx; PB.vx = 0.0; p.vx = 0.0
+		p.body.x = nx - 42; p.x = nx; p.body.vx = 0.0; p.vx = 0.0
 	p.run += absf(p.vx) * dt * .02
 	if p.dead:
 		return
-	if p.dashT > 0 and (p.thr or hasR("comet")):
+	if p.dashT > 0 and (p.thr or hasR("comet") or CH().charge):
 		var bx = Rect2(p.x - 90, p.y - 170, 180, 170)
 		var hs: Dictionary = p.thrHit if p.thr else p.dashHit
 		for e in allTargets():
 			if not hs.has(e.id) and overlap(bx, ebox(e)):
 				hs[e.id] = 1
-				damage(e, (30.0 if p.thr else 18.0) * pdm(), p.face * 500)
+				damage(e, (30.0 if p.thr else 24.0 if CH().charge else 18.0) * pdm(), p.face * (800 if CH().charge else 500))
 	if p.atk > 0 and p.atk < .18:
 		var reach = reachOf(240.0 if p.combo == 3 else 180.0)
 		var box = Rect2(p.x - 10 if p.face > 0 else p.x - reach + 10, p.y - 190, reach, 190)
@@ -246,6 +255,11 @@ func allTargets() -> Array:
 
 func hurtPlayer(d: float, kx: float) -> void:
 	var p = pl
+	if p.remote:
+		if p.inv <= 0 and not p.dead and G.state == "play":
+			p.inv = .5
+			netSend("hurt", [d, kx])
+		return
 	if p.inv > 0 or p.dead or G.state != "play":
 		return
 	if p.shield > 0:
@@ -273,6 +287,14 @@ func hurtPlayer(d: float, kx: float) -> void:
 	p.hits = 0
 	ftext(p.x, p.y - 170, int(d), "#ff3d6e")
 	burst(p.x, p.y - 80, "#ff3d6e", 12)
+	if p.hp <= 0 and NETR == "client":
+		p.hp = 0.0
+		p.dead = 1; p.deadT = 0.0; p.vx = 0.0; p.inv = 99.0
+		G.respawnT = 3.5
+		buzz([60, 40, 60])
+		sfx("pdown", null, null, 1.0, .5)
+		showBanner(CH().name + " is down", "Back in a few seconds", 2)
+		return
 	if p.hp <= 0:
 		p.hp = 0.0
 		if G.lives > 0:
@@ -337,6 +359,10 @@ func ePull(e) -> void:
 
 func damage(e, d: float, kb: float) -> void:
 	if e.dead:
+		return
+	if NETR == "client":
+		netSend("hit", [e.id, d, kb])
+		e.flash = .14
 		return
 	if e.guard != null:
 		d = guardHit(e, d)
@@ -1208,6 +1234,33 @@ func atkBox():
 	var reach = reachOf(240.0 if p.combo == 3 else 180.0)
 	return Rect2(p.x - 10 if p.face > 0 else p.x - reach + 10, p.y - 190, reach, 190)
 
+func _shotVsPl(s) -> bool:
+	var ab = atkBox()
+	if pl.aegis > 0 and absf(s.y - (pl.y - 90)) < 140 and (s.x - pl.x) * pl.face > -20 and (s.x - pl.x) * pl.face < 170:
+		s.life = 0.0
+		sparks(s.x, s.y, "#ffcc4a", 8, pl.face)
+		sfx("deflect", null, null, 1.0, .04)
+		return true
+	elif ab != null and circleBox(s, ab):
+		s.friend = true
+		s.vx = pl.face * absf(s.vx) * 1.5 + pl.face * 200
+		s.vy *= -.4
+		s.hit = {}
+		s.dmg *= 2.2
+		s.col = "#5ce1ff"
+		s.life = 1.5
+		sfx("deflect", null, null, 1.0, .04)
+		ftext(s.x, s.y - 30, "Deflect", "#5ce1ff")
+		ring(s.x, s.y, "#5ce1ff", 80)
+		pl.en = min(100.0, pl.en + 8)
+		return true
+	elif circleBox(s, pbox()):
+		hurtPlayer(s.dmg, sgn(s.vx) * 380)
+		s.life = 0.0
+		burst(s.x, s.y, s.col, 10)
+		return true
+	return false
+
 func updShots(dt: float) -> void:
 	for s in shots:
 		if s.g != 0:
@@ -1220,31 +1273,13 @@ func updShots(dt: float) -> void:
 			slagBoom(s)
 			continue
 		var blocked = false
-		if not s.friend and not pl.dead:
-			var ab = atkBox()
-			if pl.aegis > 0 and absf(s.y - (pl.y - 90)) < 140 and (s.x - pl.x) * pl.face > -20 and (s.x - pl.x) * pl.face < 170:
-				s.life = 0.0
-				sparks(s.x, s.y, "#ffcc4a", 8, pl.face)
-				sfx("deflect", null, null, 1.0, .04)
-				blocked = true
-			elif ab != null and circleBox(s, ab):
-				s.friend = true
-				s.vx = pl.face * absf(s.vx) * 1.5 + pl.face * 200
-				s.vy *= -.4
-				s.hit = {}
-				s.dmg *= 2.2
-				s.col = "#5ce1ff"
-				s.life = 1.5
-				sfx("deflect", null, null, 1.0, .04)
-				ftext(s.x, s.y - 30, "Deflect", "#5ce1ff")
-				ring(s.x, s.y, "#5ce1ff", 80)
-				pl.en = min(100.0, pl.en + 8)
-				blocked = true
-			elif circleBox(s, pbox()):
-				hurtPlayer(s.dmg, sgn(s.vx) * 380)
-				s.life = 0.0
-				burst(s.x, s.y, s.col, 10)
-				blocked = true
+		if not s.friend:
+			for P in players():
+				if P.dead:
+					continue
+				if withPl(P, _shotVsPl.bind(s)):
+					blocked = true
+					break
 		if blocked:
 			continue
 		if s.g != 0 and not s.friend and s.vy > 0 and s.y > FY - 26:
@@ -1279,31 +1314,37 @@ func updShots(dt: float) -> void:
 			part(s.x, s.y, 0, 0, .25, s.col, 14.0 if s.wave else 6.0, 0)
 	shots = shots.filter(func(s): return s.life > 0)
 
-func _hzHit(h: Dictionary) -> bool:
-	if h.hs.has("p"):
+func _hzHit(h: Dictionary, P) -> bool:
+	if h.hs.has(P.id):
 		return true
-	h.hs["p"] = 1
+	h.hs[P.id] = 1
 	return false
 
+func _hurtAs(P, d: float, kx: float) -> void:
+	withPl(P, func(): hurtPlayer(d, kx))
+
 func updHz(dt: float) -> void:
-	var P0 = pl
+	var PS = players()
 	for h in hz:
 		if h.kind == "quake":
 			h.x += h.dir * h.v * dt
 			h.act -= dt
 			if randf() < .6:
 				part(h.x, FY - 4, (randf() - .5) * 120, -200 - randf() * 200, .4, "#ffb347", 6, 900)
-			if not P0.dead and P0.y > FY - 60 and absf(P0.x - h.x) < 55 and not _hzHit(h):
-				hurtPlayer(15 * dm(), h.dir * 650)
+			for P0 in PS:
+				if not P0.dead and P0.y > FY - 60 and absf(P0.x - h.x) < 55 and not _hzHit(h, P0):
+					_hurtAs(P0, 15 * dm(), h.dir * 650)
 			continue
 		if h.kind == "fire":
 			h.act -= dt
 			if randf() < .35:
 				part(h.x + (randf() - .5) * h.w, FY - 6, (randf() - .5) * 40, -160 - randf() * 120, .5, "#ff9638", 10, -200, "glow")
 			h.hitT -= dt
-			if h.hitT <= 0 and not P0.dead and P0.ground and P0.y > FY - 10 and absf(P0.x - h.x) < h.w / 2.0 + 20:
-				h.hitT = .8
-				hurtPlayer(10 * dm(), (-1 if P0.x < h.x else 1) * 300)
+			if h.hitT <= 0:
+				for P0 in PS:
+					if not P0.dead and P0.ground and P0.y > FY - 10 and absf(P0.x - h.x) < h.w / 2.0 + 20:
+						h.hitT = .8
+						_hurtAs(P0, 10 * dm(), (-1 if P0.x < h.x else 1) * 300)
 			continue
 		if h.t > 0:
 			h.t -= dt
@@ -1313,8 +1354,9 @@ func updHz(dt: float) -> void:
 					shake = max(shake, 7.0)
 					burst(h.x, FY - 20, "#c8b8a0", 14, 600)
 					debris(h.x, FY - 60, "crate")
-					if not P0.dead and absf(P0.x - h.x) < 85:
-						hurtPlayer(16 * dm(), (-1 if P0.x < h.x else 1) * 500)
+					for P0 in PS:
+						if not P0.dead and absf(P0.x - h.x) < 85:
+							_hurtAs(P0, 16 * dm(), (-1 if P0.x < h.x else 1) * 500)
 					continue
 				sfx("boom")
 				shake = max(shake, 14.0 if h.kind == "beam" else 9.0)
@@ -1325,13 +1367,14 @@ func updHz(dt: float) -> void:
 			h.act -= dt
 			continue
 		h.act -= dt
-		if P0.dead:
-			continue
-		var pb = Rect2(P0.x - 42, P0.y - 168, 84, 168)
-		if h.kind == "pillar" and absf(P0.x - h.x) < h.w / 2.0 + 30 and not _hzHit(h):
-			hurtPlayer(22, (-1 if P0.x < h.x else 1) * 600)
-		if h.kind == "beam" and pb.position.y < h.y + 38 and pb.position.y + pb.size.y > h.y - 38 and not _hzHit(h):
-			hurtPlayer(26, (-1 if P0.x < cam + W / 2.0 else 1) * 500)
+		for P0 in PS:
+			if P0.dead:
+				continue
+			var pb = Rect2(P0.x - 42, P0.y - 168, 84, 168)
+			if h.kind == "pillar" and absf(P0.x - h.x) < h.w / 2.0 + 30 and not _hzHit(h, P0):
+				_hurtAs(P0, 22, (-1 if P0.x < h.x else 1) * 600)
+			if h.kind == "beam" and pb.position.y < h.y + 38 and pb.position.y + pb.size.y > h.y - 38 and not _hzHit(h, P0):
+				_hurtAs(P0, 26, (-1 if P0.x < cam + W / 2.0 else 1) * 500)
 	hz = hz.filter(func(h): return h.t > 0 or h.act > 0)
 
 # ---------- pickups and supply crates ----------
@@ -1356,6 +1399,8 @@ func dropFrom(e) -> void:
 
 func applyPick(k: Dictionary) -> void:
 	var p = pl
+	if p.remote:
+		netSend("pick", [k.type])
 	var Pk: Dictionary = DB.PICK[k.type]
 	sPick(k.type)
 	buzz(12)
@@ -1436,6 +1481,10 @@ func updPicks(dt: float) -> void:
 			k.life = 0.0
 			k.got = true
 			applyPick(k)
+		elif pl2 != null and NETR == "host" and not pl2.dead and absf(pl2.x - k.x) < 72 and absf(pl2.y - 90 - k.y) < 125:
+			k.life = 0.0
+			k.got = true
+			withPl(pl2, func(): applyPick(k))
 	picks = picks.filter(func(k): return (not k.got) if k.flt else k.life > 0)
 
 func boxRect(b) -> Rect2:
@@ -1461,6 +1510,8 @@ func hitBox(b) -> void:
 				picks.append(mk_drop(b.x, FY - 90, (randf() - .5) * 300, -750, t, 14))
 
 func hitBoxesWith(box: Rect2, done: Dictionary) -> void:
+	if NETR == "client":
+		return
 	for b in boxes:
 		if b.hp > 0 and not done.has(b.id) and overlap(box, boxRect(b)):
 			done[b.id] = 1
@@ -1501,6 +1552,11 @@ func fireArm(p) -> void:
 		return
 	p.en -= A.cost
 	p.armCD = .35
+	if NETR == "client" and i != 1 and i != 2:
+		netSend("arm", [i])
+		muzzle(p.x + p.face * 60, p.y - 100, A.col)
+		buzz(15)
+		return
 	if i != 1:
 		sfx("en_shot", null, null, 1.0, .03, [1.25, 1.0, .8, .7, 1.4][i])
 	armFx(p, i)

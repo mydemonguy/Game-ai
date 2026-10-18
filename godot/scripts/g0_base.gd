@@ -51,6 +51,49 @@ var RH = H
 var FY = GY
 var TRANS = {on=0, t=0.0, phase=0, act=null}
 var eid = 0
+# ---------- co-op: "" alone, "host" runs the world, "client" mirrors it and drives its own dino ----------
+var NETR = ""
+var FXQ: Array = []
+var _fxd = 0
+var pl2 = null
+
+func _rec(a: Array) -> void:
+	if NETR == "host" and _fxd == 0 and pl2 != null:
+		FXQ.append(a)
+
+func players() -> Array:
+	var a := []
+	if pl != null:
+		a.append(pl)
+	if pl2 != null:
+		a.append(pl2)
+	return a
+
+## run f with `pl` (and its inputs) temporarily switched to another player, like the web version's withPl
+func withPl(p, f: Callable):
+	if p == pl:
+		return f.call()
+	var o = pl
+	pl = p
+	var r = f.call()
+	pl = o
+	return r
+
+func nearestPl(x: float, y: float):
+	var best = pl
+	var bd = 1e12
+	for p in players():
+		if p.dead:
+			continue
+		var d: float = absf(p.x - x) + absf(p.y - y) * .5
+		if d < bd:
+			bd = d
+			best = p
+	return best
+
+func CH(p = null) -> Dictionary:
+	var q = p if p != null else pl
+	return DB.CHARS[q.ch if q != null and q.has("ch") else "tyko"]
 var unlocked = 1
 var riftOpen = false
 
@@ -131,8 +174,9 @@ func hasR(id: String) -> bool:
 func tankCount() -> int:
 	return META.tanks.size()
 
-func maxHP() -> int:
-	return 100 + 15 * tankCount()
+func maxHP(ch := "") -> int:
+	var c: String = ch if ch != "" else (pl.ch if pl != null and pl.has("ch") else "tyko")
+	return 100 + 15 * tankCount() + int(DB.CHARS[c].hp)
 
 func _countItems(prefix: String, n: int) -> int:
 	var c = 0
@@ -172,6 +216,7 @@ func completion() -> int:
 
 func pdm() -> float:
 	var f = 2.0 if (pl != null and pl.fury > 0) else 1.0
+	f *= float(CH().dmg)
 	f *= 1.3 if hasAb("plasma") else 1.0
 	f *= 1.0 + 0.1 * fangCount()
 	if hasR("fury") and pl != null and pl.hp < pl.max * 0.3:
@@ -196,7 +241,7 @@ const PREF_PATH := "user://aetherfall_prefs.json"
 var PREFS = {music=0.5, sfx=0.9, best=0, unlock=1, rift=0, rush=0.0, quality="high"}
 
 func save_meta() -> void:
-	if G.rush != null:
+	if G.rush != null or NETR == "client":
 		return
 	var f = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
 	if f:
@@ -280,6 +325,7 @@ func part(x: float, y: float, vx: float, vy: float, life: float, col, sz: float,
 	return p
 
 func burst(x: float, y: float, col, n: int, sp := 600.0) -> void:
+	_rec(["burst", x, y, col, n, sp])
 	n = int(ceil(n * (0.6 if partMul < 1.0 else 1.0)))
 	for i in n:
 		var a = randf() * TAU
@@ -287,6 +333,7 @@ func burst(x: float, y: float, col, n: int, sp := 600.0) -> void:
 		part(x, y, cos(a) * v, sin(a) * v - 120, 0.35 + randf() * 0.45, col, 4 + randf() * 6, 900)
 
 func sparks(x: float, y: float, col, n: int, dir: float) -> void:
+	_rec(["sparks", x, y, col, n, dir])
 	for i in n:
 		var a = (0.0 if dir > 0 else PI) + (randf() - 0.5) * 1.6
 		var v = 700 + randf() * 900
@@ -297,19 +344,23 @@ func sparks(x: float, y: float, col, n: int, dir: float) -> void:
 			p.sy = 0.5 + randf() * 0.4
 
 func dust(x: float, y: float) -> void:
+	_rec(["dust", x, y])
 	for i in 8:
 		part(x + (randf() - 0.5) * 60, y - 6, (randf() - 0.5) * 300, -randf() * 200, 0.45, "rgba(220,210,255,.45)", 18 + randf() * 14, 300, "norm")
 
 func souls(x: float, y: float) -> void:
+	_rec(["souls", x, y])
 	for i in 6:
 		part(x + (randf() - 0.5) * 40, y, (randf() - 0.5) * 60, -120 - randf() * 160, 1.2, "#bff6ff", 20, -40, "glow")
 
 func sparkle(x: float, y: float, col) -> void:
+	_rec(["sparkle", x, y, col])
 	for i in 10:
 		var a = i / 10.0 * TAU
 		part(x, y, cos(a) * 260, sin(a) * 260, 0.5, col, 16, 0, "glow")
 
 func debris(x: float, y: float, kind: String) -> void:
+	_rec(["debris", x, y, kind])
 	var Pa: Dictionary = DB.PAL[DB.LV[G.lv].theme]
 	var cols: Array
 	if kind == "laser":
@@ -325,32 +376,42 @@ func debris(x: float, y: float, kind: String) -> void:
 			p.ang = randf() * TAU
 
 func explode(e) -> void:
+	_rec(["explode", {x=e.x, y=e.y, w=e.w, h=e.h, heavy=true if e.get("heavy", false) else false}])
+	_fxd += 1
 	var big: bool = true if e.get("heavy", false) else false
 	burst(e.x, e.y - e.h * 0.5, "#ffb347", 22 if big else 12, 900 if big else 650)
 	for i in (10 if big else 6):
 		part(e.x + (randf() - 0.5) * e.w, e.y - randf() * e.h, (randf() - 0.5) * 200, -60 - randf() * 160, 0.7 + randf() * 0.4, "rgba(40,36,48,.55)", 50 + randf() * 40, -80, "norm")
 	debris(e.x, e.y - e.h * 0.7, "robot")
 	part(e.x, e.y - e.h * 0.5, 0, 0, 0.25, "#fff0c8", 380 if big else 240, 0, "glow")
+	_fxd -= 1
 
 func teleFx(x: float, y: float, h: float) -> void:
+	_rec(["teleFx", x, y, h])
+	_fxd += 1
 	for i in 14:
 		part(x + (randf() - 0.5) * 60, y - randf() * h, 0, -300 - randf() * 300, 0.45, "#ff4fd8", 10, 0, "add")
 	ring(x, y - h / 2.0, "#ff4fd8", 120)
+	_fxd -= 1
 
 func muzzle(x: float, y: float, col) -> void:
+	_rec(["muzzle", x, y, col])
 	part(x, y, 0, 0, 0.12, col, 120, 0, "glow")
 
 func ring(x: float, y: float, col, r := 90.0) -> void:
+	_rec(["ring", x, y, col, r])
 	if RINGS.size() > 40:
 		RINGS.pop_front()
 	RINGS.append([x, y, C(col), r, 0.0])
 
 func camKick(z: float) -> void:
+	_rec(["camKick", z])
 	kz0 = z
 	kz = z
 	kzT = 0.0
 
 func ftext(x: float, y: float, s, col, big := false) -> void:
+	_rec(["ftext", x, y, s, col, big])
 	var num = typeof(s) == TYPE_INT or typeof(s) == TYPE_FLOAT
 	if FTXT.size() > 34:
 		FTXT.pop_front()
@@ -371,6 +432,7 @@ func lightS(x: float, y: float, r: float, a: float) -> void:
 	LIGHTS.append(x); LIGHTS.append(y); LIGHTS.append(r); LIGHTS.append(a)
 
 func showBanner(t: String, sub := "", dur := 2.2) -> void:
+	_rec(["showBanner", t, sub, dur])
 	banner = {t=t, sub=sub, life=dur, max=dur}
 
 func buzz(ms) -> void:
@@ -386,6 +448,7 @@ func buzz(ms) -> void:
 
 # ---------- sound: distance and pan for things in the world ----------
 func sfx(name: String, x = null, y = null, vol := 1.0, gap := 0.04, pitch := 1.0) -> void:
+	_rec(["sfx", name, x, y, vol, gap, pitch])
 	var g = 1.0
 	var pan = 0.0
 	if x != null:
@@ -430,3 +493,6 @@ func exchangeCard(_back = null) -> void: pass
 func rushDone() -> void: pass
 func rushFail() -> void: pass
 func padArms() -> void: pass
+func netSend(_k: String, _a: Array) -> void: pass
+func coopCard() -> void: pass
+func netRoomEntered(_x: float, _y: float, _face: int) -> void: pass

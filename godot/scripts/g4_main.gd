@@ -134,9 +134,11 @@ func gameUpdate(dt: float) -> void:
 		var q: Dictionary = spawnQ.pop_front()
 		spawnEnemy(q.type, q.side)
 	for e in en:
-		updEnemy(e, dt)
+		var t = nearestPl(e.x, e.y)
+		withPl(t, func(): updEnemy(e, dt))
 	if boss != null and not boss.dead:
-		updBoss(boss, dt)
+		var tb = nearestPl(boss.x, boss.y)
+		withPl(tb, func(): updBoss(boss, dt))
 	physStep(dt)
 	updPlayerPost(dt)
 	if G.state != "play":
@@ -286,6 +288,7 @@ func toTitle() -> void:
 	btns.append(["New game" if sv != null else "Begin the Saga", confirmNew if sv != null else startNew, sv != null])
 	if riftOpen:
 		btns.append(["Boss Rush", startRush, true])
+	btns.append(["Co-op", coopCard, true])
 	btns.append(["Controls", func(): controls(toTitle), true])
 	btns.append(["Settings", func(): soundCard(toTitle), true])
 	showCard({ey="A Starblood Saga · Six Worlds", h="Aetherfall", big=true, tag="One small dino. One stolen sky. One very big Rift.", b=b, btns=btns})
@@ -389,6 +392,12 @@ func victory() -> void:
 # ---------- dialogue scenes with portraits ----------
 func portrait(key: String) -> Texture2D:
 	var Wd: Dictionary = DB.T.WHO.get(key, {})
+	if DB.CHARS.has(key) and key != "tyko":
+		var C0: Dictionary = DB.CHARS[key]
+		var ct = AtlasTexture.new()
+		ct.atlas = load(C0.tex)
+		ct.region = Rect2(0, 0, C0.fw, C0.fh)
+		return ct
 	if not Wd.has("art"):
 		return null
 	var I: Dictionary = DB.BOSSES[Wd.art]
@@ -413,7 +422,7 @@ func _scenePage(o: Dictionary, i: int, done: Callable) -> void:
 	var pg: Array = o.pages[i]
 	var lead = ""
 	for l in pg:
-		if DB.T.WHO[l[0]].has("art") and lead == "":
+		if (DB.T.WHO[l[0]].has("art") or (DB.CHARS.has(l[0]) and l[0] != "tyko")) and lead == "":
 			lead = l[0]
 	var lines = []
 	for l in pg:
@@ -1146,6 +1155,7 @@ func build_hud() -> void:
 		hud.add_child(e)
 		HU.eggs.append(e)
 	HU.fps = T.call(16, "#9d97bd", DB.font_u)
+	HU.p2n = T.call(22, "#ffc49a", DB.font_u)
 	for k in ["name", "hp", "ae", "ch", "rift", "score", "scl", "dust", "combo", "combo2", "combo3", "bossN", "hint", "seal", "bn", "bs", "fps"]:
 		HU[k].visible = false
 
@@ -1158,7 +1168,7 @@ func hudUpdate() -> void:
 	hud.queue_redraw()
 	var p = pl
 	var play: bool = G.state != "menu" and p != null and ROOM != null
-	for k in ["name", "hp", "ae", "ch", "rift", "score", "scl", "dust", "combo", "combo2", "combo3", "bossN", "hint", "seal", "bn", "bs"]:
+	for k in ["name", "hp", "ae", "ch", "rift", "score", "scl", "dust", "combo", "combo2", "combo3", "bossN", "hint", "seal", "bn", "bs", "p2n"]:
 		HU[k].visible = false
 	for e in HU.eggs:
 		e.visible = false
@@ -1174,7 +1184,8 @@ func hudUpdate() -> void:
 	var L: Dictionary = DB.LV[G.lv]
 	for k in ["name", "hp", "ae", "ch", "score", "scl"]:
 		HU[k].visible = true
-	_tx(HU.name, "TYKO"); place(HU.name, 48, 34, 0, 0)
+	_tx(HU.name, String(CH().name).to_upper()); place(HU.name, 48, 34, 0, 0)
+	HU.name.label_settings.font_color = C("#ece7ff") if pl2 == null else C(CH().col)
 	_tx(HU.hp, "%d / %d" % [ceil(p.hp), p.max]); place(HU.hp, 58, 79, 0, 0)
 	var rdy: bool = p.en >= 50 and hasAb("roar")
 	_tx(HU.ae, "✦ STARBURST READY" if rdy else "AETHER")
@@ -1188,6 +1199,11 @@ func hudUpdate() -> void:
 		HU.rift.visible = META.hard == 1
 	place(HU.rift, 528, 141, 1, 0)
 	var nx: float = 48 + HU.name.size.x + 30
+	HU.p2n.visible = pl2 != null
+	if pl2 != null:
+		_tx(HU.p2n, String(CH(pl2).name).to_upper() + ("  ·  DOWN" if pl2.dead else ""))
+		HU.p2n.label_settings.font_color = C(CH(pl2).col)
+		place(HU.p2n, 560, 52, 0, 0)
 	for i in HU.eggs.size():
 		HU.eggs[i].visible = i < G.lives
 		HU.eggs[i].position = Vector2(nx + i * 34 + 10, 51)
@@ -1271,6 +1287,8 @@ func hudDraw(c: Control) -> void:
 	bar.call(48, 80, 480, 24, p.hp / p.max, C("#ff3d6e"), C("#ff8a4c"))
 	bar.call(48, 116, 480, 14, p.en / 100.0, C("#3a7cff"), C("#5ce1ff"))
 	c.draw_rect(Rect2(48 + 239, 113, 2, 20), Color(236 / 255.0, 231 / 255.0, 1, .8))
+	if pl2 != null:
+		bar.call(560, 84, 220, 14, pl2.hp / max(1.0, float(pl2.max)), C(CH(pl2).col).darkened(.3), C(CH(pl2).col))
 	if not (boss != null and not boss.dead):
 		drawMinimap(c)
 	if boss != null and not boss.dead and boss.state != "enter":
@@ -1438,7 +1456,7 @@ func _test_tick(dt: float) -> void:
 			img.save_png(s[1])
 			print("shot ", s[1], " state=", G.state, " room=", ROOM.id if ROOM else "-", " hp=", pl.hp if pl else -1, " en=", en.size(), " boss=", boss != null)
 	if TEST.quit > 0 and f >= TEST.quit:
-		print("TEST END frame=", f, " state=", G.state, " room=", ROOM.id if ROOM else "-", " hp=", pl.hp if pl else -1, " score=", G.score, " dust=", META.dust, " lives=", G.lives, " map=", META.map.size(), " guards=", META.guards.keys(), " ab=", META.ab.keys())
+		print("TEST END net=", NETR, " p2=", [int(pl2.x), int(pl2.y), pl2.ch, pl2.hp] if pl2 != null else null, " me=", [int(pl.x), int(pl.y), pl.ch] if pl != null else null, " frame=", f, " state=", G.state, " room=", ROOM.id if ROOM else "-", " hp=", pl.hp if pl else -1, " score=", G.score, " dust=", META.dust, " lives=", G.lives, " map=", META.map.size(), " guards=", META.guards.keys(), " ab=", META.ab.keys())
 		get_tree().quit()
 
 func _bot(f: int) -> void:

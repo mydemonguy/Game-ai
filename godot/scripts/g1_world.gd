@@ -130,7 +130,7 @@ func offView(x: float, y: float) -> bool:
 	return x < cam - 300 or x > cam + W + 300 or y < camY - 500 or y > camY + H + 300
 
 func plTeleport(x: float, y: float) -> void:
-	PB.x = x - 42; PB.y = y - 168; PB.vx = 0.0; PB.vy = 0.0
+	pl.body.x = x - 42; pl.body.y = y - 168; pl.body.vx = 0.0; pl.body.vy = 0.0
 	pl.x = x; pl.y = y; pl.vx = 0.0; pl.vy = 0.0
 
 func ePlace(e, x: float, y: float) -> void:
@@ -183,7 +183,7 @@ func enterRoom(id: String, how: Dictionary) -> void:
 	for p in o.plats:
 		PLAT.append(Rect2(p.x, p.y, p.w, 26))
 	rebuild_gates()
-	var host = true
+	var host: bool = NETR != "client"
 	if host:
 		for it in o.items:
 			if it.id != null and (META.tanks.has(it.id) if it.type == "tank" else META.items.has(it.id)):
@@ -230,6 +230,10 @@ func enterRoom(id: String, how: Dictionary) -> void:
 		plTeleport(px, py)
 		pl.face = face; pl.ground = true; pl.dashT = 0.0; pl.slam = 0; pl.sup = py
 	o.entry = {x=px, y=py}
+	if pl2 != null and NETR == "host":
+		pl2.x = clampf(px - 120 * face, 120, RW - 120)
+		pl2.y = py
+		netRoomEntered(pl2.x, pl2.y, face)
 	if pl and host:
 		for s in o.spawns:
 			if o.waves != null or (o.kind == "shrine" and not gDone(o.a)):
@@ -392,8 +396,10 @@ func updWorld(dt: float) -> void:
 			return
 	if p.dead:
 		return
-	if p.dashT > 0:
-		var b = Rect2(p.x - 80, p.y - 170, 160, 170)
+	for q in players():
+		if q.dead or q.dashT <= 0:
+			continue
+		var b = Rect2(q.x - 80, q.y - 170, 160, 170)
 		for i in o.gates.size():
 			var g: Dictionary = o.gates[i]
 			var bot: float = g.bot if g.bot != null else GY
@@ -401,7 +407,7 @@ func updWorld(dt: float) -> void:
 				breakGate(g, i)
 		for i in o.cages.size():
 			var c: Dictionary = o.cages[i]
-			if not c.broken and c.kind == "crack" and absf(c.x - p.x) < 110 and p.y > GY - 200:
+			if not c.broken and c.kind == "crack" and absf(c.x - q.x) < 110 and q.y > GY - 200:
 				breakCage(c, i)
 	for s in shots:
 		if s.friend and s.wave:
@@ -466,6 +472,9 @@ func breakCage(c: Dictionary, i: int) -> void:
 	ring(c.x, GY - 80, "#ff5ad8", 180)
 
 func clawGeo(box: Rect2) -> void:
+	if NETR == "client":
+		netSend("swing", [box.position.x, box.position.y, box.size.x, box.size.y])
+		return
 	var o = ROOM
 	if o == null:
 		return
@@ -507,6 +516,9 @@ func clawGeo(box: Rect2) -> void:
 				ftext(c.x, GY - 230, "Void crystal. Claws bounce off it.", "#ffd27a")
 
 func slamAt(x: float) -> void:
+	if NETR == "client":
+		netSend("slam", [x])
+		return
 	var o = ROOM
 	for i in o.gates.size():
 		var g: Dictionary = o.gates[i]

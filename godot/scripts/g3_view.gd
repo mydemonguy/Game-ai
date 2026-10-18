@@ -1598,20 +1598,28 @@ func updBossV(b, v) -> void:
 		MARKS.append([b.x, y - 420])
 	lightW(b.x, y - 240, 420, .95)
 
-# ---------- Tyko ----------
+# ---------- the playable dinos (Tyko, Zeph, Rook): one view per player ----------
+var DVS := {}
+
 func mkPlayerView() -> void:
-	var M: Dictionary = DB.DINO
+	DVS = {}
+
+func mkDV(p) -> Dictionary:
+	var C0: Dictionary = DB.CHARS[p.ch]
+	var V0 := {ch=p.ch, root=Node2D.new()}
+	add_child(V0.root)
+	var tex: Texture2D = load(C0.tex)
 	var s = Sprite2D.new()
-	s.texture = DB.dino_tex()
-	s.hframes = int(M.cols)
+	s.texture = tex
+	s.hframes = 8
 	s.vframes = 6
 	s.centered = false
-	s.offset = -Vector2(M.ax, M.ay)
-	s.z_index = zi(D.player)
-	add_child(s)
-	DV.spr = s
-	DV.sh = Sprite2D.new(); DV.sh.texture = SHADOW_TEX; DV.sh.modulate.a = .4; DV.sh.z_index = zi(D.shadows); add_child(DV.sh)
-	DV.aura = gI(0, 0, 220, "#5ce1ff", 0); DV.aura.z_index = zi(D.player - .1); add_child(DV.aura)
+	s.offset = -Vector2(C0.ax, C0.ay)
+	s.z_index = zi(D.player - (.05 if p.remote else 0.0))
+	V0.root.add_child(s)
+	V0.spr = s
+	V0.sh = Sprite2D.new(); V0.sh.texture = SHADOW_TEX; V0.sh.modulate.a = .4; V0.sh.z_index = zi(D.shadows); V0.root.add_child(V0.sh)
+	V0.aura = gI(0, 0, 220, "#5ce1ff", 0); V0.aura.z_index = zi(D.player - .1); V0.root.add_child(V0.aura)
 	var ae = Node2D.new()
 	ae.z_index = zi(D.player + .2)
 	ae.add_child(gI(0, 0, 1, "#ffb030", .55))
@@ -1619,8 +1627,8 @@ func mkPlayerView() -> void:
 	var r1 = ColorRect.new(); r1.position = Vector2(-10, -110); r1.size = Vector2(20, 220); r1.color = C("#ffcc4a", .5); ae.add_child(r1)
 	var r2 = ColorRect.new(); r2.position = Vector2(-4, -95); r2.size = Vector2(8, 190); r2.color = C("#fff6d0", .8); ae.add_child(r2)
 	ae.visible = false
-	add_child(ae)
-	DV.aegis = ae
+	V0.root.add_child(ae)
+	V0.aegis = ae
 	var shl = Line2D.new()
 	var pts = PackedVector2Array()
 	for i in 41:
@@ -1628,26 +1636,41 @@ func mkPlayerView() -> void:
 		pts.append(Vector2(cos(a), sin(a)) * 118)
 	shl.points = pts; shl.width = 5; shl.default_color = C("#8fc8ff", .55); shl.material = MAT_ADD; shl.z_index = zi(D.player + .2)
 	shl.visible = false
-	add_child(shl)
-	DV.shield = shl
-	var shf = gI(0, 0, 236 * 1.3, "#8fc8ff", .12); shf.z_index = zi(D.player + .2); shf.visible = false; add_child(shf)
-	DV.shf = shf
-	DV.ghosts = []
+	V0.root.add_child(shl)
+	V0.shield = shl
+	var shf = gI(0, 0, 236 * 1.3, "#8fc8ff", .12); shf.z_index = zi(D.player + .2); shf.visible = false; V0.root.add_child(shf)
+	V0.shf = shf
+	V0.ghosts = []
 	for i in 8:
 		var g = Sprite2D.new()
-		g.texture = s.texture; g.hframes = s.hframes; g.vframes = 6; g.centered = false; g.offset = s.offset
-		g.z_index = zi(D.player - .2); g.material = MAT_FLASH; g.self_modulate = C("#a58cff"); g.visible = false
-		add_child(g)
-		DV.ghosts.append([g, 0.0])
-	DV.gi = 0
+		g.texture = tex; g.hframes = 8; g.vframes = 6; g.centered = false; g.offset = s.offset
+		g.z_index = zi(D.player - .2); g.material = MAT_FLASH; g.self_modulate = C(C0.col); g.visible = false
+		V0.root.add_child(g)
+		V0.ghosts.append([g, 0.0])
+	V0.gi = 0
+	var tag = labelN(top_layer, String(C0.name).to_upper(), 24, C0.col, DB.font_u, 6, C(INK))
+	tag.visible = false
+	V0.tag = tag
+	return V0
+
+func dvFor(p) -> Dictionary:
+	var V0 = DVS.get(p.id)
+	if V0 == null or V0.ch != p.ch:
+		if V0 != null:
+			V0.root.queue_free()
+			V0.tag.queue_free()
+		V0 = mkDV(p)
+		DVS[p.id] = V0
+	return V0
 
 func ghost(p) -> void:
-	var gq: Array = DV.ghosts[DV.gi % DV.ghosts.size()]
-	DV.gi += 1
+	var V0 = dvFor(p)
+	var gq: Array = V0.ghosts[V0.gi % V0.ghosts.size()]
+	V0.gi += 1
 	var g: Sprite2D = gq[0]
 	g.frame = int(DB.DINO.anims.run[2])
 	g.position = Vector2(p.x, p.y)
-	g.scale = Vector2(p.face, 1)
+	g.scale = Vector2(p.face, 1) * float(DB.CHARS[p.ch].sc)
 	g.visible = true
 	gq[1] = .22
 
@@ -1676,49 +1699,63 @@ func dinoFrame(p) -> int:
 const CLAW := [[-1.25, 1.0], [1.05, -1.2], [-1.6, 1.4]]
 
 func updPlayerView(dt: float) -> void:
-	var p = pl
-	var vis: bool = p != null and G.state != "menu"
-	for k in ["spr", "sh", "aura"]:
-		DV[k].visible = vis
-	for gq in DV.ghosts:
+	var live := {}
+	var PS: Array = players() if G.state != "menu" else []
+	for p in PS:
+		live[p.id] = true
+		_drawDino(p, dvFor(p), dt, PS.size() > 1)
+	for k in DVS.keys():
+		if not live.has(k):
+			DVS[k].root.queue_free()
+			DVS[k].tag.queue_free()
+			DVS.erase(k)
+	slash_node.queue_redraw()
+
+func _drawDino(p, V0: Dictionary, dt: float, coop: bool) -> void:
+	for gq in V0.ghosts:
 		if gq[1] > 0:
 			gq[1] -= dt
 			gq[0].modulate.a = .45 * max(0.0, gq[1] / .22)
 			if gq[1] <= 0:
 				gq[0].visible = false
-	slash_node.queue_redraw()
-	if not vis:
-		DV.shield.visible = false; DV.shf.visible = false; DV.aegis.visible = false
-		return
+	var sc: float = DB.CHARS[p.ch].sc
 	var lunge: float = 1 + .06 * sin((1 - p.atk / .22) * PI) if p.atk > 0 else 1.0
 	var sx: float = (1 + p.squash * .1) * lunge
 	var sy: float = 1 - p.squash * .1
-	var s: Sprite2D = DV.spr
+	var s: Sprite2D = V0.spr
 	s.frame = dinoFrame(p)
 	s.position = Vector2(p.x, p.y)
-	s.scale = Vector2(p.face * sx, sy)
+	s.scale = Vector2(p.face * sx, sy) * sc
 	s.modulate.a = .45 if (p.inv > 0 and p.dashT <= 0 and not p.dead and int(p.inv * 22) % 2) else 1.0
 	s.self_modulate = C("#ffd0a0") if p.fury > 0 else Color.WHITE
-	var sup: float = p.sup if p.sup != null else FY
-	setShadow(DV.sh, p.x, 60 * (1 - min(.5, (sup - p.y) / 600.0)), sup)
-	DV.aura.position = Vector2(p.x + p.face * 10, p.y - 100)
-	DV.aura.modulate.a = .18 + .08 * sin(lvT * 5) if (p.en >= 50 and not p.dead) else 0.0
-	DV.aegis.visible = p.aegis > 0 and not p.dead
-	DV.aegis.position = Vector2(p.x + p.face * 110, p.y - 95)
-	DV.aegis.modulate.a = .3 if (p.aegis < .6 and int(lvT * 16) % 2) else 1.0
+	var sup: float = p.sup if p.get("sup") != null else FY
+	setShadow(V0.sh, p.x, 60 * sc * (1 - min(.5, (sup - p.y) / 600.0)), sup)
+	V0.aura.position = Vector2(p.x + p.face * 10, p.y - 100)
+	V0.aura.modulate.a = .18 + .08 * sin(lvT * 5) if (p.en >= 50 and not p.dead) else 0.0
+	V0.aegis.visible = p.aegis > 0 and not p.dead
+	V0.aegis.position = Vector2(p.x + p.face * 110, p.y - 95)
+	V0.aegis.modulate.a = .3 if (p.aegis < .6 and int(lvT * 16) % 2) else 1.0
 	if p.aegis > 0:
 		lightW(p.x + p.face * 110, p.y - 95, 200, .6)
 	var shv: bool = p.shield > 0 and not p.dead
-	DV.shield.visible = shv; DV.shf.visible = shv
-	DV.shield.position = Vector2(p.x, p.y - 95)
-	DV.shield.scale = Vector2.ONE * ((118 + sin(lvT * 6) * 4) / 118.0)
-	DV.shf.position = Vector2(p.x, p.y - 95)
+	V0.shield.visible = shv; V0.shf.visible = shv
+	V0.shield.position = Vector2(p.x, p.y - 95)
+	V0.shield.scale = Vector2.ONE * ((118 + sin(lvT * 6) * 4) / 118.0)
+	V0.shf.position = Vector2(p.x, p.y - 95)
+	V0.tag.visible = coop
+	if coop:
+		place(V0.tag, p.x, p.y - 215 * sc, .5, 1)
 	if not p.dead:
 		lightW(p.x, p.y - 100, 280, .7)
 
 func _draw_slash() -> void:
-	var p = pl
-	if p == null or G.state == "menu" or not (p.atk > 0):
+	if G.state == "menu":
+		return
+	for p in players():
+		_drawSlashFor(p)
+
+func _drawSlashFor(p) -> void:
+	if not (p.atk > 0):
 		return
 	var cl: Array = CLAW[max(1, p.combo) - 1]
 	var q: float = min(1.0, (1 - p.atk / .22) * 1.5)

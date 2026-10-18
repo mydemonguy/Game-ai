@@ -25,6 +25,23 @@ var font_u6: Font
 var font_d9: Font
 var _tex := {}
 
+## playable dinos. spd/jump/dmg/cd scale Tyko's numbers; hp is added to max health; tex is the sprite sheet
+## (8 columns, frames ordered idle 10, walk 10, run 8, jump 12, dead 8, the same as Tyko's)
+var CHARS := {
+	tyko={id="tyko", name="Tyko", title="The Last Starblood", col="#7dffb0", tex="res://assets/dino.webp", fw=332, fh=234, ax=118, ay=210, sc=1.0,
+		spd=1.0, jump=1.0, dmg=1.0, hp=0, cd=1.0, charge=false,
+		perk="Balanced claws and speed. Lyra's collar hums around his neck.",
+		bio="The last egg of the Starblood clan, kept warm for thirty years by the star-spirit Lyra. Small, green, very hungry, and the reason the Rift has started to worry."},
+	zeph={id="zeph", name="Zeph", title="Skyreach Scout", col="#c9a8ff", tex="res://assets/chars/zeph.png", fw=340, fh=236, ax=154, ay=220, sc=1.0,
+		spd=1.2, jump=1.08, dmg=.85, hp=-15, cd=.82, charge=false,
+		perk="Fastest runner, highest jump and quickest claws. Lighter hits and a little less health.",
+		bio="Zeph hatched wild on the Skyreach Cliffs, far above the reach of the Fall, and was raised by the raptor packs who never trusted cities. For years she has shadowed Hollowed patrols along the cliff-roads, counting them, stealing their batteries and vanishing before they turn around. When Tyko's first roar echoed out of Hangar Nine, she heard a Starblood voice for the first time in her life. She came down the cliffs that same night. She talks fast, runs faster, and has decided, without asking anyone, that Tyko is her little brother now."},
+	rook={id="rook", name="Rook", title="Iron-Horn of Aeris", col="#7fd8ff", tex="res://assets/chars/rook.png", fw=340, fh=236, ax=155, ay=220, sc=1.05,
+		spd=.88, jump=.94, dmg=1.3, hp=40, cd=1.12, charge=true,
+		perk="Toughest hide and heaviest horn. Slower, but his dash is a charge that smashes robots.",
+		bio="Rook was born in a cargo crate on Orbital Dock Aeris, the stowaway egg of a freighter crew that never came back for him. The dock's loader robots raised him: they taught him to push, to lift, and to count shipping manifests out loud. Then the Hollowing came and the robots who sang him to sleep turned their lamps red. Rook has been head-butting Hollowed out of the shipping lanes ever since, hoping that somewhere inside one of them is the loader who called him 'little cargo'. Slow to anger, slower to stop."},
+}
+
 const KEYS := {
 	left=[KEY_LEFT, KEY_A], right=[KEY_RIGHT, KEY_D], jump=[KEY_UP, KEY_W, KEY_SPACE], attack=[KEY_J, KEY_X], special=[KEY_K, KEY_C],
 	dash=[KEY_L, KEY_SHIFT], down=[KEY_DOWN, KEY_S], arm=[KEY_U, KEY_V], armc=[KEY_I], pause=[KEY_ESCAPE, KEY_P]}
@@ -59,6 +76,8 @@ func _ready() -> void:
 	PICK["core"] = {name="Aether Core", col="#7fe9ff", txt="Aether Core: hits charge Aether faster"}
 	PICK["sfang"] = {name="Starblood Fang", col="#ff7a5a", txt="Starblood Fang: claws +10% damage"}
 	PICK["lore"] = {name="Data Tablet", col="#ffe08a", txt="Data tablet recovered"}
+	T.WHO["zeph"] = {n="ZEPH", c="#c9a8ff"}
+	T.WHO["rook"] = {n="ROOK", c="#7fd8ff"}
 	TEXMETA = _json("res://assets/tex/meta.json")
 	BOSSES = _json("res://assets/bosses/bosses.json")
 	DINO = _json("res://assets/dino.json")
