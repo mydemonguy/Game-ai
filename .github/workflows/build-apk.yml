@@ -2,6 +2,7 @@ name: Build Aetherfall APK
 on:
   push:
     branches: [main]
+    paths-ignore: ['godot/**', 'tools/**', '.github/workflows/godot-apk.yml']
   workflow_dispatch:
 permissions:
   contents: write

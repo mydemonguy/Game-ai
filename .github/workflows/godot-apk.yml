@@ -1,0 +1,74 @@
+name: Build Aetherfall (Godot) APK
+on:
+  push:
+    branches: [main]
+    paths: ['godot/**', '.github/workflows/godot-apk.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+env:
+  GODOT_VERSION: 4.6.3
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Android SDK build tools
+        run: |
+          SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKM" --licenses > /dev/null || true
+          "$SDKM" "platform-tools" "build-tools;34.0.0" "platforms;android-34" > /dev/null || echo "::warning::sdkmanager had a problem"
+      - name: Download Godot and its export templates
+        run: |
+          cd "$RUNNER_TEMP"
+          curl -sSL -o godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
+          unzip -q godot.zip && mv Godot_v${GODOT_VERSION}-stable_linux.x86_64 godot && chmod +x godot
+          curl -sSL -o tpl.tpz "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz"
+          mkdir -p "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable"
+          unzip -q tpl.tpz 'templates/android_*' 'templates/version.txt'
+          mv templates/* "$HOME/.local/share/godot/export_templates/${GODOT_VERSION}.stable/"
+          rm tpl.tpz
+          mkdir -p "$HOME/.config/godot"
+          for f in editor_settings-4.tres editor_settings-4.6.tres; do
+            printf '[gd_resource type="EditorSettings" format=3]\n\n[resource]\nexport/android/android_sdk_path = "%s"\nexport/android/java_sdk_path = "%s"\n' "$ANDROID_HOME" "$JAVA_HOME" > "$HOME/.config/godot/$f"
+          done
+      - name: Import and export
+        env:
+          GODOT_ANDROID_KEYSTORE_DEBUG_PATH: ${{ github.workspace }}/app/aetherfall-debug.keystore
+          GODOT_ANDROID_KEYSTORE_DEBUG_USER: androiddebugkey
+          GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: android
+        run: |
+          cd godot
+          "$RUNNER_TEMP/godot" --headless --import 2>&1 | grep -E "ERROR|SCRIPT" | head -40 || true
+          mkdir -p export
+          "$RUNNER_TEMP/godot" --headless --export-debug "Android" export/Aetherfall-Godot.apk 2>&1 | tee export.log
+          ls -la export
+          test -s export/Aetherfall-Godot.apk
+      - name: Project zip for the Godot app on a phone
+        run: |
+          cd godot
+          zip -qr ../Aetherfall-Godot-project.zip . -x '.godot/*' 'export/*' 'export.log' '*.import'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Aetherfall-Godot
+          path: |
+            godot/export/Aetherfall-Godot.apk
+            Aetherfall-Godot-project.zip
+      - name: Publish a release and the apk-godot branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp godot/export/Aetherfall-Godot.apk Aetherfall-Godot.apk
+          TAG="godot-${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" Aetherfall-Godot.apk Aetherfall-Godot-project.zip --title "Aetherfall · Godot edition (build ${GITHUB_RUN_NUMBER})" --notes "Aetherfall rebuilt in Godot 4.6. Aetherfall-Godot.apk installs next to the original game. Aetherfall-Godot-project.zip opens in the Godot 4 editor (Project Manager → Import)." --latest=false
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan apk-godot
+          git rm -rfq --cached .
+          git add -f Aetherfall-Godot.apk
+          git commit -qm "Godot APK from build ${GITHUB_RUN_NUMBER}"
+          git push -f origin apk-godot

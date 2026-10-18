@@ -1,0 +1,1305 @@
+{
+ "LV": [
+  {
+   "name": "Hangar Nine",
+   "ch": "Chapter I",
+   "theme": "hangar",
+   "len": 7400,
+   "sky": [
+    "#12151c",
+    "#262d3a",
+    "#4a566a"
+   ],
+   "planet": "#ffb070",
+   "far": "#20262f",
+   "mid": "#2b323d",
+   "gnd": "#191d24",
+   "glow": "#ff9a2a",
+   "waves": [
+    [
+     "g",
+     "g"
+    ],
+    [
+     "g",
+     "d",
+     "g"
+    ],
+    [
+     "g",
+     "g",
+     "g"
+    ],
+    [
+     "d",
+     "g",
+     "d",
+     "g"
+    ],
+    [
+     "g",
+     "g",
+     "b"
+    ]
+   ],
+   "trig": [
+    900,
+    2300,
+    3700,
+    5100,
+    6500
+   ]
+  },
+  {
+   "name": "The Iron Armory",
+   "ch": "Chapter II",
+   "theme": "armory",
+   "len": 7800,
+   "sky": [
+    "#0f1512",
+    "#212c26",
+    "#43574b"
+   ],
+   "planet": "#ffd08a",
+   "far": "#1c2620",
+   "mid": "#26332b",
+   "gnd": "#141b17",
+   "glow": "#ff8a3a",
+   "waves": [
+    [
+     "g",
+     "d",
+     "d"
+    ],
+    [
+     "h",
+     "h",
+     "b"
+    ],
+    [
+     "d",
+     "d",
+     "g",
+     "g"
+    ],
+    [
+     "b",
+     "g",
+     "d",
+     "g"
+    ],
+    [
+     "b",
+     "b",
+     "d",
+     "d"
+    ]
+   ],
+   "trig": [
+    900,
+    2400,
+    3900,
+    5400,
+    6900
+   ]
+  },
+  {
+   "name": "Orbital Dock Aeris",
+   "ch": "Chapter III",
+   "theme": "station",
+   "len": 8400,
+   "sky": [
+    "#0c1222",
+    "#203256",
+    "#5a78a6"
+   ],
+   "planet": "#cfeaff",
+   "far": "#2a3856",
+   "mid": "#354564",
+   "gnd": "#262c38",
+   "glow": "#ff9a2a",
+   "waves": [
+    [
+     "d",
+     "g",
+     "g"
+    ],
+    [
+     "b",
+     "d",
+     "g"
+    ],
+    [
+     "g",
+     "h",
+     "h",
+     "d"
+    ],
+    [
+     "b",
+     "b",
+     "d"
+    ],
+    [
+     "B",
+     "g",
+     "d"
+    ]
+   ],
+   "trig": [
+    900,
+    2550,
+    4200,
+    5850,
+    7500
+   ]
+  },
+  {
+   "name": "The Amber Foundry",
+   "ch": "Chapter IV",
+   "theme": "cargo",
+   "len": 8400,
+   "sky": [
+    "#18120a",
+    "#3a2a16",
+    "#86643a"
+   ],
+   "planet": "#ffd27a",
+   "far": "#2a2013",
+   "mid": "#382a17",
+   "gnd": "#1c160e",
+   "glow": "#ffb347",
+   "waves": [
+    [
+     "c",
+     "g",
+     "g"
+    ],
+    [
+     "b",
+     "c",
+     "d"
+    ],
+    [
+     "g",
+     "h",
+     "h",
+     "c",
+     "c"
+    ],
+    [
+     "b",
+     "b",
+     "c",
+     "d"
+    ],
+    [
+     "c",
+     "c",
+     "h",
+     "h",
+     "B"
+    ]
+   ],
+   "trig": [
+    900,
+    2550,
+    4200,
+    5850,
+    7500
+   ]
+  },
+  {
+   "name": "Gates of the Null Citadel",
+   "ch": "Chapter V",
+   "theme": "citadel",
+   "len": 8800,
+   "sky": [
+    "#07050f",
+    "#1c1238",
+    "#4e2f7c"
+   ],
+   "planet": "#c9a8ff",
+   "far": "#160c30",
+   "mid": "#201240",
+   "gnd": "#0c0718",
+   "glow": "#b48cff",
+   "waves": [
+    [
+     "c",
+     "c",
+     "d",
+     "d"
+    ],
+    [
+     "b",
+     "h",
+     "h",
+     "h",
+     "c"
+    ],
+    [
+     "d",
+     "d",
+     "d",
+     "c",
+     "c"
+    ],
+    [
+     "b",
+     "b",
+     "b",
+     "c"
+    ],
+    [
+     "B",
+     "c",
+     "c"
+    ]
+   ],
+   "trig": [
+    900,
+    2650,
+    4400,
+    6150,
+    7900
+   ]
+  },
+  {
+   "name": "Throne of the Rift",
+   "ch": "Chapter VI",
+   "theme": "core",
+   "len": 7200,
+   "sky": [
+    "#060406",
+    "#1a0a0e",
+    "#4a140e"
+   ],
+   "planet": "#ff4a2a",
+   "far": "#140b0c",
+   "mid": "#1e1113",
+   "gnd": "#0d0909",
+   "glow": "#ff4a2a",
+   "waves": [
+    [
+     "c",
+     "b",
+     "d"
+    ],
+    [
+     "h",
+     "h",
+     "c",
+     "c",
+     "b"
+    ],
+    [
+     "B",
+     "h",
+     "h",
+     "d"
+    ]
+   ],
+   "boss": true,
+   "trig": [
+    900,
+    2950,
+    5000
+   ]
+  }
+ ],
+ "STORY": {
+  "intro": [
+   {
+    "ey": "The Age of Aether",
+    "h": "The Starblood Clan",
+    "b": "For a thousand years the kingdom of [b]Ithra[/b] ran on the Aether, the living light that flows between the stars.\n\nIts keepers were the [b]Starblood[/b], a clan of dinosaurs whose claws could hold starlight. They guarded the great reactors, and the reactors kept every city in Ithra bright."
+   },
+   {
+    "ey": "The Fall",
+    "h": "Malakar Opens the Rift",
+    "b": "Then [b]Malakar[/b], the clan's own Egg-Keeper, cracked the reactors open and tore a Rift at the world's core. He fused his followers with machine and shadow and named them the [b]Hollowed[/b].\n\nHe hunted the Starblood until none were left. Ithra went dark."
+   },
+   {
+    "ey": "Hatching",
+    "h": "The Last Starblood",
+    "b": "Thirty years later, in a frozen stasis pod deep inside Hangar Nine, one egg cracks. Out tumbles [b]Tyko[/b]: small, green, and very hungry.\n\nWrapped around the shell is a glowing collar, and inside it lives [b]Lyra[/b], the star-spirit who kept the egg warm all those years.\n\n[color=#b48cff][b]LYRA:[/b][/color] \"Hello, little one. I'm sorry you woke up in the dark. Let's go and turn the lights back on.\""
+   }
+  ],
+  "brief": [
+   "[color=#b48cff][b]LYRA:[/b][/color] \"This is Hangar Nine, where your clan's ships used to launch. The Hollowed patrol it now. Their cores are stolen souls wrapped in iron, and your claws can set them free.\"\n\n[color=#b48cff][b]LYRA:[/b][/color] \"Smash the supply crates. Your clan hid food and Aether in them. And look for the old Starblood shrines. Each one wakes a power you were born with.\"",
+   "[color=#b48cff][b]LYRA:[/b][/color] \"The Iron Armory. Malakar builds his green war-drones here and fuels them with Aether stolen from your clan's reactors. Jump to reach them, and grab every Star Fruit you see. You're still growing.\"",
+   "[color=#b48cff][b]LYRA:[/b][/color] \"Orbital Dock Aeris. His fleet docks here before every raid, and an [b]Iron Warden[/b] guards the gate. When it slams the deck, jump over the shockwave.\"",
+   "[color=#b48cff][b]LYRA:[/b][/color] \"The Amber Foundry is where the Hollowed are made. Tyko... I found the clan records. Malakar wasn't just the Egg-Keeper. He kept [i]your[/i] egg. He's the one who froze it.\"",
+   "[color=#b48cff][b]LYRA:[/b][/color] \"The Null Citadel. Its gates were built to keep the Void [i]in[/i]. He turned them inside out. Everything he has left is waiting here, so take every shard you can carry.\"",
+   "[color=#b48cff][b]MALAKAR:[/b][/color] \"Little hatchling. I saved you for last. I thought one Starblood should see the end.\"\n\n[color=#b48cff][b]LYRA:[/b][/color] \"Don't listen to him. You're not the last of anything, Tyko. You're the first of what comes next.\""
+  ],
+  "clear": [
+   "The first souls rise free from their iron shells and drift into the dawn. Tyko watches them go, then sneezes out a tiny spark of starlight.",
+   "The armory reactors cool and go dark. No more war-drones will launch from Ithra.",
+   "The Iron Warden falls and Malakar's flagship burns on its moorings. The fleet will not fly tonight.",
+   "The amber furnaces go cold. Deep in the foundry, Tyko finds a shelf of frozen eggs. Lyra marks the spot. \"We'll come back for them. I promise.\"",
+   "The Citadel gates crack open. Beyond them, the Rift pulses like a red heart."
+  ],
+  "ending": [
+   {
+    "ey": "Malakar Falls",
+    "h": "The Rift Closes",
+    "b": "[color=#b48cff][b]MALAKAR:[/b][/color] \"I only wanted... to keep the light safe... somewhere no one could waste it...\"\n\nTyko takes the deepest breath of his short life and roars. Every shard of Aether he gathered pours out of him, brighter than any star, and the wound in the world begins to seal."
+   },
+   {
+    "ey": "Epilogue",
+    "h": "Dawn Over Ithra",
+    "b": "When Tyko wakes, the sky is blue. The reactors hum again, and the freed souls of the Hollowed drift upward like lanterns.\n\nIn the foundry, one by one, the frozen eggs begin to crack.\n\n[color=#b48cff][b]LYRA:[/b][/color] \"Well, little one. Looks like you have a lot of brothers and sisters to teach.\""
+   }
+  ]
+ },
+ "LORE": [
+  {
+   "h": "Launch Log, Hangar Nine",
+   "b": "[i]\"Day 4,112 of the Long Watch. Twelve sky-ships out, twelve home. The young ones raced the comet again and lost again. The Egg-Keeper came down to count the eggs in stasis. He counted them twice. He has started doing that.\"[/i]\n\n[color=#b48cff][b]LYRA:[/b][/color] \"The Starblood flew these ships for joy, Tyko. Not for war. Remember that.\""
+  },
+  {
+   "h": "The Oath of Claws",
+   "b": "[i]\"We forge no blades. Our claws hold the light of the stars, and what the light touches it does not destroy. It sets free. This is the first oath of the Starblood, older than Ithra itself.\"[/i]\n\n[color=#b48cff][b]LYRA:[/b][/color] \"Every weapon in this armory was built after the Fall. Your clan never needed one.\""
+  },
+  {
+   "h": "A Letter from Aeris",
+   "b": "[i]\"Mira, the Egg-Keeper inspected the reactor rings today. He asked how long the Aether would last if the clan kept growing. The engineers laughed and said forever. He didn't laugh. I keep thinking about his face.\"[/i]\n\n[color=#b48cff][b]LYRA:[/b][/color] \"Nobody listened to his fear. I wonder if that would have changed anything.\""
+  },
+  {
+   "h": "The Egg-Keeper's Journal",
+   "b": "[i]\"They spend the light like water. One day it will run dry, and every egg I have kept will hatch into a dark world. I will not allow it. If I must take the light from them to keep it safe, so be it. I will keep it as I kept the eggs.\"[/i]\n\n[color=#b48cff][b]LYRA:[/b][/color] \"He wasn't a monster at the start, Tyko. He was afraid. That is how it begins.\""
+  },
+  {
+   "h": "Inscription on the Void Gate",
+   "b": "[i]\"Here the first Starblood sealed the Void beneath the world, and paid for it with their light. Let no keeper open what we closed. What is kept too tightly becomes a cage.\"[/i]\n\n[color=#b48cff][b]LYRA:[/b][/color] \"Your ancestors gave everything to close this place. He opened it in a single night.\""
+  },
+  {
+   "h": "Lyra's Memory",
+   "b": "[i]A recording, very old. A voice you know, younger and afraid: \"The Hollowed are at the hangar doors. There is one egg left in stasis. I can't carry it out... but I can stay with it. If I pour my light into the collar, I can keep it warm. However long it takes.\"[/i]\n\n[color=#b48cff][b]LYRA:[/b][/color] \"...I was a Star-Singer of your clan, Tyko. I chose to wait for you. I would choose it again.\""
+  }
+ ],
+ "ABIL": [
+  {
+   "id": "dash",
+   "name": "Comet Dash",
+   "how": "Tap Â» to dash. Dash into cracked walls to smash them.",
+   "col": "#b48cff",
+   "gate": "crack"
+  },
+  {
+   "id": "double",
+   "name": "Sky Scales",
+   "how": "Tap jump again in the air to double jump.",
+   "col": "#7fe9ff",
+   "gate": "ledge"
+  },
+  {
+   "id": "roar",
+   "name": "Starburst Roar",
+   "how": "Tap âœ¦ when its ring is full. The roar melts laser gates.",
+   "col": "#5ce1ff",
+   "gate": "laser"
+  },
+  {
+   "id": "slam",
+   "name": "Ground Slam",
+   "how": "In the air, pull the stick down and strike. Slam the plate to open blast doors.",
+   "col": "#ffb347",
+   "gate": "blast"
+  },
+  {
+   "id": "plasma",
+   "name": "Plasma Claws",
+   "how": "Your claws burn hotter. Claw void-crystal walls to break them.",
+   "col": "#ff5ad8",
+   "gate": "crystal"
+  }
+ ],
+ "GATEHINT": {
+  "crack": "Cracked wall. A dash could smash it.",
+  "ledge": "Too high to climb. Maybe with a double jump?",
+  "laser": "Laser gate. Only a Starburst roar melts it.",
+  "blast": "Blast door. The plate needs a Ground Slam.",
+  "crystal": "Void crystal. Claws bounce off it.",
+  "secret": "This plating sounds hollowâ€¦"
+ },
+ "PICK": {
+  "fruit": {
+   "name": "Star Fruit",
+   "col": "#7dffb0",
+   "txt": "+25 HP"
+  },
+  "med": {
+   "name": "Med-Pack",
+   "col": "#ff6a7a",
+   "txt": "+60 HP"
+  },
+  "shard": {
+   "name": "Aether Shard",
+   "col": "#5ce1ff",
+   "txt": "+35 Aether"
+  },
+  "shield": {
+   "name": "Shield Bubble",
+   "col": "#8fc8ff",
+   "txt": "Shield Ã—3"
+  },
+  "fang": {
+   "name": "Fury Fang",
+   "col": "#ffb347",
+   "txt": "Fury: double damage"
+  },
+  "coin": {
+   "name": "Stardust",
+   "col": "#ffd27a",
+   "txt": "+250 Â· â—†2"
+  },
+  "egg": {
+   "name": "Golden Egg",
+   "col": "#ffe08a",
+   "txt": "+1 Life"
+  },
+  "tank": {
+   "name": "Energy Tank",
+   "col": "#ff5ad8",
+   "txt": "Energy Tank: +15 max HP"
+  },
+  "core": {
+   "name": "Aether Core",
+   "col": "#7fe9ff",
+   "txt": "Aether Core: hits charge Aether faster"
+  },
+  "sfang": {
+   "name": "Starblood Fang",
+   "col": "#ff7a5a",
+   "txt": "Starblood Fang: claws +10% damage"
+  },
+  "lore": {
+   "name": "Data Tablet",
+   "col": "#ffe08a",
+   "txt": "Data tablet recovered"
+  }
+ },
+ "TANKS": [
+  [
+   "high",
+   "laser"
+  ],
+  [
+   "crack",
+   "slam"
+  ],
+  [
+   "high",
+   "plasma"
+  ],
+  [
+   "laser",
+   "high"
+  ],
+  [
+   "slam",
+   "plasma"
+  ],
+  [
+   "crack",
+   "high"
+  ]
+ ],
+ "GUARD": [
+  {
+   "name": "Foreman Krell",
+   "sub": "Guardian of Hangar Nine",
+   "art": "krell",
+   "k": 3.3,
+   "glow": "#ff9a2a",
+   "hp": 700,
+   "w": 150,
+   "h": 330,
+   "range": 360,
+   "atk": [
+    "claw",
+    "drill",
+    "rivets"
+   ],
+   "atk2": [
+    "call",
+    "drill"
+   ],
+   "tip": "He telegraphs every move. When his claw opens wide, step back. When he lowers the drill, jump it: if he rams the wall he gets stuck, and stuck means free hits."
+  },
+  {
+   "name": "Bulwark",
+   "sub": "Guardian of the Iron Armory",
+   "art": "bulwark",
+   "k": 3.4,
+   "glow": "#ffcc4a",
+   "hp": 900,
+   "w": 230,
+   "h": 400,
+   "range": 320,
+   "atk": [
+    "guard",
+    "bash",
+    "pound"
+   ],
+   "atk2": [
+    "pound",
+    "guard"
+   ],
+   "tip": "His shield blocks everything from the front. Jump over him or slip behind him while he hammers the floor."
+  },
+  {
+   "name": "Alpha Hound",
+   "sub": "Guardian of Orbital Dock Aeris",
+   "art": "hound",
+   "k": 3.2,
+   "glow": "#ff5a3a",
+   "hp": 1250,
+   "w": 260,
+   "h": 190,
+   "range": 520,
+   "atk": [
+    "pounce",
+    "spin",
+    "thrust"
+   ],
+   "atk2": [
+    "howl",
+    "thrust"
+   ],
+   "tip": "Its thrusters leave burning trails. Stay off the fire, and strike back after a pounce combo."
+  },
+  {
+   "name": "Crucible",
+   "sub": "Guardian of the Amber Foundry",
+   "art": "crucible",
+   "k": 3.2,
+   "glow": "#ff7a2a",
+   "hp": 1600,
+   "w": 240,
+   "h": 460,
+   "range": 600,
+   "atk": [
+    "mortar",
+    "breath",
+    "stomp"
+   ],
+   "atk2": [
+    "mortar"
+   ],
+   "tip": "Its furnace overheats after it breathes fire. While it vents steam, every hit does double damage."
+  },
+  {
+   "name": "Null Seraph",
+   "sub": "Guardian of the Null Citadel",
+   "art": "seraph",
+   "k": 2.8,
+   "glow": "#b48cff",
+   "hp": 2000,
+   "w": 150,
+   "h": 320,
+   "range": 640,
+   "fly": 1,
+   "atk": [
+    "thrust",
+    "feathers",
+    "snipe",
+    "rift"
+   ],
+   "atk2": [
+    "halo"
+   ],
+   "tip": "When it vanishes it reappears beside you and swoops low with its lance. Jump the thrust, then hit back."
+  }
+ ],
+ "ETYPES": {
+  "g": {
+   "w": 80,
+   "h": 165,
+   "hp": 42,
+   "spd": 260,
+   "dmg": 10,
+   "score": 100
+  },
+  "b": {
+   "w": 140,
+   "h": 270,
+   "hp": 130,
+   "spd": 150,
+   "dmg": 22,
+   "score": 300,
+   "heavy": true
+  },
+  "d": {
+   "w": 70,
+   "h": 70,
+   "hp": 28,
+   "spd": 0,
+   "dmg": 8,
+   "score": 150,
+   "fly": true
+  },
+  "c": {
+   "w": 80,
+   "h": 160,
+   "hp": 55,
+   "spd": 0,
+   "dmg": 9,
+   "score": 250
+  },
+  "B": {
+   "w": 170,
+   "h": 320,
+   "hp": 420,
+   "spd": 125,
+   "dmg": 24,
+   "score": 1500,
+   "heavy": true
+  },
+  "h": {
+   "w": 130,
+   "h": 100,
+   "hp": 45,
+   "spd": 520,
+   "dmg": 12,
+   "score": 120
+  },
+  "t": {
+   "w": 90,
+   "h": 90,
+   "hp": 40,
+   "spd": 0,
+   "dmg": 9,
+   "score": 200,
+   "fly": true
+  }
+ },
+ "NPC_TALK": [
+  [
+   "[color=#ffb08a][b]CLAUDE:[/b][/color] \"Oh! Oh, hello! A real Starblood hatchling! Sorry, I'm a little excited. I'm Claude, an archive automaton. The clan built me to remember things for them.\"\n\n[color=#b48cff][b]LYRA:[/b][/color] \"An archivist? I thought the Hollowed melted all of you down.\"\n\n[color=#ffb08a][b]CLAUDE:[/b][/color] \"They tried. I hid in a filing cabinet for thirty years. It was very dusty, and I had a lot of time to think.\"",
+   "[color=#ffb08a][b]CLAUDE:[/b][/color] \"I'd like to help you, Tyko. I can ride the save-station network, so I'll meet you at each one. Walk up to me any time and I'll tell you what my sensors pick up: hidden walls, Energy Tanks, how the guardians fight.\"\n\n[color=#ffb08a][b]CLAUDE:[/b][/color] \"I also keep a little exchange. Bring me Stardust and I'll trade you Starblood relics from the archive. Just pause at any save station.\"\n\n[color=#ffb08a][b]CLAUDE:[/b][/color] \"And here, take these. I found them in a locker. It isn't much, but it's a start.\""
+  ],
+  [
+   "[color=#ffb08a][b]CLAUDE:[/b][/color] \"You made it! Riding the station network tickles, by the way. This armory is where the Hollowed keep their heavy hardware.\"\n\n[color=#ffb08a][b]CLAUDE:[/b][/color] \"The shrine guardian here is Bulwark. He loves his shield more than anything. Hit him from behind. Oh, and I saved you some supplies.\""
+  ],
+  [
+   "[color=#ffb08a][b]CLAUDE:[/b][/color] \"Orbital Dock Aeris! I've always wanted to see the stars up close. They're even better than the star charts.\"\n\n[color=#ffb08a][b]CLAUDE:[/b][/color] \"Be careful with the Alpha Hound in the shrine. It's very fast and it sets the floor on fire. Take these with you.\""
+  ],
+  [
+   "[color=#ffb08a][b]CLAUDE:[/b][/color] \"The Foundry is very warm. I'm trying not to think about what happens to automatons in furnaces.\"\n\n[color=#ffb08a][b]CLAUDE:[/b][/color] \"Crucible guards the shrine here. It runs hot, so let it overheat, then strike. I've been saving this for you.\""
+  ],
+  [
+   "[color=#ffb08a][b]CLAUDE:[/b][/color] \"The Null Citadel. My sensors keep picking up things that aren't there. That's unsettling for an archivist.\"\n\n[color=#ffb08a][b]CLAUDE:[/b][/color] \"The Null Seraph teleports, so stay on your toes. Here, one more gift for the road.\""
+  ],
+  [
+   "[color=#ffb08a][b]CLAUDE:[/b][/color] \"This is as far as the stations go, Tyko. Malakar is past the last arena.\"\n\n[color=#ffb08a][b]CLAUDE:[/b][/color] \"I'm not a fighter. But I'll be right here, remembering how brave you were. Whatever happens, it goes in the archive forever.\"\n\n[color=#b48cff][b]LYRA:[/b][/color] \"We'll come back for you, Claude.\"\n\n[color=#ffb08a][b]CLAUDE:[/b][/color] \"I know. I already wrote it down.\""
+  ]
+ ],
+ "NPC_GIFT": [
+  [
+   "shield",
+   "shard"
+  ],
+  [
+   "med",
+   "shard"
+  ],
+  [
+   "shield",
+   "med"
+  ],
+  [
+   "fang",
+   "med"
+  ],
+  [
+   "shield",
+   "shard",
+   "med"
+  ],
+  [
+   "med",
+   "fang",
+   "shield"
+  ]
+ ],
+ "NPC_IDLE": [
+  "This world is fully archived. Thank you, Tyko!",
+  "I have catalogued 4,112 kinds of rust. Number 2,031 is my favourite.",
+  "Lyra hums when you aren't listening. It's lovely.",
+  "Remember to save often. I do. Constantly.",
+  "The archive says Sable of the Ninth Talon was the bravest knight the clan ever had. If you see her, say hello for me.",
+  "Got Stardust? Pause at a station and visit my Exchange. I have relics!",
+  "If you find more data tablets, I would love to read them. Purely for the archive. And also because I like stories."
+ ],
+ "BOSS_TALK": [
+  [
+   [
+    [
+     "krell",
+     "\"Well, well. A hatchling, loose on my hangar floor. Nobody walks out of Hangar Nine without a work order.\""
+    ],
+    [
+     "lyra",
+     "\"He was the clan's chief engineer once, Tyko. Malakar welded his heart shut.\""
+    ]
+   ],
+   [
+    [
+     "krell",
+     "\"Engineer? I'm the FOREMAN now. And the shift whistle just blew.\""
+    ],
+    [
+     "tyko",
+     "\"Rawr!\""
+    ]
+   ]
+  ],
+  [
+   [
+    [
+     "bulwark",
+     "\"Halt. The Armory is sealed by order of the Sovereign. I am the wall. Walls do not move.\""
+    ],
+    [
+     "lyra",
+     "\"Every wall has a back, little one. Get behind that shield.\""
+    ]
+   ],
+   [
+    [
+     "bulwark",
+     "\"Then come. Break yourself against me.\""
+    ]
+   ]
+  ],
+  [
+   [
+    [
+     "hound",
+     "\"GRRRRRAAAAH!\""
+    ],
+    [
+     "lyra",
+     "\"It was a hunting companion of the Starblood once. Loyal. Gentle. Malakar bolted thrusters to its spine.\""
+    ]
+   ],
+   [
+    [
+     "lyra",
+     "\"Free it, Tyko. And watch out for the fire it leaves behind.\""
+    ],
+    [
+     "tyko",
+     "\"...rawr.\""
+    ]
+   ]
+  ],
+  [
+   [
+    [
+     "crucible",
+     "\"MORE FUEL. THE FURNACE HUNGERS. YOU ARE... SMALL. BUT YOU WILL BURN.\""
+    ],
+    [
+     "lyra",
+     "\"That furnace runs too hot for its own good. Wait until it vents, then strike!\""
+    ]
+   ],
+   [
+    [
+     "crucible",
+     "\"ALL THINGS BECOME ASH. ALL THINGS BECOME... HOLLOW.\""
+    ]
+   ]
+  ],
+  [
+   [
+    [
+     "seraph",
+     "\"Little light. Can you hear it? The Void is singing. It sings of quiet. Of no more running.\""
+    ],
+    [
+     "lyra",
+     "\"Don't listen, Tyko. That's the Void talking through her.\""
+    ]
+   ],
+   [
+    [
+     "seraph",
+     "\"Lay down your claws, hatchling. Let the dark hold you, as it holds me.\""
+    ],
+    [
+     "tyko",
+     "\"RAWR!\""
+    ]
+   ]
+  ]
+ ],
+ "WHO": {
+  "tyko": {
+   "n": "TYKO",
+   "c": "#7dffb0"
+  },
+  "lyra": {
+   "n": "LYRA",
+   "c": "#c9a8ff"
+  },
+  "sable": {
+   "n": "SABLE",
+   "c": "#5ce1d8",
+   "art": "sable"
+  },
+  "krell": {
+   "n": "FOREMAN KRELL",
+   "c": "#ffa040",
+   "art": "krell"
+  },
+  "bulwark": {
+   "n": "BULWARK",
+   "c": "#c4d890",
+   "art": "bulwark"
+  },
+  "hound": {
+   "n": "ALPHA HOUND",
+   "c": "#ff8a6a",
+   "art": "hound",
+   "fr": "howl"
+  },
+  "crucible": {
+   "n": "CRUCIBLE",
+   "c": "#ffb040",
+   "art": "crucible"
+  },
+  "seraph": {
+   "n": "NULL SERAPH",
+   "c": "#d8b8ff",
+   "art": "seraph"
+  },
+  "malakar": {
+   "n": "MALAKAR",
+   "c": "#ff5a7a",
+   "art": "malakar"
+  }
+ },
+ "RELICS": [
+  {
+   "id": "lode",
+   "name": "Lodestone",
+   "txt": "Pickups fly to you from far away.",
+   "cost": 60,
+   "w": 0,
+   "col": "#9ad0ff"
+  },
+  {
+   "id": "swift",
+   "name": "Swift Talons",
+   "txt": "Claw attacks recover 25% faster.",
+   "cost": 110,
+   "w": 0,
+   "col": "#ffb08a"
+  },
+  {
+   "id": "reach",
+   "name": "Long Claws",
+   "txt": "Claw reach +30%.",
+   "cost": 90,
+   "w": 0,
+   "col": "#ffe066"
+  },
+  {
+   "id": "siphon",
+   "name": "Soul Siphon",
+   "txt": "Every robot you free heals 3 HP.",
+   "cost": 120,
+   "w": 0,
+   "col": "#7dffb0"
+  },
+  {
+   "id": "stone",
+   "name": "Stone Scales",
+   "txt": "Take 20% less damage.",
+   "cost": 140,
+   "w": 1,
+   "col": "#c8c0b0"
+  },
+  {
+   "id": "battery",
+   "name": "Aether Battery",
+   "txt": "Aether charges 40% faster; enter rooms half full.",
+   "cost": 100,
+   "w": 1,
+   "col": "#5ce1ff"
+  },
+  {
+   "id": "thorn",
+   "name": "Thorn Hide",
+   "txt": "When hit, a burst of spines hurts nearby robots.",
+   "cost": 90,
+   "w": 2,
+   "col": "#ff8a8a"
+  },
+  {
+   "id": "comet",
+   "name": "Comet Tail",
+   "txt": "Dash recharges twice as fast and hurts robots.",
+   "cost": 150,
+   "w": 2,
+   "col": "#b48cff"
+  },
+  {
+   "id": "fury",
+   "name": "Fury Heart",
+   "txt": "Fury lasts twice as long; +30% damage below 30% HP.",
+   "cost": 120,
+   "w": 3,
+   "col": "#ffb347"
+  },
+  {
+   "id": "lucky",
+   "name": "Lucky Egg",
+   "txt": "Double Stardust from everything.",
+   "cost": 160,
+   "w": 3,
+   "col": "#ffe08a"
+  }
+ ],
+ "ARMS": [
+  {
+   "name": "Rivet Spray",
+   "g": 0,
+   "cost": 15,
+   "col": "#ffe066",
+   "how": "Lobs a spread of hot rivets."
+  },
+  {
+   "name": "Aegis Shield",
+   "g": 1,
+   "cost": 30,
+   "col": "#ffcc4a",
+   "how": "A shield in front of you eats enemy shots for 3 seconds."
+  },
+  {
+   "name": "Thruster Dash",
+   "g": 2,
+   "cost": 20,
+   "col": "#ff9638",
+   "how": "A blazing dash that burns through robots."
+  },
+  {
+   "name": "Slag Mortar",
+   "g": 3,
+   "cost": 25,
+   "col": "#ff6418",
+   "how": "A molten shell that bursts where it lands."
+  },
+  {
+   "name": "Crystal Feathers",
+   "g": 4,
+   "cost": 20,
+   "col": "#a8f0ff",
+   "how": "A fan of piercing crystal feathers."
+  }
+ ],
+ "SABLE_BIO": "[color=#5ce1d8][b]Sable of the Ninth Talon[/b][/color] was captain of the Talon Guard, the Starblood's raptor knights. During the Fall, Malakar captured her and made her one of his Hollowed. For thirty years she hunted her own clan with iron in her chest and his leash on her mind.\n\nTyko's first roar in Hangar Nine cracked that leash. Half machine now, she follows the last Starblood through the dark with a plasma glaive, and steps in when the fighting gets thick. She can't undo what she did, but she means to try.",
+ "SLINE": {
+  "join": [
+   "Need a talon, little one?",
+   "Talon Guard, reporting!",
+   "Thought you could use a hand. Well, a claw.",
+   "Stay close. I have your back."
+  ],
+  "hit": [
+   "One more soul set free.",
+   "Stay behind me!",
+   "Too slow, tin can.",
+   "For the Starblood!",
+   "Ha! Did you see that?"
+  ],
+  "leave": [
+   "Room's clear. I'll be watching from the shadows.",
+   "Good fight, little one. Until next time.",
+   "Go on. I will catch up."
+  ]
+ },
+ "PAL": {
+  "hangar": {
+   "metal": "#626b78",
+   "light": "#a7b1be",
+   "dark": "#2c323b",
+   "ink": "#14171c",
+   "acc": "#ff9a2a",
+   "acc2": "#ffd9a0",
+   "scr": "#7fd8ff",
+   "alt": "#4a525e"
+  },
+  "armory": {
+   "metal": "#5f8a6e",
+   "light": "#a2c8ac",
+   "dark": "#26372d",
+   "ink": "#111813",
+   "acc": "#ff8a3a",
+   "acc2": "#ffc890",
+   "scr": "#9affc8",
+   "alt": "#4b535c"
+  },
+  "station": {
+   "metal": "#c3c9d2",
+   "light": "#f3f5f8",
+   "dark": "#596171",
+   "ink": "#1f232a",
+   "acc": "#ff9a2a",
+   "acc2": "#ffe0b0",
+   "scr": "#7fd8ff",
+   "alt": "#6c7482"
+  },
+  "cargo": {
+   "metal": "#e09f2c",
+   "light": "#ffd47e",
+   "dark": "#6a4a1c",
+   "ink": "#221709",
+   "acc": "#ffb347",
+   "acc2": "#fff0c8",
+   "scr": "#8fe8ff",
+   "alt": "#4c4d54"
+  },
+  "citadel": {
+   "metal": "#4e4a64",
+   "light": "#8e88ad",
+   "dark": "#221f30",
+   "ink": "#0f0d17",
+   "acc": "#ff7a2a",
+   "acc2": "#e0ccff",
+   "scr": "#b48cff",
+   "alt": "#3a3650"
+  },
+  "core": {
+   "metal": "#4c4246",
+   "light": "#8a7a80",
+   "dark": "#1f1a1c",
+   "ink": "#0b0909",
+   "acc": "#ff4a2a",
+   "acc2": "#ffc0a0",
+   "scr": "#ff8a6a",
+   "alt": "#352d30"
+  }
+ },
+ "AMB": {
+  "hangar": {
+   "col": "#040814",
+   "a": 0.5,
+   "weather": "rain",
+   "heavy": 1,
+   "lightning": "#dfe8ff",
+   "signs": [
+    "HANGAR 09",
+    "BAY CLOSED",
+    "NO SMOKING",
+    "LAUNCH TUBE 3"
+   ]
+  },
+  "armory": {
+   "col": "#05100a",
+   "a": 0.4,
+   "weather": "rain",
+   "heavy": 0,
+   "fog": "#cfe8d8",
+   "signs": [
+    "ARMORY",
+    "DRONE LINE 3",
+    "AMMO DEPOT",
+    "RESTRICTED"
+   ]
+  },
+  "station": {
+   "col": "#040918",
+   "a": 0.3,
+   "weather": "debris",
+   "signs": [
+    "DOCK A-7",
+    "GRAVITY 1.0G",
+    "SHUTTLE BAY",
+    "AIRLOCK"
+   ]
+  },
+  "cargo": {
+   "col": "#120802",
+   "a": 0.34,
+   "weather": "ash",
+   "heat": 1,
+   "conveyor": 1,
+   "signs": [
+    "FOUNDRY",
+    "HOT METAL",
+    "CARGO 12",
+    "SMELTER"
+   ]
+  },
+  "citadel": {
+   "col": "#08031a",
+   "a": 0.48,
+   "weather": "snow",
+   "search": "#d8c8ff",
+   "signs": [
+    "NULL GATE",
+    "VOID ALERT",
+    "SECTOR V"
+   ]
+  },
+  "core": {
+   "col": "#120203",
+   "a": 0.52,
+   "weather": "ash2",
+   "lightning": "#ff8a6a",
+   "search": "#ff9a7a",
+   "signs": [
+    "RIFT CORE",
+    "DANGER",
+    "NO ENTRY"
+   ]
+  }
+ },
+ "MOTE": {
+  "hangar": {
+   "col": "#ffb066",
+   "v": 70,
+   "n": 40
+  },
+  "armory": {
+   "col": "#d8ffe0",
+   "v": -10,
+   "n": 40
+  },
+  "station": {
+   "col": "#ffffff",
+   "v": 0,
+   "n": 46,
+   "wind": 1
+  },
+  "cargo": {
+   "col": "#ffb347",
+   "v": -60,
+   "n": 60
+  },
+  "citadel": {
+   "col": "#c9a8ff",
+   "v": -18,
+   "n": 60
+  },
+  "core": {
+   "col": "#ff5a2a",
+   "v": 40,
+   "n": 80
+  }
+ },
+ "KINDS": {
+  "hangar": [
+   "stack",
+   "crane",
+   "antenna",
+   "stack"
+  ],
+  "armory": [
+   "stack",
+   "tower",
+   "antenna",
+   "tankfar"
+  ],
+  "station": [
+   "ring",
+   "stack",
+   "antenna",
+   "ship"
+  ],
+  "cargo": [
+   "tankfar",
+   "crane",
+   "stack",
+   "chimney"
+  ],
+  "citadel": [
+   "spire",
+   "stack",
+   "ring",
+   "tower"
+  ],
+  "core": [
+   "ring",
+   "stack",
+   "pillar",
+   "tankfar"
+  ]
+ },
+ "FGK": {
+  "hangar": "pipes",
+  "armory": "rail",
+  "station": "rail",
+  "cargo": "pipes",
+  "citadel": "spikes",
+  "core": "pipes"
+ },
+ "TOPK": {
+  "hangar": "beams",
+  "armory": "cables",
+  "station": "beams",
+  "cargo": "chains",
+  "citadel": "cables",
+  "core": "chains"
+ },
+ "PROPK": {
+  "hangar": [
+   "generator",
+   "locker",
+   "crate",
+   "reactor",
+   "console"
+  ],
+  "armory": [
+   "pod",
+   "turret",
+   "crate",
+   "locker",
+   "generator"
+  ],
+  "station": [
+   "console",
+   "pipes",
+   "reactor",
+   "locker",
+   "turret"
+  ],
+  "cargo": [
+   "tank",
+   "crate",
+   "tank",
+   "pipes",
+   "generator"
+  ],
+  "citadel": [
+   "reactor",
+   "console",
+   "locker",
+   "turret"
+  ],
+  "core": [
+   "reactor",
+   "generator",
+   "pipes",
+   "tank"
+  ]
+ },
+ "CW": 2560,
+ "GY": 880,
+ "H": 1080,
+ "RUSH": [
+  "0-4",
+  "1-4",
+  "2-4",
+  "3-4",
+  "4-4",
+  "5-8"
+ ]
+}
