@@ -233,7 +233,7 @@ func startGame(room: String, how: Dictionary) -> void:
 	hideCard()
 	padShow(true)
 	clearInput()
-	showBanner(DB.LV[G.lv].ch, DB.LV[G.lv].name, 2.4)
+	showBanner(DB.LV[G.lv].ch, String(ROOM.get("zn", DB.LV[G.lv].name)), 2.4)
 	musicFor()
 
 func continueGame() -> void:
@@ -689,19 +689,44 @@ func archiveCard() -> void:
 	showCard({ey="Starblood archive", h="Data Tablets", tag="%d of 6 recovered" % got, b=b, btns=[["Back", pauseCard]]})
 
 func travelCard() -> void:
-	var btns = []
+	# random worlds have three stations each, so pick a world first, then a station in it
+	var by = {}
 	for id in saveRooms():
 		if id == ROOM.id:
 			continue
+		var a: int = DB.ROOMS[id].a
+		if not by.has(a):
+			by[a] = []
+		by[a].append(id)
+	if by.size() == 1:
+		travelWorld(by.keys()[0], false)
+		return
+	var btns = []
+	for a in 6:
+		if by.has(a):
+			var n: int = by[a].size()
+			btns.append([DB.LV[a].ch + " · " + DB.LV[a].name + ("  (%d)" % n if n > 1 else ""), func(): travelWorld(a, true)])
+	btns.append(["Back", pauseCard, true])
+	showCard({ey="Save station network", h="Fast Travel", b="Pick a world, then a station. Your progress is saved on arrival.", btns=btns})
+
+func travelWorld(a: int, back: bool) -> void:
+	var btns = []
+	var seen = {}
+	for id in saveRooms():
 		var o: Dictionary = DB.ROOMS[id]
-		btns.append([DB.LV[o.a].ch + " · " + String(o.get("zn", DB.LV[o.a].name)), func():
+		if id == ROOM.id or o.a != a:
+			continue
+		var zn: String = String(o.get("zn", DB.LV[a].name))
+		seen[zn] = seen.get(zn, 0) + 1
+		var lab: String = zn + (" · station %d" % seen[zn] if seen[zn] > 1 else "")
+		btns.append([lab, func():
 			G.paused = false
 			hideCard()
 			padShow(true)
 			Sfx.duck = 1.0
 			startTrans({travel=id})])
-	btns.append(["Back", pauseCard, true])
-	showCard({ey="Save station network", h="Fast Travel", b="Pick a station to warp to. Your progress is saved on arrival.", btns=btns})
+	btns.append(["Back", travelCard if back else pauseCard, true])
+	showCard({ey="Save station network · " + DB.LV[a].ch, h=DB.LV[a].name, b="Pick a station to warp to. Your progress is saved on arrival.", btns=btns})
 
 func maxArea() -> int:
 	var m = 0
@@ -1410,7 +1435,7 @@ func _test_init() -> void:
 				var out = {}
 				for id in DB.ROOMS:
 					var o = DB.ROOMS[id]
-					out[id] = {a=o.a, gx=o.gx, gy=o.gy, w=o.w, h=o.h, kind=o.kind, th=o.get("th", ""), zn=o.get("zn", ""), doors=o.doors, items=o.items.map(func(it): return it.type), gates=o.gates.map(func(g): return g.kind), sp=o.spawns.size()}
+					out[id] = o
 				var f = FileAccess.open(parts2[1], FileAccess.WRITE)
 				f.store_string(JSON.stringify(out))
 				f.close()
@@ -1455,6 +1480,32 @@ func _test_init() -> void:
 				TEST.god = true
 			"pausef":
 				TEST.pausef = int(v)
+			"doorwalk":
+				META = fresh_meta()
+				META.seed = DB.WORLD_SEED
+				for A in DB.ABIL:
+					META.ab[A.id] = 1
+				TEST.dw = []
+				TEST.dwi = 0
+				TEST.dwbad = []
+				for id in DB.ROOMS:
+					for d in DB.ROOMS[id].doors:
+						TEST.dw.append([id, d])
+				G.lives = 3
+				startGame(TEST.dw[0][0], {x=300.0, y=GY})
+				TEST.dwf = 2
+			"savecycle":
+				TEST.sc = true
+			"travelf":
+				TEST.travelf = int(v)
+			"travelto":
+				TEST.travelto = v
+			"cont":
+				load_meta()
+				continueGame()
+				print("CONT seed=", DB.WORLD_SEED, " room=", ROOM.id, " th=", curTh(), " rooms=", DB.ROOMS.size())
+			"memlog":
+				TEST.memlog = true
 			"mapall":
 				for id in DB.ROOMS:
 					META.map[id] = 1
@@ -1538,6 +1589,44 @@ func _genCheck(n: int) -> void:
 	print("GENCHECK seeds=%d bad=%d rooms/world=%.1f cells/world=%.1f ms/seed=%.1f" % [n, bad, tot / (6.0 * n), cells / (6.0 * n), (Time.get_ticks_msec() - t0) / float(n)])
 	DB.set_world(0)
 
+## walk through every door: enter its room, step into the door, check where we land
+func _doorWalk(f: int) -> void:
+	if G.state == "card":
+		hideCard()
+		G.state = "play"
+	if TEST.dwi >= TEST.dw.size():
+		print("DOORWALK doors=%d bad=%d" % [TEST.dw.size(), TEST.dwbad.size()])
+		for b in TEST.dwbad.slice(0, 20):
+			print("  ", b)
+		TEST.erase("dw")
+		TEST.quit = f + 1
+		return
+	var it = TEST.dw[TEST.dwi]
+	var ph: int = f - TEST.dwf
+	if ph == 0:
+		boss = null
+		en = []
+		lock = false
+		enterRoom(it[0], {x=300.0, y=GY})
+		var d = it[1]
+		plTeleport(60.0 if d.side == "L" else RW - 60, d.row * H + GY - 2)
+		startTrans({door=d})
+	elif ph == 40:
+		var d = it[1]
+		var bad = ""
+		if ROOM.id != d.to:
+			bad = "did not arrive (in %s)" % ROOM.id
+		elif not pl.ground:
+			bad = "not on ground at %d,%d" % [pl.x, pl.y]
+		elif inSolid(pl.x, pl.y - 80) or inSolid(pl.x, pl.y - 10):
+			bad = "inside a wall at %d,%d" % [pl.x, pl.y]
+		elif pl.x < 60 or pl.x > RW - 60:
+			bad = "outside room x=%d" % pl.x
+		if bad != "":
+			TEST.dwbad.append("%s %s%d -> %s: %s" % [it[0], d.side, d.row, d.to, bad])
+		TEST.dwi += 1
+		TEST.dwf = f + 1
+
 func _test_tick(dt: float) -> void:
 	TEST.frame += 1
 	var f: int = TEST.frame
@@ -1548,6 +1637,17 @@ func _test_tick(dt: float) -> void:
 		print("LOCK f=", f, " room=", ROOM.id, " wave=", ROOM.arena.i if ROOM.arena != null else -1, " cam=", int(cam), " pl=", int(pl.x), " en=", L, " q=", spawnQ.size())
 	if TEST.get("pausef", 0) == f:
 		togglePause()
+	if TEST.get("travelf", 0) == f:
+		G.paused = true
+		travelCard()
+	if TEST.get("travelf", 0) > 0 and f == TEST.travelf + 20:
+		travelWorld(3, true)
+	if TEST.has("travelto") and f == 200:
+		G.paused = false
+		hideCard()
+		startTrans({travel=TEST.travelto})
+	if TEST.has("travelto") and f == 320:
+		print("TRAVEL room=", ROOM.id, " kind=", ROOM.kind, " pl=", int(pl.x), ",", int(pl.y), " ground=", pl.ground, " save=", META.save.room)
 	if TEST.get("liftf", 0) == f and ROOM != null and ROOM.lift != null:
 		print("LIFT from ", ROOM.id, " to ", ROOM.lift.to)
 		startTrans({lift=ROOM.lift})
@@ -1561,6 +1661,33 @@ func _test_tick(dt: float) -> void:
 			enterRoom(TEST.rooms[TEST.ri], {x=300.0, y=GY})
 		else:
 			TEST.quit = f
+	if TEST.has("dw"):
+		_doorWalk(f)
+	if TEST.get("sc", false):
+		if f == 30:
+			var sid = ""
+			for id in DB.AREAS[2]:
+				if DB.ROOMS[id].kind == "save":
+					sid = id
+			TEST.sc_seed = DB.WORLD_SEED
+			TEST.sc_room = sid
+			enterRoom(sid, {x=300.0, y=GY})
+			useStation(ROOM.station)
+			print("SAVECYCLE saved seed=", META.seed, " room=", sid, " zone=", ROOM.zn)
+		elif f == 60:
+			toTitle()
+		elif f == 90:
+			load_meta()
+			print("SAVECYCLE loaded seed=", META.get("seed"), " save=", META.save, " type=", typeof(META.seed))
+			continueGame()
+		elif f == 120:
+			var ok = DB.WORLD_SEED == TEST.sc_seed and ROOM.id == TEST.sc_room and ROOM.has("th")
+			print("SAVECYCLE continue seed=", DB.WORLD_SEED, " room=", ROOM.id, " zone=", ROOM.get("zn", ""), " ok=", ok)
+			TEST.quit = f + 1
+	if TEST.get("memlog", false) and f % 600 == 0:
+		print("MEM f=%d room=%s th=%s tex=%.0fMB static=%.0fMB fps=%d nodes=%d cache=%d" % [f, ROOM.id if ROOM else "-", curTh(),
+			Performance.get_monitor(Performance.RENDER_TEXTURE_MEM_USED) / 1048576.0, Performance.get_monitor(Performance.MEMORY_STATIC) / 1048576.0,
+			Performance.get_monitor(Performance.TIME_FPS), Performance.get_monitor(Performance.OBJECT_NODE_COUNT), DB._tex.size()])
 	if TEST.bot != "" and G.state == "play" and pl != null:
 		_bot(f)
 	if G.state == "card" and TEST.bot != "" and f % 30 == 0 and cardOpen:

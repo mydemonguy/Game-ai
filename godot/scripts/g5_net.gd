@@ -375,7 +375,7 @@ func _clientEv(k: String, a: Array) -> void:
 			pl.hp = float(pl.max)
 			padShow(true)
 			clearInput()
-			showBanner(DB.LV[G.lv].ch, DB.LV[G.lv].name, 2.4)
+			showBanner(DB.LV[G.lv].ch, String(ROOM.get("zn", DB.LV[G.lv].name)), 2.4)
 		"hurt":
 			if pl != null:
 				hurtPlayer(float(a[0]), float(a[1]))
