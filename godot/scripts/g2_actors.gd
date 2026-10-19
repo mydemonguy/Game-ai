@@ -265,7 +265,7 @@ func hurtPlayer(d: float, kx: float) -> void:
 	if p.inv > 0 or p.dead or G.state != "play":
 		return
 	if modOn("glass"):
-		d *= 1.3
+		d *= 1.2
 	if int(META.get("easy", 0)):
 		d *= .6   # Story mode
 	if p.shield > 0:

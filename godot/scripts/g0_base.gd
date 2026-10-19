@@ -277,7 +277,7 @@ const CODEX_TOTAL := 16
 ## Map of the day twists: one per day, the same for everyone
 const MODS := [
 	["surge", "Overcharged Surge", "Three times as many Overcharged robots."],
-	["glass", "Glass Dino", "You hit 30% harder, and so does everything else."],
+	["glass", "Glass Dino", "You hit 30% harder, and robots hit 20% harder."],
 	["dust", "Stardust Rain", "Double Stardust from everything."],
 	["shield", "Shield Wall", "Aegis Troopers from Chapter II, and twice as many."],
 	["swarm", "Swarm", "One extra robot in every wave."],
