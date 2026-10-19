@@ -1192,7 +1192,12 @@ func soundCard(back: Callable) -> void:
 			soundCard(back))
 		gq.add_child(b)
 	box.add_child(gq)
-	_optRow(box, "Screen shake", "shake", [[1.0, "Full"], [0.4, "Low"], [0.0, "Off"]], 1.0, back)
+	var shr = _optRow(null, "Shake", "shake", [[1.0, "Full"], [0.4, "Low"], [0.0, "Off"]], 1.0, back)
+	shr.get_child(0).custom_minimum_size = Vector2(0, 0)
+	var spc = Control.new()
+	spc.custom_minimum_size = Vector2(26, 0)
+	gq.add_child(spc)
+	gq.add_child(shr)
 	var pair = HBoxContainer.new()
 	pair.add_theme_constant_override("separation", 40)
 	pair.add_child(_optRow(null, "Vibration", "vibe", [[true, "On"], [false, "Off"]], true, back))
@@ -1200,8 +1205,16 @@ func soundCard(back: Callable) -> void:
 	tr.get_child(0).custom_minimum_size = Vector2(0, 0)
 	pair.add_child(tr)
 	box.add_child(pair)
+	if touchy:
+		var tb = _optRow(box, "Touch buttons", "padS", [[0.85, "Small"], [1.0, "Normal"], [1.15, "Large"]], 1.0, back)
+		var fb = _btn("See-through", not PREFS.get("padF", false))
+		fb.pressed.connect(func():
+			PREFS.padF = not PREFS.get("padF", false)
+			save_prefs()
+			soundCard(back))
+		tb.add_child(fb)
 	showCard({ey="Settings", h="Sound & graphics", extra=box,
-		b="Fast graphics draw fewer particles and less weather, for a steadier frame rate on older phones.",
+		b="" if touchy else "Fast graphics draw fewer particles and less weather, for a steadier frame rate on older phones.",
 		btns=[["Done", back], ["Credits", func(): showCard({ey="Settings", h="Credits",
 			b="Music by Tanner Helland (github.com/tannerhelland/free-music, CC BY 4.0).\n\nSound effects by Kenney (kenney.nl, CC0) and synthesised for Aetherfall.\n\nFonts: Cinzel and Chakra Petch (SIL Open Font License).\n\nMade with Godot Engine.",
 			btns=[["Back", func(): soundCard(back)]]}), true]]})
@@ -2619,6 +2632,7 @@ func _test_tick(dt: float) -> void:
 				PREFS.codex = {g=1, r=1, b=1, h=1, oc=1, G0=1, G1=1}
 				codexCard()
 			"settings":
+				touchy = true
 				PREFS.timer = true
 				soundCard(toTitle)
 			"stats":

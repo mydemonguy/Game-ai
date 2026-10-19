@@ -24,6 +24,13 @@ func _btns() -> Dictionary:
 		special={c=Vector2(W - 143.5, 693.5), d=157.0, col=Color("#5ce1ff"), show=g.hasAb("roar")},
 		arm={c=Vector2(W - 570, 921), d=146.0, col=Color("#ffcc4a"), show=_ownAny()},
 	}
+	# Settings → Touch buttons: scale the button arc around the bottom-right corner
+	var sc: float = float(g.PREFS.get("padS", 1.0))
+	if sc != 1.0:
+		var corner = Vector2(W, H)
+		for k in b:
+			b[k].c = corner + (b[k].c - corner) * sc
+			b[k].d *= sc
 	if b.arm.show:
 		b.arm.col = Color(DB.ARMS[int(g.META.arm)].col) if g.ownArm(int(g.META.arm)) else b.arm.col
 	return b
@@ -133,6 +140,7 @@ func _poly(pts: Array, c: Vector2, s: float, col: Color, w: float, fill := false
 func _draw() -> void:
 	if not visible or g == null:
 		return
+	modulate.a = .55 if g.PREFS.get("padF", false) else 1.0
 	var held = {}
 	for i in touches:
 		var t: Dictionary = touches[i]
