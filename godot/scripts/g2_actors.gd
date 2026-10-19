@@ -264,6 +264,8 @@ func hurtPlayer(d: float, kx: float) -> void:
 		return
 	if p.inv > 0 or p.dead or G.state != "play":
 		return
+	if modOn("glass"):
+		d *= 1.3
 	if int(META.get("easy", 0)):
 		d *= .6   # Story mode
 	if p.shield > 0:
@@ -406,6 +408,8 @@ func spawnEnemy(type: String, side: float, quiet := false):
 	e.oc = false
 	e.dmul = 1.0
 	var ocP: float = (.6 if ROOM != null and ROOM.kind == "trial" else .04 + .03 * G.lv) if G.rush == null else (min(.45, .03 * endlessWave()) if endlessOn() else 0.0)
+	if modOn("surge"):
+		ocP = min(.6, ocP * 3.0)
 	if type in ["g", "r", "b", "c", "h", "d"] and (ocForce or randf() < ocP):
 		e.oc = true
 		e.dmul = 1.25
@@ -413,7 +417,8 @@ func spawnEnemy(type: String, side: float, quiet := false):
 		e.max *= 1.9
 		e.score *= 2
 	e.aegis = false
-	if type == "r" and (aegisForce or ((G.rush == null and G.lv >= 2) or endlessWave() >= 8) and randf() < .35):
+	var shw: bool = modOn("shield")
+	if type == "r" and (aegisForce or ((G.rush == null and G.lv >= (1 if shw else 2)) or endlessWave() >= 8) and randf() < (.7 if shw else .35)):
 		e.aegis = true
 		e.hp *= 1.15
 		e.max *= 1.15

@@ -274,6 +274,24 @@ func codexAdd(k: String) -> bool:
 
 const CODEX_TOTAL := 16
 
+## Map of the day twists: one per day, the same for everyone
+const MODS := [
+	["surge", "Overcharged Surge", "Three times as many Overcharged robots."],
+	["glass", "Glass Dino", "You hit 30% harder, and so does everything else."],
+	["dust", "Stardust Rain", "Double Stardust from everything."],
+	["shield", "Shield Wall", "Aegis Troopers from Chapter II, and twice as many."],
+	["swarm", "Swarm", "One extra robot in every wave."],
+]
+
+func modOn(id: String) -> bool:
+	return String(META.get("mod", "")) == id
+
+func modInfo(id: String) -> Array:
+	for m in MODS:
+		if m[0] == id:
+			return m
+	return []
+
 ## Aegis Troopers carry a front energy shield while they walk and aim; it drops while they fire and reload
 var _pierce := false
 
@@ -385,6 +403,7 @@ func pdm() -> float:
 	var f = 2.0 if (pl != null and pl.fury > 0) else 1.0
 	f *= float(CH().dmg)
 	f *= 1.3 if hasAb("plasma") else 1.0
+	f *= 1.3 if modOn("glass") else 1.0
 	f *= 1.0 + 0.1 * fangCount()
 	if hasR("fury") and pl != null and pl.hp < pl.max * 0.3:
 		f *= 1.3
@@ -396,6 +415,8 @@ func reachOf(b: float) -> float:
 func addDust(n: int, x = null, y = null) -> void:
 	if n == 0:
 		return
+	if n > 0 and modOn("dust"):
+		n *= 2
 	if n > 0:
 		stat("dust", n)
 	if hasR("lucky"):

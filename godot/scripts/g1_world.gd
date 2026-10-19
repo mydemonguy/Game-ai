@@ -577,6 +577,8 @@ func endlessList(n: int) -> Array:
 	return out
 
 func spawnWave(list: Array) -> void:
+	if modOn("swarm") and G.rush == null:
+		list = list + [["g", "d", "h"][randi() % 3]]
 	for i in list.size():
 		spawnQ.append({t=i * .55, type=list[i], side=-1 if i % 2 else 1})
 

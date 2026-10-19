@@ -1,6 +1,6 @@
 # Aetherfall devlog
 
-## 19 October 2026 · overnight build session (versions 4.1 – 4.11)
+## 19 October 2026 · overnight build session (versions 4.1 – 4.12)
 
 ### New for players
 - **Capsule elevators**: a glass tube in a lit shaft. Stand inside to charge it (green for up, amber for down), it fires a beam and launches; it is still glowing when you arrive.
@@ -18,6 +18,7 @@
 - **District hazards** (4.5): icy districts drop icicle clusters when you pass under (14 damage, regrow after 6 s), smoggy districts vent toxic gas on a cycle with a bubbling warning, neon districts have hazard-striped floor plates that flicker and then arc. Only in the new districts' halls, kept clear of doors, gates, items and machines.
 - **Map of the day** (4.5): the same map for everyone on a given day.
 - **100% completion fixed on random maps** (4.6): found by the completionist bot. Random worlds had no Chapter VI shrine room, where the classic map keeps the sixth golden egg; it now waits in Chapter VI's first supply cache (old saves get it too). `--gencheck` now verifies every collectible exists exactly once per world.
+- **Daily twists** (4.12): the Map of the day comes with one twist, picked from the date so everyone gets the same: Overcharged Surge (3× Overcharged robots), Glass Dino (you and everything else hit 30% harder), Stardust Rain (double Stardust), Shield Wall (Aegis Troopers from Chapter II, twice as many) or Swarm (one extra robot per wave). Shown on the new-game screen, as a toast when the run starts, and on the pause screen. Bot: each twist played clean; Stardust Rain doubled the Stardust as expected.
 - **Aegis Troopers** (4.11): from Chapter III (and wave 8 of Endless Siege) about a third of Troopers carry a cyan front shield that blocks every hit while they walk and aim. It drops while they fire and reload, and a Starburst Roar or Ground Slam knocks it out for 4 s. New codex entry (16 now). Bot check: 22 blocked hits and 9 shield breaks in one Endless run. A full mortal campaign on 4.11 (seed 31337) beat Malakar with 13 falls, in line with the 12–14 baseline; shields blocked 7 hits over the whole game.
 - **Endless Siege** (4.10): title → Challenges. One locked room (the Iron Armory arena), waves that never stop: bigger each wave, more Overcharged robots, an Iron Warden every 10th wave, health back every 5 waves. Best wave is saved; Siege Breaker feat at wave 15. Bot (no god mode, full loadout) reached wave 26.
 - Endless Siege stress test (god bot, 15,000 frames, ~60 waves of spawns): node count steady at 330–376 and average frame time 5–9 ms the whole way, so no leaks from the toasts, shields or wave spawns.

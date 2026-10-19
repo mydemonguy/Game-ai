@@ -297,6 +297,8 @@ func newRun(hard := false) -> void:
 	META.seed = pendSeed if pendSeed >= 0 else randi_range(1, 2000000000)
 	META.gv = DB.GEN_VER
 	pendSeed = -1
+	if int(META.seed) == dailySeed():
+		META.mod = dailyMod()
 	if pendShuffle:
 		# a fixed order per map, so friends sharing a code and the shuffle get the same game
 		var r = Rng.new(int(META.seed) * 13 + 5)
@@ -311,6 +313,12 @@ func newRun(hard := false) -> void:
 	G.score = 0
 	G.lives = 3
 	startGame("0-0", {x=300.0, y=GY})
+	if String(META.get("mod", "")) != "":
+		var mi = modInfo(META.mod)
+		later(2.6, func(): toast("Today's twist · " + mi[1], mi[2]))
+
+func dailyMod() -> String:
+	return MODS[posmod(int(dailySeed() / 7), MODS.size())][0]
 
 func startGame(room: String, how: Dictionary) -> void:
 	pl = newPlayer()
@@ -418,8 +426,8 @@ func toTitle() -> void:
 		return
 	showCard({ey="A Starblood Saga · Six Worlds", h="Aetherfall", big=true, tag="One small dino. One stolen sky. One very big Rift.", b=b, btns=btns})
 
-const WHATS_NEW_VER := "4.11"
-const WHATS_NEW := "[color=#7fe9ff][b]Aegis Troopers[/b][/color] · from Chapter III, some Troopers carry a front shield. Hit them while they fire and reload, or break it with a Roar or Slam.\n\n[color=#b48cff][b]Endless Siege[/b][/color] · title → Challenges: one locked room, waves that never stop. Also [b]Photo mode[/b] in the pause menu, and Overcharged hounds and drones.\n\n[b]Map of the day streaks[/b], [color=#ffe08a][b]16 Feats[/b][/color], lifetime Stats, and the [color=#ffd24a][b]Golden Gauntlet[/b][/color] after Boss Rush.\n\n[b]Robot codex[/b] · lore and a fighting tip for every robot and guardian you meet. Both are on the title screen and in pause → Archive.\n\n[b]A new map every game[/b] · bigger worlds across 26 districts. Share the map code from the pause screen.\n\n[b]New options[/b] · Map of the day, Shuffle powers and Story mode.\n\n[color=#ffe08a][b]Overcharged robots[/b][/color], [b]Trial[/b] rooms, capsule elevators, and hazards: icicles, toxic gas, sparking floors and new [b]void rifts[/b]."
+const WHATS_NEW_VER := "4.12"
+const WHATS_NEW := "[b]Map of the day[/b] now comes with a [color=#ffd24a][b]daily twist[/b][/color]: Overcharged Surge, Glass Dino, Stardust Rain, Shield Wall or Swarm. Same twist for everyone.\n\n[color=#7fe9ff][b]Aegis Troopers[/b][/color] · from Chapter III, some Troopers carry a front shield. Hit them while they fire and reload, or break it with a Roar or Slam.\n\n[color=#b48cff][b]Endless Siege[/b][/color] · title → Challenges: one locked room, waves that never stop. Also [b]Photo mode[/b] in the pause menu, and Overcharged hounds and drones.\n\n[b]Map of the day streaks[/b], [color=#ffe08a][b]16 Feats[/b][/color], lifetime Stats, and the [color=#ffd24a][b]Golden Gauntlet[/b][/color] after Boss Rush.\n\n[b]Robot codex[/b] · lore and a fighting tip for every robot and guardian you meet. Both are on the title screen and in pause → Archive.\n\n[b]A new map every game[/b] · bigger worlds across 26 districts. Share the map code from the pause screen.\n\n[b]New options[/b] · Map of the day, Shuffle powers and Story mode.\n\n[color=#ffe08a][b]Overcharged robots[/b][/color], [b]Trial[/b] rooms, capsule elevators, and hazards: icicles, toxic gas, sparking floors and new [b]void rifts[/b]."
 
 func _fmt(n: int) -> String:
 	var s = str(n)
@@ -469,7 +477,8 @@ func dailyWin() -> void:
 	save_prefs()
 
 func dailyLine() -> String:
-	var s = "[b]Map of the day[/b] · the same map for everyone today (code [b]%s[/b])." % mapCode(dailySeed())
+	var mi = modInfo(dailyMod())
+	var s = "[b]Map of the day[/b] · the same map for everyone today (code [b]%s[/b]). Twist: [color=#ffd24a]%s[/color], %s" % [mapCode(dailySeed()), mi[1], String(mi[2]).left(1).to_lower() + String(mi[2]).substr(1)]
 	var dl = PREFS.get("daily", null)
 	if typeof(dl) == TYPE_DICTIONARY:
 		var live: bool = dl.last == _dayKey() or dl.last == _dayKey(-1)
@@ -831,7 +840,8 @@ func pauseCard() -> void:
 
 func _mapLine() -> String:
 	var c = mapCode(int(META.get("seed", 0)))
-	return ("Map code [color=#ffe08a][b]%s[/b][/color]" % c if c != "" else "Classic map") + (" · powers shuffled" if META.get("perm", []).size() == 5 else "") + " · Time " + fmtTime(float(META.get("time", 0.0)))
+	var tw = modInfo(String(META.get("mod", "")))
+	return ("Map code [color=#ffe08a][b]%s[/b][/color]" % c if c != "" else "Classic map") + (" · powers shuffled" if META.get("perm", []).size() == 5 else "") + (" · twist: [color=#ffd24a]%s[/color]" % tw[1] if tw.size() else "") + " · Time " + fmtTime(float(META.get("time", 0.0)))
 
 class MapView extends Control:
 	const ZCOL := [Color("#a8327a"), Color("#2f6f9a"), Color("#5f8a2a"), Color("#7448a8"), Color("#a86a24")]
@@ -2028,6 +2038,8 @@ func _test_init() -> void:
 					META.hard = 1
 				if TEST.get("easy", false):
 					META.easy = 1
+				if TEST.has("mod"):
+					META.mod = TEST.mod
 				if TEST.get("shuffle", false):
 					var r = Rng.new(int(META.seed) * 13 + 5)
 					var pm = [0, 1, 2, 3, 4]
@@ -2054,6 +2066,8 @@ func _test_init() -> void:
 				TEST.hard = true
 			"story":
 				TEST.easy = true
+			"mod":
+				TEST.mod = v
 			"full":
 				TEST.full = true
 			"nowalk":
@@ -2781,7 +2795,7 @@ func _test_tick(dt: float) -> void:
 		match TEST.showcard:
 			"map": mapCard(false, toTitle)
 			"mode": modeCard(toTitle)
-			"new": showCard({ey="Aetherfall 4.11", h="What's new", b=WHATS_NEW, btns=[["Got it", toTitle]]})
+			"new": showCard({ey="Aetherfall 4.12", h="What's new", b=WHATS_NEW, btns=[["Got it", toTitle]]})
 			"code": codeCard(false, toTitle, "That code doesn't look right. Codes use letters and numbers only.")
 			"pause": togglePause()
 			"title": toTitle()
