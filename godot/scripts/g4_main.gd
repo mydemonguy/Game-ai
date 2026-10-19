@@ -340,7 +340,7 @@ func toTitle() -> void:
 	showCard({ey="A Starblood Saga · Six Worlds", h="Aetherfall", big=true, tag="One small dino. One stolen sky. One very big Rift.", b=b, btns=btns})
 
 const WHATS_NEW_VER := "4.5"
-const WHATS_NEW := "[b]A new map every game[/b] · six bigger worlds across 26 districts, laid out fresh each time. Share the map code on your pause screen so friends can play the same one.\n\n[b]New options[/b] · Map of the day, Shuffle powers, and Story mode (40% less damage).\n\n[color=#ffe08a][b]Overcharged robots[/b][/color] glow gold and drop extra Stardust. Find a [b]Trial[/b] room in each world from Chapter II.\n\nWatch your step: icy districts drop icicles, smoggy ones vent toxic gas, and neon floors spark.\n\nPlus capsule elevators and a map coloured by district."
+const WHATS_NEW := "[b]A new map every game[/b] · bigger worlds across 26 districts. Share the map code on your pause screen so friends can play the same one.\n\n[b]New options[/b] · Map of the day, Shuffle powers and Story mode.\n\n[color=#ffe08a][b]Overcharged robots[/b][/color], [b]Trial[/b] rooms, and district hazards: icicles, toxic gas and sparking floors.\n\nPlus capsule elevators and a map coloured by district."
 
 func _fmt(n: int) -> String:
 	var s = str(n)
