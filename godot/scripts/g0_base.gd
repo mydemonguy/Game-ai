@@ -223,10 +223,16 @@ class Rng:
 
 # ---------- difficulty and progression helpers ----------
 func dm() -> float:
-	return (1.0 + G.lv * 0.12) * (1.45 if META.get("hard", 0) else 1.0) * (1.25 if rushGold() else 1.0)
+	return (1.0 + G.lv * 0.12) * (1.45 if META.get("hard", 0) else 1.0) * (1.25 if rushGold() else 1.0) * (1.0 + .025 * endlessWave())
 
 func rushGold() -> bool:
 	return G.rush != null and G.rush.get("gold", false)
+
+func endlessOn() -> bool:
+	return G.rush != null and G.rush.get("endless", false)
+
+func endlessWave() -> int:
+	return int(G.rush.get("wave", 0)) if endlessOn() else 0
 
 func hasAb(id: String) -> bool:
 	return META.ab.has(id)
@@ -283,6 +289,7 @@ const FEATS := [
 	["clean", "Unbroken", "Beat the game without falling once."],
 	["rush", "Gauntlet", "Clear Boss Rush."],
 	["gold", "Golden Gauntlet", "Clear Boss Rush with every guardian Overcharged."],
+	["siege", "Siege Breaker", "Reach wave 15 in Endless Siege."],
 	["codex", "Archivist", "Fill every page of the Robot codex."],
 ]
 

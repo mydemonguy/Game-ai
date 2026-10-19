@@ -438,8 +438,11 @@ func updWorld(dt: float) -> void:
 		o.lift.ch = o.lift.hold > 0
 		if on and o.lift.armed and (o.lift.hold > 1.1 or P.has("down")):
 			startTrans({lift=o.lift})
-	# lockdown arena
+	# lockdown arena (Endless Siege runs its own never-ending waves instead)
 	var A = o.arena
+	if endlessOn():
+		_endlessTick(p)
+		A = null
 	if A != null:
 		if A.i < 0 and not lock and p.x > 440 and p.x < RW - 440:
 			lock = true; A.i = 0
@@ -528,6 +531,46 @@ func updWorld(dt: float) -> void:
 		st.t -= dt
 		if not lock and st.t <= 0 and absf(p.x - st.x) < 70 and p.ground:
 			useStation(st)
+
+## Endless Siege: waves keep coming, bigger and more often Overcharged, until you fall
+func _endlessTick(p) -> void:
+	var E: Dictionary = G.rush
+	if int(E.wave) == 0:
+		if not lock and p.x > 440 and p.x < RW - 440:
+			lock = true
+			E.wave = 1
+			spawnWave(endlessList(1))
+			showBanner("Endless Siege", "Wave 1", 1.6)
+			sfx("warn", null, null, 1.0, .15)
+			sfx("alarm", null, null, 1.0, 1.0)
+	elif lock and spawnQ.is_empty() and en.is_empty():
+		G.score += 150 * int(E.wave)
+		addDust(2)
+		E.wave = int(E.wave) + 1
+		var sub = ""
+		if int(E.wave) % 5 == 1:
+			p.hp = min(float(p.max), p.hp + p.max * .4)
+			sub = "Health restored"
+		if int(E.wave) % 10 == 0:
+			sub = "Iron Warden incoming"
+		spawnWave(endlessList(int(E.wave)))
+		showBanner("Wave " + str(E.wave), sub, 1.3)
+		sfx("warn", null, null, 1.0, .15)
+		if int(E.wave) >= 15:
+			feat("siege")
+
+func endlessList(n: int) -> Array:
+	var pool = ["g", "g", "d"]
+	if n >= 3:
+		pool += ["r", "h"]
+	if n >= 6:
+		pool += ["b", "c"]
+	var out = []
+	for i in mini(10, 2 + int(n * .6)):
+		out.append(pool[randi() % pool.size()])
+	if n % 10 == 0:
+		out.append("B")
+	return out
 
 func spawnWave(list: Array) -> void:
 	for i in list.size():

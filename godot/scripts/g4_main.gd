@@ -404,7 +404,7 @@ func toTitle() -> void:
 		btns.append(["Continue", func(): continueGame()])
 	btns.append(["New game" if sv != null else "Begin the Saga", confirmNew if sv != null else startNew, sv != null])
 	if riftOpen:
-		btns.append(["Boss Rush", _rushBtn, true])
+		btns.append(["Challenges", _rushBtn, true])
 	btns.append(["Co-op", coopCard, true])
 	if featCount() or codexCount():
 		btns.append(["Feats & codex", titleArchive, true])
@@ -418,8 +418,8 @@ func toTitle() -> void:
 		return
 	showCard({ey="A Starblood Saga · Six Worlds", h="Aetherfall", big=true, tag="One small dino. One stolen sky. One very big Rift.", b=b, btns=btns})
 
-const WHATS_NEW_VER := "4.9"
-const WHATS_NEW := "[b]Map of the day streaks[/b] · beat the daily map on days in a row.\n\n[color=#ffe08a][b]15 Feats[/b][/color] to earn, plus lifetime Stats. Clear Boss Rush to unlock the [color=#ffd24a][b]Golden Gauntlet[/b][/color].\n\n[b]Robot codex[/b] · lore and a fighting tip for every robot and guardian you meet. Both are on the title screen and in pause → Archive.\n\n[b]A new map every game[/b] · bigger worlds across 26 districts. Share the map code from the pause screen.\n\n[b]New options[/b] · Map of the day, Shuffle powers and Story mode.\n\n[color=#ffe08a][b]Overcharged robots[/b][/color], [b]Trial[/b] rooms, capsule elevators, and hazards: icicles, toxic gas, sparking floors and new [b]void rifts[/b]."
+const WHATS_NEW_VER := "4.10"
+const WHATS_NEW := "[color=#b48cff][b]Endless Siege[/b][/color] · title → Challenges: one locked room, waves that never stop. Also [b]Photo mode[/b] in the pause menu, and Overcharged hounds and drones.\n\n[b]Map of the day streaks[/b], [color=#ffe08a][b]16 Feats[/b][/color], lifetime Stats, and the [color=#ffd24a][b]Golden Gauntlet[/b][/color] after Boss Rush.\n\n[b]Robot codex[/b] · lore and a fighting tip for every robot and guardian you meet. Both are on the title screen and in pause → Archive.\n\n[b]A new map every game[/b] · bigger worlds across 26 districts. Share the map code from the pause screen.\n\n[b]New options[/b] · Map of the day, Shuffle powers and Story mode.\n\n[color=#ffe08a][b]Overcharged robots[/b][/color], [b]Trial[/b] rooms, capsule elevators, and hazards: icicles, toxic gas, sparking floors and new [b]void rifts[/b]."
 
 func _fmt(n: int) -> String:
 	var s = str(n)
@@ -1020,6 +1020,8 @@ func statsCard() -> void:
 		b += "\nBoss Rush best [b]%s[/b]" % fmtT(rushBest())
 		if rushBest(true) > 0:
 			b += " · Golden Gauntlet best [b]%s[/b]" % fmtT(rushBest(true))
+	if G.rush == null and endlessBest() > 0:
+		b += "\nEndless Siege best [b]%d[/b] waves" % endlessBest()
 	showCard({ey="Starblood archive", h="Stats", b=b, btns=[["Back", _archGo]]})
 
 func featsCard() -> void:
@@ -1302,25 +1304,32 @@ func controls(back: Callable) -> void:
 var rushIsGold := false
 
 func _rushBtn() -> void:
-	if featHas("rush"):
-		rushCard()
-	else:
-		rushIsGold = false
-		startRush()
+	rushCard()
 
 func rushBest(gold := false) -> float:
 	return float(PREFS.get("rushG" if gold else "rush", 0.0))
 
 func rushCard() -> void:
-	var b = "Every guardian and the Void Sovereign, back to back.\n\nBest time [b]%s[/b]" % (fmtT(rushBest()) if rushBest() > 0 else "-")
-	b += "\n\n[color=#ffd24a][b]Golden Gauntlet[/b][/color] · the same fights, but every guardian is Overcharged: tougher, and hitting harder."
+	var b = "[b]Boss Rush[/b] · every guardian and the Void Sovereign, back to back." + (" Best [b]%s[/b]" % fmtT(rushBest()) if rushBest() > 0 else "")
+	if featHas("rush"):
+		b += "\n[color=#ffd24a][b]Golden Gauntlet[/b][/color] · the same fights with every guardian Overcharged."
+	else:
+		b += "\n[color=#6a6488]Clear Boss Rush to unlock the Golden Gauntlet.[/color]"
 	if rushBest(true) > 0:
 		b += " Best time [b]%s[/b]" % fmtT(rushBest(true))
-	showCard({ey="Boss Rush", h="Choose your gauntlet", b=b, btns=[["Boss Rush", func():
+	b += "\n[color=#b48cff][b]Endless Siege[/b][/color] · one locked room, waves that never stop."
+	if endlessBest() > 0:
+		b += " Best [b]%d[/b] waves" % endlessBest()
+	var btns = [["Boss Rush", func():
 		rushIsGold = false
-		startRush()], ["Golden Gauntlet", func():
-		rushIsGold = true
-		startRush()], ["Back", toTitle, true]]})
+		startRush()]]
+	if featHas("rush"):
+		btns.append(["Golden Gauntlet", func():
+			rushIsGold = true
+			startRush()])
+	btns.append(["Endless Siege", startEndless])
+	btns.append(["Back", toTitle, true])
+	showCard({ey="Challenges", h="Choose your challenge", b=b, btns=btns})
 
 func fmtT(t: float) -> String:
 	return "%d:%02d.%d" % [int(t / 60), int(fmod(t, 60)), int(fmod(t * 10, 10))]
@@ -1344,11 +1353,28 @@ func startRush() -> void:
 	m.arm = -1
 	META = m
 	DB.set_world(0)
-	G.rush = {i=0, t=0.0, next=0.0, gold=rushIsGold}
+	G.rush = {i=0, t=0.0, next=0.0, gold=rushIsGold, endless=_endlessNext, wave=0}
 	G.score = 0
 	G.lives = 3
+	if _endlessNext:
+		_endlessNext = false
+		startGame(ENDLESS_ROOM, {x=300.0, y=GY})
+		showBanner("Endless Siege", "Step in. They won't stop coming.", 2)
+		return
 	startGame(DB.RUSH[0], {x=W * .72, y=GY})
 	showBanner("Golden Gauntlet" if rushIsGold else "Boss Rush", "Fight 1 of 6", 2)
+
+const ENDLESS_ROOM := "1-7"
+
+var _endlessNext := false
+
+func startEndless() -> void:
+	rushIsGold = false
+	_endlessNext = true
+	startRush()
+
+func endlessBest() -> int:
+	return int(PREFS.get("endless", 0))
 
 func rushEnd() -> void:
 	if G.rush != null and realMeta != null:
@@ -1377,6 +1403,18 @@ func rushDone() -> void:
 
 func rushFail() -> void:
 	var Rr: Dictionary = G.rush
+	if Rr.get("endless", false):
+		var wv: int = max(0, int(Rr.wave) - 1)
+		var nb: bool = wv > endlessBest()
+		if nb:
+			PREFS.endless = wv
+		stat("siegeWaves", wv)
+		save_prefs()
+		rushEnd()
+		later(.9, func(): showCard({ey="Endless Siege", h="%d wave%s cleared" % [wv, "" if wv == 1 else "s"],
+			b=("[color=#ffd27a][b]New best![/b][/color]" if nb else "Your best: [b]%d[/b] waves" % endlessBest()) + "\n\nTime %s · Score %s" % [fmtT(Rr.t), _fmt(G.score)],
+			btns=[["Try again", startEndless], ["Title", toTitle, true]]}))
+		return
 	rushEnd()
 	later(.9, func(): showCard({ey="Golden Gauntlet" if Rr.get("gold", false) else "Boss Rush", h="Tyko is down", b="You reached fight %d of 6 in %s." % [Rr.i + 1, fmtT(Rr.t)], btns=[["Try again", startRush], ["Title", toTitle, true]]}))
 
@@ -1679,7 +1717,7 @@ func hudUpdate() -> void:
 	HU.ae.label_settings.font_color = C("#5ce1ff") if rdy else C("#9d97bd")
 	place(HU.ae, 48, 142, 0, 0)
 	if G.rush != null:
-		_tx(HU.rift, ("◆ GOLDEN GAUNTLET  " if rushGold() else "◆ BOSS RUSH  ") + fmtT(G.rush.t))
+		_tx(HU.rift, ("◆ WAVE %d  " % max(1, endlessWave()) if endlessOn() else "◆ GOLDEN GAUNTLET  " if rushGold() else "◆ BOSS RUSH  ") + fmtT(G.rush.t))
 		HU.rift.label_settings.font_color = C("#ffd24a") if rushGold() else C("#ff4a6a")
 		HU.rift.visible = true
 	else:
@@ -2011,6 +2049,8 @@ func _test_init() -> void:
 				TEST.rush = true
 			"gold":
 				rushIsGold = true
+			"endless":
+				TEST.endless = true
 			"showcard":
 				TEST.showcard = v
 			"gatetest":
@@ -2722,11 +2762,13 @@ func _test_tick(dt: float) -> void:
 		print("TRAVEL room=", ROOM.id, " kind=", ROOM.kind, " pl=", int(pl.x), ",", int(pl.y), " ground=", pl.ground, " save=", META.save.room)
 	if TEST.get("rush", false) and f == 40:
 		startRush()
+	if TEST.get("endless", false) and f == 40:
+		startEndless()
 	if TEST.has("showcard") and f == 40:
 		match TEST.showcard:
 			"map": mapCard(false, toTitle)
 			"mode": modeCard(toTitle)
-			"new": showCard({ey="Aetherfall 4.9", h="What's new", b=WHATS_NEW, btns=[["Got it", toTitle]]})
+			"new": showCard({ey="Aetherfall 4.10", h="What's new", b=WHATS_NEW, btns=[["Got it", toTitle]]})
 			"code": codeCard(false, toTitle, "That code doesn't look right. Codes use letters and numbers only.")
 			"pause": togglePause()
 			"title": toTitle()
@@ -2745,6 +2787,10 @@ func _test_tick(dt: float) -> void:
 				dailyWin(); print("DAILY ", PREFS.daily)
 				PREFS.erase("daily")
 				dailyWin(); print("DAILY ", PREFS.daily)
+			"challenges":
+				PREFS.feats = {rush=1}
+				PREFS.endless = 26
+				rushCard()
 			"mapcard":
 				PREFS.daily = {last=_dayKey(-1), streak=3, best=5}
 				mapCard(false, toTitle)

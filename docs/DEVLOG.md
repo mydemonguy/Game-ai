@@ -1,6 +1,6 @@
 # Aetherfall devlog
 
-## 19 October 2026 · overnight build session (versions 4.1 – 4.9)
+## 19 October 2026 · overnight build session (versions 4.1 – 4.10)
 
 ### New for players
 - **Capsule elevators**: a glass tube in a lit shaft. Stand inside to charge it (green for up, amber for down), it fires a beam and launches; it is still glowing when you arrive.
@@ -18,6 +18,7 @@
 - **District hazards** (4.5): icy districts drop icicle clusters when you pass under (14 damage, regrow after 6 s), smoggy districts vent toxic gas on a cycle with a bubbling warning, neon districts have hazard-striped floor plates that flicker and then arc. Only in the new districts' halls, kept clear of doors, gates, items and machines.
 - **Map of the day** (4.5): the same map for everyone on a given day.
 - **100% completion fixed on random maps** (4.6): found by the completionist bot. Random worlds had no Chapter VI shrine room, where the classic map keeps the sixth golden egg; it now waits in Chapter VI's first supply cache (old saves get it too). `--gencheck` now verifies every collectible exists exactly once per world.
+- **Endless Siege** (4.10): title → Challenges. One locked room (the Iron Armory arena), waves that never stop: bigger each wave, more Overcharged robots, an Iron Warden every 10th wave, health back every 5 waves. Best wave is saved; Siege Breaker feat at wave 15. Bot (no god mode, full loadout) reached wave 26.
 - **Photo mode** (4.10): pause → Photo mode hides the HUD, buttons and menus so you can screenshot the scene; tap or press anything to come back. Single-player only.
 - **Overcharged hounds and drones** (4.10): they can now spawn gold-lit too, with the same extra health, damage and Stardust.
 - **Map of the day streak** (4.9): beat the day's map on consecutive days to build a streak; the new-game screen shows today's code, your streak and your best.
@@ -25,7 +26,7 @@
 - Long cards show a "more below" hint at phone font sizes.
 - **Robot codex** (4.7): pause → Archive → Robot codex. Every robot, guardian and Malakar you meet gets an entry with lore and a fighting tip; "New codex entry" pops up the first time. Kept across games.
 - **Golden Gauntlet** (4.8): after clearing Boss Rush, pick the Golden Gauntlet: the same six fights with every guardian Overcharged (gold glow and health bar, 1.6× health, 25% harder hits; Malakar 1.4×). Separate best time.
-- **Feats** (4.8): 15 achievements (Untouchable: beat a guardian without a hit; Gold Rush: 25 Overcharged robots; Daily Dino; Comet Run: under two hours; Unbroken: no falls; Gauntlet: Boss Rush; Golden Gauntlet; Archivist: full codex, and more). A gold toast slides in when you earn one. Feats & codex are on the title screen too.
+- **Feats** (4.8, 16 since 4.10): achievements (Untouchable: beat a guardian without a hit; Gold Rush: 25 Overcharged robots; Daily Dino; Comet Run: under two hours; Unbroken: no falls; Gauntlet: Boss Rush; Golden Gauntlet; Archivist: full codex, and more). A gold toast slides in when you earn one. Feats & codex are on the title screen too.
 - **Stats** (4.8): lifetime totals (games, sagas completed, play time, falls, robots destroyed, Overcharged, guardians, Stardust) and your fastest clears per map, next to Feats in the Archive.
 - **Settings** (4.8): screen shake Full / Low / Off, and an optional run timer under the chapter name (handy for Comet Run). On phones: **touch button size** (Small / Normal / Large) and a **see-through** option. Credits moved to their own card so everything fits on a phone.
 - **Void rifts** (4.8): the six dark "abyss" districts (Glacial Bastion, Hollow Foundry, Verdant Spire, Tidal Relay, Radiant Conduit…) now have their own hazard. A rift hangs at head height; every 5 s it spins up, drags you toward its core for under 2 s and hurts if you touch it. Dash cancels the pull. Kept clear of platforms, doors, gates and items.
@@ -40,6 +41,7 @@
   - `--full` adds completionist mode: opens every tank cage with the right power, double-jumps to high tanks, scratches open hollow walls, takes the egg and Aether core, clears trials, and backtracks by elevator for items that needed a later power.
   - Without `--god` it plays mortal: counts falls and takes *Continue from save* on game over.
 - Results so far: 10+ full campaigns on random, shuffled and classic maps all reached and beat Malakar. Bugs it found and that are fixed: off-screen roar waves were culled after a teleport (bot), gates now retried like a player would, completionist ping-pong between worlds (bot), Aether core drops where the guardian dies (bot now reads the real position).
+- **Co-op campaign** (4.10 test): the host campaign bot played a whole random map (seed 4242) with a second player (Rook, fight bot) connected from the first room to the Malakar kill: 0 errors on either side.
 - 4.8 checks: a shuffled-powers campaign on the new code earned Saga's End, Mixed Up, Comet Run, Unbroken, Gold Rush and Archivist on its own, and a completionist run (seed 8086, shuffled) added Fang Hunter and Completionist; the fight bot cleared Boss Rush and the Golden Gauntlet (Gauntlet + Golden Gauntlet feats); co-op host/client run clean; deployed web build loads with no console errors.
 - `--gencheck=N`: builds N random worlds and checks doors, overlaps, room counts and that each shrine is before its gate and the exit after it (1,000+ seeds clean).
 - `tools/reach_check.py` (on `--gendump` output): jump-reachability of every door, item and station using the real jump physics (50+ seeds clean; catches broken climbs when platforms are removed).
