@@ -839,5 +839,20 @@ func _test_init() -> void:
 func _test_tick(dt: float) -> void:
 	if TEST.get("autohost", false) and NET.get("hello", false) and NETR == "" and NET.lobby == "host":
 		TEST.autohost = false
-		coopStart(true)
+		if TEST.has("cp"):
+			# co-op campaign test: the friend joins the campaign bot's game as it is
+			NETR = "host"
+			NET.lobby = ""
+			beacon = null
+			pl2 = newPlayer(NET.joinCh)
+			pl2.remote = true
+			pl2.x = pl.x - 120; pl2.y = pl.y
+			pl2.body.x = pl2.x - 42
+			G.state = "play"
+			G.paused = false
+			hideCard()
+			netSend("start", [JSON.stringify(META), ROOM.id, pl2.x, pl2.y, NET.hostCh])
+			print("COOP campaign: friend joined in ", ROOM.id)
+		else:
+			coopStart(true)
 	super._test_tick(dt)
