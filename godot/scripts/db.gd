@@ -166,8 +166,14 @@ func rooms_of(seed: int, gv := GEN_VER) -> Dictionary:
 	set_world(keep, keepV)
 	return r
 
-## drop cached textures of every theme except the one on screen (each theme is ~30 MB of GPU memory)
+## drop cached textures of themes not used recently (each theme is ~30 MB of GPU memory);
+## the last three stay so walking back across a district border doesn't reload anything
+var _recent: Array = []
 func flush_themes(keep: String) -> void:
+	_recent.erase(keep)
+	_recent.push_front(keep)
+	while _recent.size() > 3:
+		_recent.pop_back()
 	for key in _tex.keys():
 		var k: String = key
 		var t: String
@@ -177,7 +183,7 @@ func flush_themes(keep: String) -> void:
 			t = k.substr(3, k.length() - 4)
 		else:
 			t = k.substr(k.rfind("_") + 1)
-		if t != keep and THL.has(t):
+		if not (t in _recent) and THL.has(t):
 			_tex.erase(key)
 
 func _font(p: String) -> Font:
@@ -196,10 +202,33 @@ func tex(key: String) -> Texture2D:
 		return _tex[key]
 	var t: Texture2D = null
 	var p := "res://assets/tex/%s.png" % key
-	if ResourceLoader.exists(p):
+	if _pending.has(p):
+		t = ResourceLoader.load_threaded_get(p)
+		_pending.erase(p)
+	elif ResourceLoader.exists(p):
 		t = load(p)
 	_tex[key] = t
 	return t
+
+## start loading a district's art in the background (next door leads into it)
+var _pending := {}
+func prefetch_theme(t: String) -> void:
+	if not THL.has(t) or t in _recent:
+		return
+	var keys = ["sky_", "far_", "mid_", "fog_", "fgb_", "fgt_", "gt_", "wp_", "pl_", "lamp_", "fgcol_", "dframe_", "pipev_", "ship_", "crate_"]
+	for k in keys:
+		_req("res://assets/tex/%s%s.png" % [k, t], k + t)
+	for i in 4:
+		_req("res://assets/tex/wl_%s%d.png" % [t, i], "wl_%s%d" % [t, i])
+	for m in MACH.get(t, []):
+		for v in 2:
+			_req("res://assets/tex/m_%s_%s%d.png" % [t, m, v], "m_%s_%s%d" % [t, m, v])
+
+func _req(p: String, key: String) -> void:
+	if _tex.has(key) or _pending.has(p) or not ResourceLoader.exists(p):
+		return
+	if ResourceLoader.load_threaded_request(p) == OK:
+		_pending[p] = 1
 
 func boss_tex(key: String) -> Texture2D:
 	var k := "bs_" + key

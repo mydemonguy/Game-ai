@@ -280,6 +280,11 @@ func enterRoom(id: String, how: Dictionary) -> void:
 	roomView(o)
 	padAbilities()
 	musicFor()
+	# neighbouring districts start loading in the background so the next border crossing is smooth
+	for d in o.doors:
+		var nt = DB.ROOMS[d.to].get("th", "")
+		if nt != "" and nt != o.get("th", ""):
+			DB.prefetch_theme(nt)
 	# walking into a new district of a random world
 	if how.has("side") and prevZone != "" and o.get("zn", "") != prevZone and G.state == "play":
 		showBanner(o.zn, DB.LV[o.a].ch, 2.0)

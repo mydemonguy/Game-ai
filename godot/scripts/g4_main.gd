@@ -2338,7 +2338,14 @@ func _test_tick(dt: float) -> void:
 			var ok = DB.WORLD_SEED == TEST.sc_seed and ROOM.id == TEST.sc_room and ROOM.has("th")
 			print("SAVECYCLE continue seed=", DB.WORLD_SEED, " room=", ROOM.id, " zone=", ROOM.get("zn", ""), " ok=", ok)
 			TEST.quit = f + 1
-	if TEST.get("memlog", false) and f % 600 == 0:
+	if TEST.get("memlog", false):
+		TEST.pt = TEST.get("pt", 0.0) + Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0
+		TEST.ptn = TEST.get("ptn", 0) + 1
+		TEST.ptmax = max(TEST.get("ptmax", 0.0), Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0)
+		if f % 1500 == 0:
+			print("PERF f=%d avg=%.2fms max=%.2fms nodes=%d" % [f, TEST.pt / TEST.ptn, TEST.ptmax, Performance.get_monitor(Performance.OBJECT_NODE_COUNT)])
+			TEST.pt = 0.0; TEST.ptn = 0; TEST.ptmax = 0.0
+	if TEST.get("memlog", false) and f % 600 == 0 and false:
 		print("MEM f=%d room=%s th=%s tex=%.0fMB static=%.0fMB fps=%d nodes=%d cache=%d" % [f, ROOM.id if ROOM else "-", curTh(),
 			Performance.get_monitor(Performance.RENDER_TEXTURE_MEM_USED) / 1048576.0, Performance.get_monitor(Performance.MEMORY_STATIC) / 1048576.0,
 			Performance.get_monitor(Performance.TIME_FPS), Performance.get_monitor(Performance.OBJECT_NODE_COUNT), DB._tex.size()])
