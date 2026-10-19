@@ -1504,6 +1504,8 @@ func _test_init() -> void:
 				load_meta()
 				continueGame()
 				print("CONT seed=", DB.WORLD_SEED, " room=", ROOM.id, " th=", curTh(), " rooms=", DB.ROOMS.size())
+			"armlift":
+				TEST.armlift = true
 			"memlog":
 				TEST.memlog = true
 			"mapall":
@@ -1648,6 +1650,8 @@ func _test_tick(dt: float) -> void:
 		startTrans({travel=TEST.travelto})
 	if TEST.has("travelto") and f == 320:
 		print("TRAVEL room=", ROOM.id, " kind=", ROOM.kind, " pl=", int(pl.x), ",", int(pl.y), " ground=", pl.ground, " save=", META.save.room)
+	if TEST.get("armlift", false) and f == 30 and ROOM != null and ROOM.lift != null:
+		ROOM.lift.armed = 1
 	if TEST.get("liftf", 0) == f and ROOM != null and ROOM.lift != null:
 		print("LIFT from ", ROOM.id, " to ", ROOM.lift.to)
 		startTrans({lift=ROOM.lift})

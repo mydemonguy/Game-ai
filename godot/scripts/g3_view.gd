@@ -628,18 +628,57 @@ func roomView(o) -> void:
 				if q.kind == "secret":
 					sg = q
 		RV.doors.append({d=d, h=hs, g=g, f=f, bx=bx, y=y, op=0.0, sg=sg, hid=null})
-	# elevator
+	# elevator: a glass capsule in a lit shaft (the shaft runs up for lifts going up, down through the floor for lifts going down)
 	if o.lift != null:
 		var lx: float = o.lift.x
-		spr(room_root, "lift_" + t, lx, FY + 4, .5, 1, D.fixtures)
-		var vg = spr(room_root, "vgrad", lx, FY - 26, .5, 1, D.fixtures + .5)
-		dsize(vg, 180, 394)
-		vg.material = MAT_ADD
-		vg.modulate = C("#7fd8ff", .35)
-		glowS(room_root, lx, FY - 20, 280, 60, "#7fd8ff", .5, D.fixtures + .5)
-		var lab = labelN(top_room, ("▼ " if o.lift.dir > 0 else "▲ ") + "ELEVATOR · " + String(DB.LV[DB.ROOMS[o.lift.to].a].name).to_upper(), 26, "#bff0ff")
-		place(lab, lx, FY - 450, .5, 1)
-		RV.lift = {bar=rectN(room_root, lx - 80, FY - 433, 160, 6, C("#7fd8ff", .85), D.fixtures)}
+		var up: bool = o.lift.dir < 0
+		var gcol: String = "#7dffb0" if up else "#ffb347"
+		var tint = Color.WHITE.lerp(C(Pa.light), .3)
+		var rowTop: float = FY - GY
+		var capTop: float = FY - 452
+		var sh = tileS(room_root, lx - 100, rowTop, 200, capTop - rowTop + 40, "lift2_shaft", D.back + .6)
+		sh.modulate = tint
+		var rails = []
+		for rx in [lx - 64, lx + 64]:
+			var rl = rectN(room_root, rx - 2, rowTop, 4, capTop - rowTop + 30, C(L.glow, .3), D.back + .7)
+			rl.material = MAT_ADD
+			rails.append(rl)
+		if not up:
+			# the shaft carries on down through the floor
+			var pit = rectN(room_root, lx - 120, FY + 20, 240, 180, Color8(10, 12, 18), D.solids + .3)
+			for i in 5:
+				rectN(pit, 20, 22 + i * 30, 200, 8, Color8(40, 44, 54), -1)
+			var pg = glowS(room_root, lx, FY + 60, 260, 120, gcol, .35, D.solids + .4)
+			rails.append(pg)
+		var back = spr(room_root, "lift2_tubeback", lx, FY - 6, .5, 1, D.fixtures)
+		var inner = spr(room_root, "vgrad", lx, FY - 10, .5, 1, D.fixtures + .4)
+		dsize(inner, 200, 330)
+		inner.material = MAT_ADD
+		inner.modulate = C(gcol, .2)
+		var base = spr(room_root, "lift2_base", lx, FY + 72, .5, 1, D.fixtures + .2)
+		base.modulate = tint
+		var padG = glowS(room_root, lx, FY - 2, 240, 34, gcol, .7, D.fixtures + .5)
+		var glass = spr(room_root, "lift2_glass", lx, FY - 6, .5, 1, D.player + .5)
+		var cap = spr(room_root, "lift2_cap", lx, capTop, .5, 0, D.player + .6)
+		cap.modulate = tint
+		var gem = spr(room_root, "lift2_gem", lx, capTop + 64, .5, .5, D.player + .7)
+		gem.modulate = C(gcol)
+		var gemG = glowS(room_root, lx, capTop + 64, 120, 120, gcol, .6, D.player + .7)
+		var rings = []
+		for i in 3:
+			rings.append(glowS(room_root, lx, FY, 240, 34, gcol, 0.0, D.player + .55))
+		# launch beam along the shaft
+		var beam = spr(room_root, "vgrad", lx, FY - 10, .5, 1, D.player + .58)
+		var bh: float = FY - 10 - rowTop if up else 330.0
+		dsize(beam, 150, bh)
+		if not up:
+			beam.position.y = FY + 180
+		beam.material = MAT_ADD
+		beam.modulate = C("#ffffff", 0.0)
+		var lab = labelN(top_room, ("▲ " if up else "▼ ") + "ELEVATOR · " + String(DB.LV[DB.ROOMS[o.lift.to].a].name).to_upper(), 26, "#bff0ff")
+		place(lab, lx, capTop - 14, .5, 1)
+		RV.lift = {bar=rectN(room_root, lx - 80, FY - 330, 160, 6, C(gcol, .9), D.player + .65), inner=inner, padG=padG, gem=gem, gemG=gemG, rings=rings, rails=rails,
+			up=up, glass=glass, x=lx, beam=beam}
 	# ability shrine
 	var sh = o.shrine
 	if sh != null and sh.ab != null:
@@ -841,9 +880,30 @@ func roomUpdate(dt: float) -> void:
 		q.g.modulate = Color(col.r, col.g, col.b, .45)
 		lightW(q.bx + 13, q.y - 150, 220, .6)
 	if o.lift != null and RV.lift != null:
-		lightW(o.lift.x, FY - 160, 320, .8)
-		RV.lift.bar.visible = o.lift.hold > 0
-		RV.lift.bar.scale.x = min(1.0, o.lift.hold / 1.1)
+		var q: Dictionary = RV.lift
+		# charge: 0 idle, rises while you stand inside, 1 while the capsule launches
+		var k: float = min(1.0, o.lift.hold / 1.1)
+		if TRANS.on and TRANS.act != null and TRANS.act.has("lift") and TRANS.phase == 0:
+			k = 1.0 + TRANS.t / transDur()
+		lightW(o.lift.x, FY - 160, 320 + 120 * k, .8 + .4 * min(k, 1.0))
+		q.bar.visible = o.lift.hold > 0 and k < 1.0
+		q.bar.scale.x = min(1.0, k)
+		q.inner.modulate.a = .14 + .05 * sin(lvT * 2.4) + .75 * min(k, 1.5)
+		q.padG.modulate.a = .55 + .15 * sin(lvT * 3) + .3 * min(k, 1.0)
+		var pulse: float = .5 + .5 * sin(lvT * (3.0 + 9.0 * min(k, 1.0)))
+		q.gemG.modulate.a = .35 + (.35 + .3 * min(k, 1.0)) * pulse
+		q.gem.modulate.v = .8 + .2 * pulse
+		for r in q.rails:
+			r.modulate.a = .25 + .5 * min(k, 1.0)
+		# light rings race along the tube in the direction of travel
+		var spd: float = 120.0 + 900.0 * min(k, 1.5)
+		for i in q.rings.size():
+			var ph: float = fposmod(lvT * spd + i * 110.0, 330.0)
+			var y: float = (FY - 10 - ph) if q.up else (FY - 320 + ph)
+			q.rings[i].position = Vector2(q.x, y)
+			q.rings[i].modulate.a = (.15 + .85 * min(k, 1.0)) * sin(ph / 330.0 * PI)
+		q.glass.modulate = Color.WHITE.lerp(Color(1.6, 1.8, 2.0), max(0.0, k - 1.0))
+		q.beam.modulate.a = clampf((k - 1.0) * 2.0, 0.0, .9)
 	if RV.shrine != null:
 		var q: Dictionary = RV.shrine
 		var got: bool = hasAb(q.ab) or not gDone(ROOM.a)
