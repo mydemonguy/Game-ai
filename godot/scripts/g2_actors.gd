@@ -272,6 +272,8 @@ func hurtPlayer(d: float, kx: float) -> void:
 		buzz(15)
 		ftext(p.x, p.y - 200, "Blocked", "#8fc8ff")
 		return
+	if boss != null:
+		boss.hitMe = true   # for the Untouchable feat
 	if hasR("stone"):
 		d *= .8
 	d = round(d)
@@ -301,6 +303,7 @@ func hurtPlayer(d: float, kx: float) -> void:
 		p.hp = 0.0
 		if p == pl and G.rush == null:
 			META.deaths = int(META.get("deaths", 0)) + 1
+			stat("falls")
 		if G.lives > 0:
 			G.lives -= 1
 			p.dead = 1; p.deadT = 0.0; p.vx = 0.0; p.inv = 99.0
@@ -314,6 +317,8 @@ func hurtPlayer(d: float, kx: float) -> void:
 ## district hazards hurt only the dino on this device (each phone runs its own in co-op)
 const TOX_P := 4.6
 const ZAP_P := 4.0
+const VOID_P := 5.0
+const VOID_Y := 230.0   # how high above the floor a void rift hangs
 func hzPhase(h: Dictionary, per: float) -> float:
 	return fposmod(lvT + h.ph, per)
 
@@ -361,6 +366,23 @@ func updDHZ(dt: float) -> void:
 					hurtPlayer(12 * dm(), sgn(p.x - h.x) * 300)
 				if q >= 2.9 and q - dt < 2.9:
 					sfx("fizz", h.x, FY, .8, .3, 1.2)
+			"void":
+				# abyss districts: a rift that wakes, drags you toward its core, and bites if you touch it
+				var q = hzPhase(h, VOID_P)
+				if q >= 2.6 and q - dt < 2.6:
+					sfx("vent", h.x, FY - VOID_Y, .7, .3, .5)
+				if q >= 3.3 and p != null and not p.dead:
+					var dx: float = h.x - p.x
+					if absf(dx) < 560 and absf(p.y - FY) < 320 and p.dashT <= 0:
+						var pull: float = (60.0 + 250.0 * (1.0 - absf(dx) / 560.0)) * sgn(dx) * dt
+						if absf(pull) > absf(dx):
+							pull = dx
+						p.x += pull
+						p.body.x += pull
+					h.tick -= dt
+					if h.tick <= 0 and absf(dx) < 80 and p.y - 175 < FY - VOID_Y + 70 and p.y > FY - VOID_Y - 40:
+						h.tick = .6
+						hurtPlayer(10 * dm(), -sgn(dx) * 620 if dx != 0 else 620.0)
 
 func spawnEnemy(type: String, side: float, quiet := false):
 	if type == "g" and G.lv >= 1 and randf() < .35:
@@ -472,6 +494,7 @@ func damage(e, d: float, kb: float) -> void:
 				killBoss()
 			return
 		e.dead = true
+		stat("kills")
 		corpse(e.type, e.x, e.y, e.face)
 		G.score += e.score * (1 + min(4, int(floor((pl.hits if pl else 0) / 10.0))))
 		addDust(10 if e.type == "B" else 3 if e.heavy else 1)
@@ -491,6 +514,10 @@ func damage(e, d: float, kb: float) -> void:
 			for k in 4:
 				picks.append(mk_drop(e.x, e.y - e.h * .6, R(-320, 320), R(-950, -650), "coin", 12))
 			ftext(e.x, e.y - e.h - 40, "Overcharged! +◆4", "#ffe08a", true)
+			PREFS.ocK = int(PREFS.get("ocK", 0)) + 1
+			save_prefs()
+			if PREFS.ocK >= 25:
+				feat("oc25")
 
 func updEnemy(e, dt: float) -> void:
 	var dx: float = pl.x - e.x
@@ -1333,6 +1360,10 @@ func guardianDown(b) -> void:
 	var D0: Dictionary = DB.GUARD[a]
 	var had: bool = META.guards.has(str(a))
 	codexAdd("G" + str(a))
+	stat("guards")
+	feat("first")
+	if not b.get("hitMe", false):
+		feat("nohit")
 	b.dead = true
 	boss = null
 	lock = false; camLock = null

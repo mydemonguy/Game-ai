@@ -1,6 +1,6 @@
 # Aetherfall devlog
 
-## 19 October 2026 · overnight build session (versions 4.1 – 4.7)
+## 19 October 2026 · overnight build session (versions 4.1 – 4.8)
 
 ### New for players
 - **Capsule elevators**: a glass tube in a lit shaft. Stand inside to charge it (green for up, amber for down), it fires a beam and launches; it is still glowing when you arrive.
@@ -21,6 +21,10 @@
 - **Personal records** (4.6): fastest clear per map code and mode, shown on the victory screen.
 - Long cards show a "more below" hint at phone font sizes.
 - **Robot codex** (4.7): pause → Archive → Robot codex. Every robot, guardian and Malakar you meet gets an entry with lore and a fighting tip; "New codex entry" pops up the first time. Kept across games.
+- **Feats** (4.8): 14 achievements (Untouchable: beat a guardian without a hit; Gold Rush: 25 Overcharged robots; Daily Dino; Comet Run: under two hours; Unbroken: no falls; Gauntlet: Boss Rush; Archivist: full codex, and more). A gold toast slides in when you earn one. Feats & codex are on the title screen too.
+- **Stats** (4.8): lifetime totals (games, sagas completed, play time, falls, robots destroyed, Overcharged, guardians, Stardust) and your fastest clears per map, next to Feats in the Archive.
+- **Settings** (4.8): screen shake Full / Low / Off, and an optional run timer under the chapter name (handy for Comet Run). Credits moved to their own card so everything fits on a phone.
+- **Void rifts** (4.8): the six dark "abyss" districts (Glacial Bastion, Hollow Foundry, Verdant Spire, Tidal Relay, Radiant Conduit…) now have their own hazard. A rift hangs at head height; every 5 s it spins up, drags you toward its core for under 2 s and hurts if you touch it. Dash cancels the pull. Kept clear of platforms, doors, gates and items.
 - **Balance check**: playing without god mode, the bot does the same on random maps as on the classic map (12 falls / 3 game overs vs 13 / 3); Chapter III is the hardest on both.
 
 ### Under the hood

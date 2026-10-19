@@ -80,6 +80,46 @@ func clearInput() -> void:
 		pad.call("reset")
 
 # ---------- the game loop: input -> AI -> physics -> world logic -> camera ----------
+var _featT := 0.0
+var _toasts := []
+
+## a small panel that slides down from the top for a few seconds (feats)
+func toast(h: String, s: String) -> void:
+	var lay = CanvasLayer.new()
+	lay.layer = 40
+	add_child(lay)
+	var pn = PanelContainer.new()
+	var sb = StyleBoxFlat.new()
+	sb.bg_color = Color("#120f24ee")
+	sb.border_color = Color("#ffd24a")
+	sb.set_border_width_all(2)
+	sb.set_corner_radius_all(10)
+	sb.content_margin_left = 22; sb.content_margin_right = 22; sb.content_margin_top = 12; sb.content_margin_bottom = 12
+	sb.shadow_color = Color("#ffd24a40"); sb.shadow_size = 16
+	pn.add_theme_stylebox_override("panel", sb)
+	pn.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var vb = VBoxContainer.new()
+	vb.add_theme_constant_override("separation", 2)
+	pn.add_child(vb)
+	labelN(vb, h, 30, "#ffe08a", DB.font_u)
+	labelN(vb, s, 22, "#ece7ff", DB.font_u6)
+	lay.add_child(pn)
+	var slot: int = _toasts.size()
+	_toasts.append(lay)
+	sfx("oc_die", null, null, .7, .3, 1.25)
+	await get_tree().process_frame
+	var sz: Vector2 = pn.get_combined_minimum_size()
+	var vw: float = get_viewport().get_visible_rect().size.x
+	var y1: float = 18.0 + slot * (sz.y + 10)
+	pn.position = Vector2((vw - sz.x) / 2.0, -sz.y - 20)
+	var tw = create_tween()
+	tw.tween_property(pn, "position:y", y1, .35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_interval(3.6)
+	tw.tween_property(pn, "modulate:a", 0.0, .5)
+	tw.tween_callback(func():
+		_toasts.erase(lay)
+		lay.queue_free())
+
 func _process(delta: float) -> void:
 	var dt: float = min(.033, max(0.0, delta))
 	var nw = _calcW()
@@ -90,6 +130,10 @@ func _process(delta: float) -> void:
 		gameUpdate(dt)
 		if G.rush == null and NETR != "client":
 			META.time = float(META.get("time", 0.0)) + dt
+		_featT += dt
+		if _featT > 1.0:
+			_featT = 0.0
+			featTick()
 	elif G.state == "over":
 		lvT += dt
 		shake *= .9
@@ -210,6 +254,7 @@ func bossTexLoad(key: String) -> void:
 
 # ---------- starting and ending runs ----------
 func newRun(hard := false) -> void:
+	stat("games")
 	META = fresh_meta()
 	if hard:
 		META.hard = 1
@@ -329,6 +374,8 @@ func toTitle() -> void:
 	if riftOpen:
 		btns.append(["Boss Rush", startRush, true])
 	btns.append(["Co-op", coopCard, true])
+	if featCount() or codexCount():
+		btns.append(["Feats & codex", titleArchive, true])
 	btns.append(["Controls", func(): controls(toTitle), true])
 	btns.append(["Settings", func(): soundCard(toTitle), true])
 	var ver = String(ProjectSettings.get_setting("application/config/version", ""))
@@ -339,8 +386,8 @@ func toTitle() -> void:
 		return
 	showCard({ey="A Starblood Saga · Six Worlds", h="Aetherfall", big=true, tag="One small dino. One stolen sky. One very big Rift.", b=b, btns=btns})
 
-const WHATS_NEW_VER := "4.7"
-const WHATS_NEW := "[b]Robot codex[/b] · pause → Archive keeps lore and a fighting tip for every robot and guardian you meet.\n\n[b]A new map every game[/b] · bigger worlds across 26 districts. Share the map code from the pause screen.\n\n[b]New options[/b] · Map of the day, Shuffle powers and Story mode.\n\n[color=#ffe08a][b]Overcharged robots[/b][/color], [b]Trial[/b] rooms, capsule elevators, and hazards: icicles, toxic gas and sparking floors."
+const WHATS_NEW_VER := "4.8"
+const WHATS_NEW := "[color=#ffe08a][b]14 Feats[/b][/color] to earn, from beating a guardian without a scratch to clearing the Map of the day.\n\n[b]Robot codex[/b] · lore and a fighting tip for every robot and guardian you meet. Both are on the title screen and in pause → Archive.\n\n[b]A new map every game[/b] · bigger worlds across 26 districts. Share the map code from the pause screen.\n\n[b]New options[/b] · Map of the day, Shuffle powers and Story mode.\n\n[color=#ffe08a][b]Overcharged robots[/b][/color], [b]Trial[/b] rooms, capsule elevators, and hazards: icicles, toxic gas, sparking floors and new [b]void rifts[/b]."
 
 func _fmt(n: int) -> String:
 	var s = str(n)
@@ -492,7 +539,19 @@ func victory() -> void:
 	else:
 		recLine = "Your best on this map: [b]%s[/b]" % fmtTime(prev)
 	PREFS.records = recs
+	stat("wins")
 	save_prefs()
+	feat("saga")
+	if int(META.get("seed", 0)) == dailySeed():
+		feat("daily")
+	if META.get("perm", []).size() == 5:
+		feat("shuffle")
+	if wasRift:
+		feat("rift")
+	if tnow > 0 and tnow < 7200:
+		feat("fast")
+	if int(META.get("deaths", 0)) == 0:
+		feat("clean")
 	Sfx.music("victory")
 	var found: int = META.map.size()
 	var tot: int = DB.ROOMS.size()
@@ -686,13 +745,14 @@ func abilitiesBB() -> String:
 	return s
 
 func pauseCard() -> void:
+	_archBack = Callable()
 	var canTravel: bool = ROOM != null and ROOM.kind == "save" and not lock and saveRooms().size() > 1
 	var btns = [["Resume", resume]]
 	if canTravel:
 		btns.append(["Fast travel", travelCard])
 	if ROOM != null and ROOM.kind == "save" and G.rush == null:
 		btns.append(["Claude's Exchange", func(): exchangeCard(pauseCard)])
-	if loreCount() or META.sable or codexCount():
+	if loreCount() or META.sable or codexCount() or featCount():
 		btns.append(["Archive", archiveCard, true])
 	btns.append(["Settings", func(): soundCard(pauseCard), true])
 	btns.append(["Controls", func(): controls(pauseCard), true])
@@ -825,6 +885,8 @@ func archiveCard() -> void:
 	var btns = []
 	if codexCount():
 		btns.append(["Robot codex  (%d/%d)" % [codexCount(), CODEX_ORDER.size() + 6], codexCard])
+	btns.append(["Feats  (%d/%d)" % [featCount(), FEATS.size()], featsCard])
+	btns.append(["Stats", statsCard, true])
 	btns.append(["Back", pauseCard, btns.size() > 0])
 	showCard({ey="Starblood archive", h="Data Tablets", tag="%d of 6 recovered" % got, b=b, btns=btns})
 
@@ -850,6 +912,63 @@ const CODEX := {
 	oc = ["Overcharged", "Robots the Rift has overfed. Raw Aether leaks from every seam and gives them a gold glow.",
 		"Nearly twice the health and they hit a quarter harder, but each one bursts into 4 extra Stardust and a shower of coins. Trial rooms are full of them."],
 }
+
+var _archBack := Callable()
+
+func titleArchive() -> void:
+	_archBack = titleArchive
+	var btns = []
+	if codexCount():
+		btns.append(["Robot codex  (%d/%d)" % [codexCount(), CODEX_ORDER.size() + 6], codexCard])
+	btns.append(["Feats  (%d/%d)" % [featCount(), FEATS.size()], featsCard])
+	btns.append(["Stats", statsCard, true])
+	btns.append(["Back", func():
+		_archBack = Callable()
+		toTitle(), true])
+	showCard({ey="Starblood archive", h="Feats & Codex", b="Kept across every game you play on this device.\n\nFeats earned [b]%d of %d[/b] · Codex entries [b]%d of 15[/b]" % [featCount(), FEATS.size(), codexCount()], btns=btns})
+
+func _archGo() -> void:
+	if _archBack.is_valid():
+		_archBack.call()
+	else:
+		archiveCard()
+
+func statsCard() -> void:
+	var b = "[color=#9d97bd]Totals for every game on this device.[/color]\n\n"
+	b += "Games started [b]%d[/b] · Sagas completed [b]%d[/b]\n" % [statGet("games"), statGet("wins")]
+	b += "Play time [b]%s[/b] · Falls [b]%d[/b]\n" % [fmtTime(statGet("time")), statGet("falls")]
+	b += "Robots destroyed [b]%d[/b] · Overcharged [b]%d[/b] · Guardians beaten [b]%d[/b]\n" % [statGet("kills"), int(PREFS.get("ocK", 0)), statGet("guards")]
+	b += "Stardust collected [b]◆ %d[/b]\n" % statGet("dust")
+	var recs = PREFS.get("records", {})
+	if typeof(recs) == TYPE_DICTIONARY and recs.size():
+		var ks: Array = recs.keys()
+		ks.sort_custom(func(x, y): return float(recs[x]) < float(recs[y]))
+		b += "\n[color=#ffe08a][b]Fastest clears[/b][/color]\n"
+		for i in min(8, ks.size()):
+			var parts: PackedStringArray = String(ks[i]).split("-")
+			var label = ("Map " + parts[0]) if parts[0] != "classic" else "Classic map"
+			if parts.size() > 1:
+				label += " · " + " · ".join(Array(parts.slice(1)).map(func(m): return String(m).capitalize()))
+			b += "%s  [b]%s[/b]\n" % [label, fmtTime(float(recs[ks[i]]))]
+	if G.rush == null and rushBest() > 0:
+		b += "\nBoss Rush best [b]%s[/b]" % fmtT(rushBest())
+	showCard({ey="Starblood archive", h="Stats", b=b, btns=[["Back", _archGo]]})
+
+func featsCard() -> void:
+	var b = ""
+	var fx: Dictionary = _feats()
+	for f in FEATS:
+		var got: bool = fx.has(f[0])
+		var extra = ""
+		if f[0] == "oc25" and not got:
+			extra = "  (%d/25)" % min(25, int(PREFS.get("ocK", 0)))
+		if f[0] == "codex" and not got:
+			extra = "  (%d/15)" % codexCount()
+		if got:
+			b += "[color=#ffd24a]★[/color] [color=#ffe08a][b]%s[/b][/color] · %s\n" % [f[1], f[2]]
+		else:
+			b += "[color=#6a6488]☆ [b]%s[/b] · %s%s[/color]\n" % [f[1], f[2], extra]
+	showCard({ey="Starblood archive", h="Feats", tag="%d of %d earned" % [fx.size(), FEATS.size()], b=b, btns=[["Back", _archGo]]})
 
 func codexCard() -> void:
 	var cx: Dictionary = PREFS.get("codex", {})
@@ -881,7 +1000,7 @@ func codexCard() -> void:
 		rest.append("one who waits at the top of the Rift")
 	if rest.size():
 		b += "[color=#6a6488][b]Still unknown:[/b] " + ", ".join(rest) + ".[/color]"
-	showCard({ey="Starblood archive", h="Robot Codex", tag="%d of %d entries" % [cx.size(), CODEX_ORDER.size() + 6], b=b, btns=[["Back", archiveCard]]})
+	showCard({ey="Starblood archive", h="Robot Codex", tag="%d of %d entries" % [cx.size(), CODEX_ORDER.size() + 6], b=b, btns=[["Back", _archGo]]})
 
 func travelCard() -> void:
 	# random worlds have three stations each, so pick a world first, then a station in it
@@ -1009,9 +1128,31 @@ func _btn(label: String, alt := false) -> Button:
 	return b
 
 # ---------- settings and controls ----------
+## one settings row of mutually exclusive buttons, stored in PREFS[key]
+func _optRow(box: Control, title: String, key: String, opts: Array, def, back: Callable) -> HBoxContainer:
+	var row = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 14)
+	var l = Label.new()
+	l.text = title
+	l.custom_minimum_size = Vector2(220, 0)
+	l.add_theme_color_override("font_color", C("#5ce1ff"))
+	row.add_child(l)
+	var cur = PREFS.get(key, def)
+	for o in opts:
+		var b = _btn(o[1], cur != o[0])
+		var v = o[0]
+		b.pressed.connect(func():
+			PREFS[key] = v
+			save_prefs()
+			soundCard(back))
+		row.add_child(b)
+	if box != null:
+		box.add_child(row)
+	return row
+
 func soundCard(back: Callable) -> void:
 	var box = VBoxContainer.new()
-	box.add_theme_constant_override("separation", 18)
+	box.add_theme_constant_override("separation", 12)
 	for q in [["Music", "music"], ["Effects", "sfx"]]:
 		var row = HBoxContainer.new()
 		var l = Label.new()
@@ -1051,23 +1192,19 @@ func soundCard(back: Callable) -> void:
 			soundCard(back))
 		gq.add_child(b)
 	box.add_child(gq)
-	var vb = HBoxContainer.new()
-	var vl = Label.new()
-	vl.text = "Vibration"
-	vl.custom_minimum_size = Vector2(220, 0)
-	vl.add_theme_color_override("font_color", C("#5ce1ff"))
-	vb.add_child(vl)
-	var on: bool = PREFS.get("vibe", true)
-	var vbtn = _btn("On" if on else "Off", not on)
-	vbtn.pressed.connect(func():
-		PREFS.vibe = not PREFS.get("vibe", true)
-		save_prefs()
-		soundCard(back))
-	vb.add_child(vbtn)
-	box.add_child(vb)
+	_optRow(box, "Screen shake", "shake", [[1.0, "Full"], [0.4, "Low"], [0.0, "Off"]], 1.0, back)
+	var pair = HBoxContainer.new()
+	pair.add_theme_constant_override("separation", 40)
+	pair.add_child(_optRow(null, "Vibration", "vibe", [[true, "On"], [false, "Off"]], true, back))
+	var tr = _optRow(null, "Run timer", "timer", [[true, "On"], [false, "Off"]], false, back)
+	tr.get_child(0).custom_minimum_size = Vector2(0, 0)
+	pair.add_child(tr)
+	box.add_child(pair)
 	showCard({ey="Settings", h="Sound & graphics", extra=box,
-		b="Fast draws fewer particles and less weather, for a steadier frame rate on older phones.\n\n[i]Music by Tanner Helland (github.com/tannerhelland/free-music, CC BY 4.0). Sound effects by Kenney (kenney.nl, CC0) and synthesised for Aetherfall. Fonts: Cinzel and Chakra Petch (SIL Open Font License). Made with Godot Engine.[/i]",
-		btns=[["Done", back]]})
+		b="Fast graphics draw fewer particles and less weather, for a steadier frame rate on older phones.",
+		btns=[["Done", back], ["Credits", func(): showCard({ey="Settings", h="Credits",
+			b="Music by Tanner Helland (github.com/tannerhelland/free-music, CC BY 4.0).\n\nSound effects by Kenney (kenney.nl, CC0) and synthesised for Aetherfall.\n\nFonts: Cinzel and Chakra Petch (SIL Open Font License).\n\nMade with Godot Engine.",
+			btns=[["Back", func(): soundCard(back)]]}), true]]})
 
 func controls(back: Callable) -> void:
 	var k = "[color=#5ce1ff][b]Left thumb / A D[/b][/color]  Move. Touch anywhere on the left side of the screen and slide. Pull down to drop through thin platforms\n"
@@ -1126,6 +1263,7 @@ func rushDone() -> void:
 		PREFS.rush = t
 		save_prefs()
 	rushEnd()
+	feat("rush")
 	G.state = "card"
 	padShow(false)
 	clearInput()
@@ -1399,6 +1537,7 @@ func build_hud() -> void:
 		hud.add_child(e)
 		HU.eggs.append(e)
 	HU.fps = T.call(16, "#9d97bd", DB.font_u)
+	HU.timer = T.call(24, "#ffe08a", DB.font_u)
 	HU.p2n = T.call(22, "#ffc49a", DB.font_u)
 	for k in ["name", "hp", "ae", "ch", "rift", "score", "scl", "dust", "combo", "combo2", "combo3", "bossN", "hint", "seal", "bn", "bs", "fps"]:
 		HU[k].visible = false
@@ -1412,7 +1551,7 @@ func hudUpdate() -> void:
 	hud.queue_redraw()
 	var p = pl
 	var play: bool = G.state != "menu" and p != null and ROOM != null
-	for k in ["name", "hp", "ae", "ch", "rift", "score", "scl", "dust", "combo", "combo2", "combo3", "bossN", "hint", "seal", "bn", "bs", "p2n"]:
+	for k in ["name", "hp", "ae", "ch", "rift", "score", "scl", "dust", "combo", "combo2", "combo3", "bossN", "hint", "seal", "bn", "bs", "p2n", "timer"]:
 		HU[k].visible = false
 	for e in HU.eggs:
 		e.visible = false
@@ -1457,6 +1596,11 @@ func hudUpdate() -> void:
 	_tx(HU.scl, "SCORE"); place(HU.scl, rx, 76, 1, 0)
 	HU.dust.visible = true
 	_tx(HU.dust, "◆ %d" % META.dust); place(HU.dust, rx, 98, 1, 0)
+	if PREFS.get("timer", false) and G.rush == null:
+		var tt: float = float(META.get("time", 0.0))
+		HU.timer.visible = true
+		_tx(HU.timer, ("%d:" % int(tt / 3600) if tt >= 3600 else "") + ("%02d:%02d.%d" % [int(fmod(tt, 3600) / 60), int(fmod(tt, 60)), int(fmod(tt * 10, 10))] if tt >= 3600 else fmtT(tt)))
+		place(HU.timer, rx, 124, 1, 0)
 	var bf = []
 	if p.shield > 0:
 		bf.append(["shield", "%d× · %ds" % [p.shield, ceil(p.shieldT)]])
@@ -1752,6 +1896,8 @@ func _test_init() -> void:
 				TEST.full = true
 			"nowalk":
 				TEST.walk = false
+			"rush":
+				TEST.rush = true
 			"showcard":
 				TEST.showcard = v
 			"gatetest":
@@ -2459,21 +2605,35 @@ func _test_tick(dt: float) -> void:
 		startTrans({travel=TEST.travelto})
 	if TEST.has("travelto") and f == 320:
 		print("TRAVEL room=", ROOM.id, " kind=", ROOM.kind, " pl=", int(pl.x), ",", int(pl.y), " ground=", pl.ground, " save=", META.save.room)
+	if TEST.get("rush", false) and f == 40:
+		startRush()
 	if TEST.has("showcard") and f == 40:
 		match TEST.showcard:
 			"map": mapCard(false, toTitle)
 			"mode": modeCard(toTitle)
-			"new": showCard({ey="Aetherfall 4.7", h="What's new", b=WHATS_NEW, btns=[["Got it", toTitle]]})
+			"new": showCard({ey="Aetherfall 4.8", h="What's new", b=WHATS_NEW, btns=[["Got it", toTitle]]})
 			"code": codeCard(false, toTitle, "That code doesn't look right. Codes use letters and numbers only.")
 			"pause": togglePause()
 			"title": toTitle()
 			"codex":
 				PREFS.codex = {g=1, r=1, b=1, h=1, oc=1, G0=1, G1=1}
 				codexCard()
+			"settings":
+				PREFS.timer = true
+				soundCard(toTitle)
+			"stats":
+				PREFS.stats = {games=7, wins=2, time=31234.0, falls=19, kills=1543, guards=14, dust=5120}
+				PREFS.records = {"7KQ2M3-shuffle": 4100.0, "classic": 5400.0, "AB12CD-rift": 6000.0}
+				statsCard()
+			"feats":
+				PREFS.feats = {first=1, trial=1}
+				PREFS.ocK = 11
+				featsCard()
+				feat("nohit")
 	if TEST.get("noen", false):
 		en = []; spawnQ = []; shots = shots.filter(func(q): return q.friend)
 	if TEST.get("hzdbg", false) and f % 30 == 0 and ROOM != null:
-		print("HZ f=%d %s" % [f, str(ROOM.get("dhz", []).map(func(h): return [h.k, int(h.x), h.st, snappedf(hzPhase(h, 4.6 if h.k == "tox" else 4.0), .1)]))])
+		print("HZ f=%d %s" % [f, str(ROOM.get("dhz", []).map(func(h): return [h.k, int(h.x), h.st, snappedf(hzPhase(h, 4.6 if h.k == "tox" else 5.0 if h.k == "void" else 4.0), .1)]))])
 	if TEST.get("armlift", false) and f == 30 and ROOM != null and ROOM.lift != null:
 		ROOM.lift.armed = 1
 	if TEST.get("liftf", 0) == f and ROOM != null and ROOM.lift != null:

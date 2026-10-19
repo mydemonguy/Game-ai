@@ -292,7 +292,7 @@ func enterRoom(id: String, how: Dictionary) -> void:
 
 ## district hazards: icy districts drop icicles, smoggy ones vent toxic gas, neon ones have electric floor panels.
 ## Made from the room id when you walk in, so saved maps never change; only in the new districts' halls.
-const HZ_KIND := {cryo="ice", blight="tox", neon="zap"}
+const HZ_KIND := {cryo="ice", blight="tox", neon="zap", abyss="void"}
 func genHazards(o: Dictionary) -> Array:
 	var out = []
 	if not o.has("th") or o.h != 1 or not (o.kind in ["hall", "gate", "cache"]):
@@ -306,10 +306,18 @@ func genHazards(o: Dictionary) -> Array:
 	for i in n:
 		for tries in 5:
 			var x: float = o.RW * (i + .5) / n + (r.next() - .5) * o.RW / n * .7
-			if _hzFree(o, x):
+			if _hzFree(o, x) and (k != "void" or _voidFree(o, x)):
 				out.append({k=k, x=x, ph=r.next() * 4.0, st="hang", t=0.0, y=70.0, y0=70.0, vy=0.0, tick=0.0, v=null})
 				break
 	return out
+
+## a void rift hangs in mid-air, so keep it clear of platforms at that height
+func _voidFree(o: Dictionary, x: float) -> bool:
+	var vy: float = float(o.FY) - 230.0
+	for s in o.get("plats", []):
+		if x > s.x - 130 and x < s.x + s.w + 130 and s.y > vy - 150 and s.y < vy + 120:
+			return false
+	return true
 
 func _hzFree(o: Dictionary, x: float) -> bool:
 	if x < 650 or x > o.RW - 650:
@@ -457,6 +465,7 @@ func updWorld(dt: float) -> void:
 				G.score += 500
 				if o.kind == "trial":
 					showBanner("Trial complete", "+◆25 Stardust · health restored", 2.4)
+					feat("trial")
 					addDust(25)
 					p.hp = float(p.max)
 					for k in 6:

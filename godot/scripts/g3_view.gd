@@ -766,6 +766,37 @@ func roomView(o) -> void:
 				arcs.width = 5; arcs.default_color = Color("#bff6ff"); arcs.z_index = zi(D.player + .4); arcs.material = MAT_ADD
 				room_root.add_child(arcs)
 				q.arcs = arcs
+			"void":
+				rectN(room_root, h.x - 70, FY - 8, 140, 10, Color("#0c0814"), D.solids + .6)
+				q.floor = glowS(room_root, h.x, FY - 6, 260, 40, "#b48cff", .2, D.solids + .7)
+				var vn = Node2D.new()
+				vn.z_index = zi(D.fixtures + .6)
+				vn.position = Vector2(h.x, FY - VOID_Y)
+				room_root.add_child(vn)
+				q.g = glowS(vn, 0, 0, 420, 420, "#9a5cff", .3)
+				var vrings = []
+				for i in 3:
+					var rg = Line2D.new()
+					var pts = PackedVector2Array()
+					var rr: float = 46.0 + i * 16
+					for va in 25:
+						var vt: float = va / 24.0 * TAU
+						pts.append(Vector2(cos(vt) * rr, sin(vt) * rr * (.55 + .2 * i)))
+					rg.points = pts
+					rg.width = 5.0 - i
+					rg.default_color = Color("#c9a6ff") if i == 0 else Color("#7a4cff")
+					rg.material = MAT_ADD
+					vn.add_child(rg)
+					vrings.append(rg)
+				var core = Polygon2D.new()
+				var cp = PackedVector2Array()
+				for vb in 20:
+					var vt2: float = vb / 20.0 * TAU
+					cp.append(Vector2(cos(vt2) * 34, sin(vt2) * 34))
+				core.polygon = cp
+				core.color = Color("#07040c")
+				vn.add_child(core)
+				q.n = vn; q.rings = vrings; q.core = core
 		RV.dhz.append(q)
 	# trial rooms: a golden sigil on the back wall
 	if o.kind == "trial":
@@ -979,6 +1010,21 @@ func roomUpdate(dt: float) -> void:
 						x0 += 22 + randf() * 18
 					lightW(h.x, FY - 40, 260, .6)
 				q.arcs.points = pts
+			"void":
+				var ph: float = hzPhase(h, VOID_P)
+				var on: float = 1.0 if ph >= 3.3 else (ph - 2.6) / .7 if ph >= 2.6 else 0.0
+				var sc: float = .55 + .45 * on + (sin(lvT * 9) * .04 if on >= 1.0 else 0.0)
+				q.n.scale = Vector2(sc, sc)
+				for i in q.rings.size():
+					q.rings[i].rotation = lvT * (1.2 + 2.5 * on) * (1 if i % 2 == 0 else -1) * (1.0 + i * .3)
+				q.g.modulate.a = .25 + .55 * on
+				q.floor.modulate.a = .15 + .5 * on
+				if on >= 1.0:
+					if randf() < .8:
+						var va: float = randf() * TAU
+						var r0: float = 200 + randf() * 260
+						part(h.x + cos(va) * r0, FY - VOID_Y + sin(va) * r0 * .6, -cos(va) * r0 * 1.6, -sin(va) * r0 * 1.0, .6, "#b48cff", 10 + randf() * 10, 0, "glow")
+					lightW(h.x, FY - VOID_Y, 300, .5)
 	if o.lift != null and RV.lift != null:
 		var q: Dictionary = RV.lift
 		# charge: 0 idle, rises while you stand inside, 1 while the capsule launches
@@ -2374,8 +2420,9 @@ func actorsUpdate(dt: float) -> void:
 	OVL = []
 
 func render(dt: float) -> void:
-	var sx = (randf() - .5) * shake * 2 if shake > 0 else 0.0
-	var sy = (randf() - .5) * shake * 2 if shake > 0 else 0.0
+	var sm: float = float(PREFS.get("shake", 1.0))
+	var sx = (randf() - .5) * shake * 2 * sm if shake > 0 else 0.0
+	var sy = (randf() - .5) * shake * 2 * sm if shake > 0 else 0.0
 	var k = 1.0 + kz
 	cam2d.zoom = Vector2(k, k)
 	cam2d.position = Vector2(round(cam + sx + W / 2.0 * (1 - 1 / k)), round(camY + sy + H / 2.0 * (1 - 1 / k)))

@@ -264,6 +264,77 @@ func codexAdd(k: String) -> bool:
 func codexCount() -> int:
 	return PREFS.get("codex", {}).size() if typeof(PREFS.get("codex", {})) == TYPE_DICTIONARY else 0
 
+## Feats: small achievements, kept across games in PREFS.feats
+const FEATS := [
+	["saga", "Saga's End", "Beat Malakar."],
+	["first", "Shrine Breaker", "Beat your first shrine guardian."],
+	["nohit", "Untouchable", "Beat a shrine guardian without taking a hit."],
+	["trial", "Trial by Fire", "Clear a Trial room."],
+	["oc25", "Gold Rush", "Destroy 25 Overcharged robots."],
+	["fangs", "Fang Hunter", "Find all six Starblood Fangs in one game."],
+	["full", "Completionist", "Collect 100% of the items in one game."],
+	["daily", "Daily Dino", "Beat the Map of the day on its day."],
+	["shuffle", "Mixed Up", "Beat a game with Shuffle powers on."],
+	["rift", "Rift Walker", "Beat the game in Rift Mode."],
+	["fast", "Comet Run", "Beat the game in under two hours."],
+	["clean", "Unbroken", "Beat the game without falling once."],
+	["rush", "Gauntlet", "Clear Boss Rush."],
+	["codex", "Archivist", "Fill every page of the Robot codex."],
+]
+
+func _feats() -> Dictionary:
+	var fx = PREFS.get("feats", null)
+	return fx if typeof(fx) == TYPE_DICTIONARY else {}
+
+func featHas(id: String) -> bool:
+	return _feats().has(id)
+
+func featCount() -> int:
+	return _feats().size()
+
+func feat(id: String) -> void:
+	if featHas(id):
+		return
+	if typeof(PREFS.get("feats", null)) != TYPE_DICTIONARY:
+		PREFS.feats = {}
+	PREFS.feats[id] = int(Time.get_unix_time_from_system())
+	save_prefs()
+	for f in FEATS:
+		if f[0] == id:
+			toast("Feat earned · " + f[1], f[2])
+	print("FEAT ", id)
+
+func toast(_h: String, _s: String) -> void:
+	pass
+
+## once a second while playing: feats that depend on totals
+## lifetime totals across every game on this device (PREFS.stats)
+func stat(k: String, n := 1.0) -> void:
+	if typeof(PREFS.get("stats", null)) != TYPE_DICTIONARY:
+		PREFS.stats = {}
+	PREFS.stats[k] = float(PREFS.stats.get(k, 0.0)) + n
+
+func statGet(k: String) -> float:
+	var st = PREFS.get("stats", null)
+	return float(st.get(k, 0.0)) if typeof(st) == TYPE_DICTIONARY else 0.0
+
+var _statSave := 0
+
+func featTick() -> void:
+	if G.rush != null:
+		return
+	stat("time")
+	_statSave += 1
+	if _statSave >= 60:
+		_statSave = 0
+		save_prefs()
+	if not featHas("fangs") and fangCount() >= 6:
+		feat("fangs")
+	if not featHas("full") and completion() >= 100:
+		feat("full")
+	if not featHas("codex") and codexCount() >= 15:
+		feat("codex")
+
 func loreCount() -> int:
 	return _countItems("lore", 6)
 
@@ -302,6 +373,8 @@ func reachOf(b: float) -> float:
 func addDust(n: int, x = null, y = null) -> void:
 	if n == 0:
 		return
+	if n > 0:
+		stat("dust", n)
 	if hasR("lucky"):
 		n *= 2
 	META.dust = int(META.get("dust", 0)) + n
@@ -479,6 +552,7 @@ func ring(x: float, y: float, col, r := 90.0) -> void:
 
 func camKick(z: float) -> void:
 	_rec(["camKick", z])
+	z *= float(PREFS.get("shake", 1.0))
 	kz0 = z
 	kz = z
 	kzT = 0.0
