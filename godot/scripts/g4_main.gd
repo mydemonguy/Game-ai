@@ -161,7 +161,7 @@ func gameUpdate(dt: float) -> void:
 					a.body.x -= push
 				if b.body:
 					b.body.x += push
-	updShots(dt); updHz(dt); updPicks(dt); updBoxes(dt); updAtmos(dt); updWorld(dt); updNPC(dt); updAlly(dt)
+	updShots(dt); updHz(dt); updPicks(dt); updBoxes(dt); updAtmos(dt); updWorld(dt); updNPC(dt); updAlly(dt); updDHZ(dt)
 	if G.state != "play" or TRANS.on:
 		P.clear()
 		return
@@ -1667,6 +1667,8 @@ func _test_init() -> void:
 				for i in ROOM.gates.size():
 					if ROOM.gates[i].kind != "secret":
 						TEST.cp.gi = i
+			"hzdbg":
+				TEST.hzdbg = true
 			"armlift":
 				TEST.armlift = true
 			"memlog":
@@ -2329,6 +2331,8 @@ func _test_tick(dt: float) -> void:
 			"code": codeCard(false, toTitle, "That code doesn't look right. Codes use letters and numbers only.")
 			"pause": togglePause()
 			"title": toTitle()
+	if TEST.get("hzdbg", false) and f % 30 == 0 and ROOM != null:
+		print("HZ f=%d %s" % [f, str(ROOM.get("dhz", []).map(func(h): return [h.k, int(h.x), h.st, snappedf(hzPhase(h, 4.6 if h.k == "tox" else 4.0), .1)]))])
 	if TEST.get("armlift", false) and f == 30 and ROOM != null and ROOM.lift != null:
 		ROOM.lift.armed = 1
 	if TEST.get("liftf", 0) == f and ROOM != null and ROOM.lift != null:

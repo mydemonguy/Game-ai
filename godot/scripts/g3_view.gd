@@ -708,6 +708,65 @@ func roomView(o) -> void:
 		RV.station = {col=col, gl=glowS(room_root, st.x, GY - 30, 180, 40, "#7dffb0", .4, D.fixtures + .5)}
 		var lab = labelN(top_room, "SAVE", 20, "#7dffb0")
 		place(lab, st.x, GY - 244, .5, 1)
+	# district hazards
+	RV.dhz = []
+	for h in o.get("dhz", []):
+		var q = {h=h}
+		match h.k:
+			"ice":
+				var n = Node2D.new()
+				n.z_index = zi(D.fixtures + .3)
+				room_root.add_child(n)
+				var ic = Polygon2D.new()
+				ic.polygon = PackedVector2Array([Vector2(-26, -70), Vector2(26, -70), Vector2(14, -10), Vector2(4, 40), Vector2(-4, 46), Vector2(-14, -6)])
+				ic.color = Color("#d8f4ff")
+				n.add_child(ic)
+				var hl = Polygon2D.new()
+				hl.polygon = PackedVector2Array([Vector2(-14, -66), Vector2(-4, -66), Vector2(-2, 20), Vector2(-8, -10)])
+				hl.color = Color(1, 1, 1, .8)
+				n.add_child(hl)
+				var ol = Line2D.new()
+				ol.points = PackedVector2Array([Vector2(-26, -70), Vector2(-14, -6), Vector2(-4, 46), Vector2(4, 40), Vector2(14, -10), Vector2(26, -70)])
+				ol.width = 3; ol.default_color = Color(.1, .2, .3, .8)
+				n.add_child(ol)
+				n.scale = Vector2(1.6, 1.6)
+				for sx in [-34.0, 30.0]:
+					var small = Polygon2D.new()
+					small.polygon = PackedVector2Array([Vector2(sx - 10, 0), Vector2(sx + 10, 0), Vector2(sx, 70)])
+					small.color = Color("#cbeeff")
+					small.position = Vector2(h.x, 14)
+					small.z_index = zi(D.fixtures + .25)
+					room_root.add_child(small)
+				rectN(room_root, h.x - 60, 0, 120, 16, C(Pa.ink), D.fixtures + .2)
+				q.n = n
+				q.g = glowS(room_root, h.x, 60, 140, 140, "#bfe8ff", .25, D.fixtures + .4)
+			"tox":
+				rectN(room_root, h.x - 85, FY - 12, 170, 14, C(Pa.ink), D.solids + .6)
+				for i in 8:
+					rectN(room_root, h.x - 76 + i * 20, FY - 10, 10, 8, Color(.45, 1, .5, .55), D.solids + .6)
+				q.g = glowS(room_root, h.x, FY - 150, 240, 360, "#7dff6a", 0.0, D.fixtures + .5)
+				q.w = glowS(room_root, h.x, FY - 8, 240, 44, "#7dff6a", .35, D.solids + .7)
+			"zap":
+				var plate = Node2D.new()
+				plate.z_index = zi(D.solids + .6)
+				room_root.add_child(plate)
+				rectN(plate, h.x - 140, FY - 18, 280, 20, C(Pa.ink))
+				for i in 14:
+					var stripe = Polygon2D.new()
+					var x0: float = h.x - 136 + i * 20
+					stripe.polygon = PackedVector2Array([Vector2(x0, FY - 2), Vector2(x0 + 10, FY - 2), Vector2(x0 + 18, FY - 15), Vector2(x0 + 8, FY - 15)])
+					stripe.color = Color("#ffd24a")
+					plate.add_child(stripe)
+				rectN(plate, h.x - 146, FY - 22, 10, 24, Color("#4a5060"))
+				rectN(plate, h.x + 136, FY - 22, 10, 24, Color("#4a5060"))
+				q.line = rectN(room_root, h.x - 132, FY - 21, 264, 4, C("#7fe9ff"), D.solids + .7)
+				q.line.material = MAT_ADD
+				q.g = glowS(room_root, h.x, FY - 24, 340, 100, "#7fe9ff", .12, D.fixtures + .5)
+				var arcs = Line2D.new()
+				arcs.width = 5; arcs.default_color = Color("#bff6ff"); arcs.z_index = zi(D.player + .4); arcs.material = MAT_ADD
+				room_root.add_child(arcs)
+				q.arcs = arcs
+		RV.dhz.append(q)
 	# trial rooms: a golden sigil on the back wall
 	if o.kind == "trial":
 		var cx2: float = RW * .5
@@ -887,6 +946,39 @@ func roomUpdate(dt: float) -> void:
 		q.h.modulate = col
 		q.g.modulate = Color(col.r, col.g, col.b, .45)
 		lightW(q.bx + 13, q.y - 150, 220, .6)
+	for q in RV.get("dhz", []):
+		var h: Dictionary = q.h
+		match h.k:
+			"ice":
+				q.n.visible = h.st != "gone"
+				var sx: float = sin(lvT * 60) * 3 if h.st == "shake" else 0.0
+				q.n.position = Vector2(h.x + sx, h.y - 40)
+				q.g.position = Vector2(h.x, h.y - 10)
+				q.g.visible = h.st != "gone"
+			"tox":
+				var ph: float = hzPhase(h, TOX_P)
+				var on: float = 1.0 if ph >= 3.2 else (ph - 2.6) / .6 if ph >= 2.6 else 0.0
+				q.g.modulate.a = .55 * on
+				q.w.modulate.a = .3 + .45 * on
+				for kk in (2 if ph >= 3.2 else 1):
+					if on > 0 and randf() < (.95 if ph >= 3.2 else .4):
+						part(h.x + (randf() - .5) * 110, FY - 14, (randf() - .5) * 90, -220 - randf() * 300 * on, 1.2, "rgba(125,255,106,.45)", 44 + randf() * 36, -50, "norm")
+				if on > .5:
+					lightW(h.x, FY - 140, 220, .35)
+			"zap":
+				var ph: float = hzPhase(h, ZAP_P)
+				var on: bool = ph >= 2.9
+				var warn: bool = ph >= 2.2 and not on
+				q.line.visible = on or (warn and int(lvT * 14) % 2 == 0)
+				q.g.modulate.a = .7 if on else (.4 if q.line.visible else .12)
+				var pts = PackedVector2Array()
+				if on:
+					var x0: float = h.x - 125
+					while x0 < h.x + 125:
+						pts.append(Vector2(x0, FY - 10 - randf() * 70))
+						x0 += 22 + randf() * 18
+					lightW(h.x, FY - 40, 260, .6)
+				q.arcs.points = pts
 	if o.lift != null and RV.lift != null:
 		var q: Dictionary = RV.lift
 		# charge: 0 idle, rises while you stand inside, 1 while the capsule launches

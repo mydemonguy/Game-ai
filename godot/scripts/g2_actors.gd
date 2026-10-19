@@ -311,6 +311,57 @@ func hurtPlayer(d: float, kx: float) -> void:
 			gameOver()
 
 # ---------- robots ----------
+## district hazards hurt only the dino on this device (each phone runs its own in co-op)
+const TOX_P := 4.6
+const ZAP_P := 4.0
+func hzPhase(h: Dictionary, per: float) -> float:
+	return fposmod(lvT + h.ph, per)
+
+func updDHZ(dt: float) -> void:
+	if ROOM == null or not ROOM.has("dhz"):
+		return
+	var p = pl
+	for h in ROOM.dhz:
+		match h.k:
+			"ice":
+				if h.st == "hang":
+					if p != null and not p.dead and absf(p.x - h.x) < 140 and p.y > h.y:
+						h.st = "shake"; h.t = .55
+						sfx("crate1", h.x, h.y, .6, .3, 1.4)
+				elif h.st == "shake":
+					h.t -= dt
+					if h.t <= 0:
+						h.st = "fall"; h.vy = 300.0
+				elif h.st == "fall":
+					h.vy += 2600 * dt
+					h.y += h.vy * dt
+					if p != null and not p.dead and absf(p.x - h.x) < 48 and h.y + 50 > p.y - 160 and h.y < p.y:
+						hurtPlayer(14 * dm(), sgn(p.x - h.x) * 260)
+						h.y = FY
+					if h.y >= FY - 40:
+						h.st = "gone"; h.t = 6.0
+						burst(h.x, FY - 30, "#cfefff", 22, 700)
+						sfx("block", h.x, FY, .7, .2, 1.3)
+				elif h.st == "gone":
+					h.t -= dt
+					if h.t <= 0:
+						h.st = "hang"; h.y = h.y0
+			"tox":
+				var q = hzPhase(h, TOX_P)
+				if q >= 3.2:
+					h.tick -= dt
+					if h.tick <= 0 and p != null and not p.dead and absf(p.x - h.x) < 80 and p.y > FY - 300:
+						h.tick = .5
+						hurtPlayer(7 * dm(), sgn(p.x - h.x) * 180)
+				if q >= 2.6 and q - dt < 2.6:
+					sfx("vent", h.x, FY, .7, .3, .8)
+			"zap":
+				var q = hzPhase(h, ZAP_P)
+				if q >= 2.9 and p != null and not p.dead and p.ground and absf(p.x - h.x) < 130 and absf(p.y - FY) < 8:
+					hurtPlayer(12 * dm(), sgn(p.x - h.x) * 300)
+				if q >= 2.9 and q - dt < 2.9:
+					sfx("fizz", h.x, FY, .8, .3, 1.2)
+
 func spawnEnemy(type: String, side: float, quiet := false):
 	if type == "g" and G.lv >= 1 and randf() < .35:
 		type = "r"   # some Ronin swap for Trooper gunners from the Armory on

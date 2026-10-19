@@ -175,6 +175,7 @@ func enterRoom(id: String, how: Dictionary) -> void:
 	lock = false; camLock = null; ally = null; PLUGS = []; boss = null
 	bossDone = int(META.boss) == 1
 	o.arena = null; o.bossT = 1.4
+	o.dhz = genHazards(o)
 	# Shuffle powers: this world's shrine and gate use a different power
 	if o.a < 5 and int(META.get("perm", []).size()) == 5:
 		var Ab: Dictionary = abilOf(o.a)
@@ -288,6 +289,41 @@ func enterRoom(id: String, how: Dictionary) -> void:
 	# walking into a new district of a random world
 	if how.has("side") and prevZone != "" and o.get("zn", "") != prevZone and G.state == "play":
 		showBanner(o.zn, DB.LV[o.a].ch, 2.0)
+
+## district hazards: icy districts drop icicles, smoggy ones vent toxic gas, neon ones have electric floor panels.
+## Made from the room id when you walk in, so saved maps never change; only in the new districts' halls.
+const HZ_KIND := {cryo="ice", blight="tox", neon="zap"}
+func genHazards(o: Dictionary) -> Array:
+	var out = []
+	if not o.has("th") or o.h != 1 or not (o.kind in ["hall", "gate", "cache"]):
+		return out
+	var st: Dictionary = DB.THL[o.th].get("style", {})
+	var k: String = HZ_KIND.get(st.get("sky", ""), "")
+	if k == "":
+		return out
+	var r = Rng.new(hstr(o.id) + 77)
+	var n: int = max(1, int(o.w))
+	for i in n:
+		var x: float = o.RW * (i + .5) / n + (r.next() - .5) * o.RW / n * .4
+		var ok = x > 650 and x < o.RW - 650
+		for z in o.zones:
+			if x > z[0] - 260 and x < z[1] + 260:
+				ok = false
+		for g in o.gates:
+			if absf(g.x - x) < 520:
+				ok = false
+		for c in o.crates:
+			if absf(c - x) < 200:
+				ok = false
+		for it in o.items:
+			if absf(it.x - x) < 240:
+				ok = false
+		for pr in o.props:
+			if absf(pr.x - x) < 190:
+				ok = false
+		if ok:
+			out.append({k=k, x=x, ph=r.next() * 4.0, st="hang", t=0.0, y=70.0, y0=70.0, vy=0.0, tick=0.0, v=null})
+	return out
 
 func _nid() -> int:
 	eid += 1
