@@ -340,7 +340,7 @@ func toTitle() -> void:
 	showCard({ey="A Starblood Saga · Six Worlds", h="Aetherfall", big=true, tag="One small dino. One stolen sky. One very big Rift.", b=b, btns=btns})
 
 const WHATS_NEW_VER := "4.4"
-const WHATS_NEW := "[b]A new map every game[/b] · six bigger worlds across 26 districts, laid out fresh each time. Share the map code on your pause screen so friends can play the same one.\n\n[b]New options[/b] · Shuffle powers, and Story mode (40% less damage).\n\n[color=#ffe08a][b]Overcharged robots[/b][/color] glow gold and drop extra Stardust. Find a [b]Trial[/b] room in each world from Chapter II.\n\nPlus capsule elevators and a map coloured by district."
+const WHATS_NEW := "[b]A new map every game[/b] · six bigger worlds across 26 districts, laid out fresh each time. Share the map code on your pause screen so friends can play the same one.\n\n[b]New options[/b] · Map of the day, Shuffle powers, and Story mode (40% less damage).\n\n[color=#ffe08a][b]Overcharged robots[/b][/color] glow gold and drop extra Stardust. Find a [b]Trial[/b] room in each world from Chapter II.\n\nPlus capsule elevators and a map coloured by district."
 
 func _fmt(n: int) -> String:
 	var s = str(n)
@@ -361,14 +361,21 @@ func startNew() -> void:
 ## which world layout to play: a fresh random one, one from a friend's map code, or the original
 func mapCard(hard: bool, back: Callable) -> void:
 	showCard({ey="New game" + (" · Rift Mode" if hard else ""), h="Choose a map",
-		b="[b]New random map[/b] · every world laid out fresh: routes, guardians, saves and treasure in new places.\n\n[b]Map code[/b] · play the same map as a friend. Their code is on their pause screen.\n\n[b]Classic map[/b] · the original hand-built worlds.\n\n[b]Shuffle powers[/b] · [color=%s]%s[/color] · each shrine grants a different power than usual, and its gate changes to match." % ["#7dffb0" if pendShuffle else "#9d97bd", "ON" if pendShuffle else "off"],
+		b="[b]New random map[/b] · fresh routes, guardians, saves and treasure.\n[b]Map of the day[/b] · the same map for everyone today.\n[b]Map code[/b] · a friend's map, from their pause screen.\n[b]Classic map[/b] · the original hand-built worlds.\n\n[b]Shuffle powers[/b] · [color=%s]%s[/color] · shrines grant different powers." % ["#7dffb0" if pendShuffle else "#9d97bd", "ON" if pendShuffle else "off"],
 		btns=[["New random map", func():
 			pendSeed = -1
-			beginSaga(hard)], ["Map code", func(): codeCard(hard, back, ""), true], ["Classic map", func():
+			beginSaga(hard)], ["Map of the day", func():
+			pendSeed = dailySeed()
+			beginSaga(hard), true], ["Map code", func(): codeCard(hard, back, ""), true], ["Classic map", func():
 			pendSeed = 0
 			beginSaga(hard), true], ["Shuffle powers: " + ("on" if pendShuffle else "off"), func():
 			pendShuffle = not pendShuffle
 			mapCard(hard, back), true], ["Back", back, true]]})
+
+## the same seed for everyone on a given (UTC) day
+func dailySeed() -> int:
+	var d = Time.get_date_dict_from_system(true)
+	return int(posmod(hstr("aetherfall-%04d-%02d-%02d" % [d.year, d.month, d.day]), 2000000000)) + 1
 
 func codeCard(hard: bool, back: Callable, err: String) -> void:
 	var row = HBoxContainer.new()
