@@ -546,6 +546,10 @@ func _endlessTick(p) -> void:
 	elif lock and spawnQ.is_empty() and en.is_empty():
 		G.score += 150 * int(E.wave)
 		addDust(2)
+		var pb: int = int(PREFS.get("endless", 0))
+		if pb > 0 and int(E.wave) == pb + 1 and not E.get("pbShown", false):
+			E.pbShown = true
+			toast("New best!", "Past your record of %d waves" % pb)
 		E.wave = int(E.wave) + 1
 		var sub = ""
 		if int(E.wave) % 5 == 1:
