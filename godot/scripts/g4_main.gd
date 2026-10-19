@@ -280,7 +280,23 @@ func menuBG() -> void:
 	shots = []; hz = []; picks = []; boxes = []; boss = null; banner = null; shake = 0.0; lock = false; ally = null
 	var a: int = min(unlocked, 6) - 1
 	DB.set_world(0)
-	enterRoom(str(a) + "-6", {x=300.0, y=GY})
+	# show off a different district behind the title each time (half the time once you've seen more than the first world)
+	var id: String = str(a) + "-6"
+	var src: Dictionary = DB.ROOMS[id]
+	if DB.THEMES2.size() and (unlocked > 1 or randf() < .5) and randf() < .7:
+		var t: String = DB.THEMES2[randi() % DB.THEMES2.size()]
+		src.th = t
+		src.zn = DB.THL[t].name
+		src.props = src.props.map(func(p0):
+			var p1 = p0.duplicate()
+			var ks: Array = DB.MACH[t]
+			p1.k = ks[int(absf(p0.x)) % ks.size()]
+			return p1)
+		enterRoom(id, {x=300.0, y=GY})
+		src.erase("th"); src.erase("zn")
+		src.props = DB.CLASSIC_PROPS[id]
+	else:
+		enterRoom(id, {x=300.0, y=GY})
 	cam = 0.0
 	camY = 0.0
 

@@ -25,6 +25,7 @@ var THL: Dictionary = {}   # theme -> sky / glow colours and display name (like 
 var MACH: Dictionary = {}  # theme -> machine kinds that can stand in its rooms
 var CLASSIC: Dictionary    # the hand-shaped six worlds from rooms.json (boss rush, title screen, old saves)
 var CLASSIC_AREAS: Array = []
+var CLASSIC_PROPS := {}
 var WORLD_SEED: int = 0
 var _gen_cache := {}
 var font_d: Font
@@ -103,6 +104,8 @@ func _ready() -> void:
 		AREAS[o.a].append(id)
 	CLASSIC = ROOMS
 	CLASSIC_AREAS = AREAS
+	for id in ROOMS:
+		CLASSIC_PROPS[id] = ROOMS[id].props
 	_load_themes()
 	font_d = _font("res://assets/fonts/cinzel-latin-700-normal.ttf")
 	font_d9 = _font("res://assets/fonts/cinzel-latin-900-normal.ttf")
