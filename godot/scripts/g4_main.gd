@@ -213,6 +213,9 @@ func newRun(hard := false) -> void:
 	META = fresh_meta()
 	if hard:
 		META.hard = 1
+	elif pendEasy:
+		META.easy = 1
+	pendEasy = false
 	# every new game rolls its own world layout (or uses the map code / classic map picked on the new-game card)
 	META.seed = pendSeed if pendSeed >= 0 else randi_range(1, 2000000000)
 	META.gv = DB.GEN_VER
@@ -315,7 +318,7 @@ func toTitle() -> void:
 	var b = ""
 	if sv != null:
 		var mc = mapCode(int(META.get("seed", 0)))
-		b += "Save: %s%s · Map %d%% · Items %d%%" % [DB.LV[clampi(int(String(sv.room).get_slice("-", 0)), 0, 5)].name, " · [color=#ff4a6a][b]Rift Mode[/b][/color]" if META.hard else "", round(found * 100.0 / tot), completion()]
+		b += "Save: %s%s · Map %d%% · Items %d%%" % [DB.LV[clampi(int(String(sv.room).get_slice("-", 0)), 0, 5)].name, " · [color=#ff4a6a][b]Rift Mode[/b][/color]" if META.hard else " · [color=#7dffb0]Story[/color]" if int(META.get("easy", 0)) else "", round(found * 100.0 / tot), completion()]
 		b += (" · Map %s\n" % mc) if mc != "" else "\n"
 	if G.best:
 		b += "Best score %s" % _fmt(G.best)
@@ -341,11 +344,10 @@ func _fmt(n: int) -> String:
 var pendSeed := -1   # -1 = roll a random map, 0 = classic map, >0 = a map code
 var pendShuffle := false
 
+var pendEasy := false
+
 func startNew() -> void:
-	if riftOpen:
-		modeCard(toTitle)
-	else:
-		mapCard(false, toTitle)
+	modeCard(toTitle)
 
 ## which world layout to play: a fresh random one, one from a friend's map code, or the original
 func mapCard(hard: bool, back: Callable) -> void:
@@ -384,8 +386,19 @@ func confirmNew() -> void:
 	showCard({ey="New game", h="Start over?", b="This erases your map, abilities and energy tanks.", btns=[["Start over", startNew], ["Back", toTitle, true]]})
 
 func modeCard(back: Callable) -> void:
-	showCard({ey="New game", h="Choose your path", b="[b]Normal[/b] · the saga as it was meant to be told.\n\n[color=#ff4a6a][b]Rift Mode[/b][/color] · the Rift remembers you. Robots hit 45% harder and take more punishment, and the guardians and Malakar are far tougher.",
-		btns=[["Normal", func(): mapCard(false, back)], ["Rift Mode", func(): mapCard(true, back)], ["Back", back, true]]})
+	var b = "[b]Normal[/b] · the saga as it was meant to be told.\n\n[color=#7dffb0][b]Story[/b][/color] · for the adventure more than the challenge: robots and bosses do 40% less damage."
+	var btns = [["Normal", func():
+		pendEasy = false
+		mapCard(false, back)], ["Story", func():
+		pendEasy = true
+		mapCard(false, back), true]]
+	if riftOpen:
+		b += "\n\n[color=#ff4a6a][b]Rift Mode[/b][/color] · the Rift remembers you. Robots hit 45% harder and take more punishment, and the guardians and Malakar are far tougher."
+		btns.append(["Rift Mode", func():
+			pendEasy = false
+			mapCard(true, back)])
+	btns.append(["Back", back, true])
+	showCard({ey="New game", h="Choose your path", b=b, btns=btns})
 
 func story(pages: Array, i: int, done: Callable) -> void:
 	var p: Dictionary = pages[i]
@@ -2295,6 +2308,7 @@ func _test_tick(dt: float) -> void:
 	if TEST.has("showcard") and f == 40:
 		match TEST.showcard:
 			"map": mapCard(false, toTitle)
+			"mode": modeCard(toTitle)
 			"code": codeCard(false, toTitle, "That code doesn't look right. Codes use letters and numbers only.")
 			"pause": togglePause()
 			"title": toTitle()

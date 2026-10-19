@@ -262,6 +262,8 @@ func hurtPlayer(d: float, kx: float) -> void:
 		return
 	if p.inv > 0 or p.dead or G.state != "play":
 		return
+	if int(META.get("easy", 0)):
+		d *= .6   # Story mode
 	if p.shield > 0:
 		p.shield -= 1; p.inv = .6
 		ring(p.x, p.y - 95, "#8fc8ff", 170)
