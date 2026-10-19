@@ -251,6 +251,19 @@ func coreCount() -> int:
 func fangCount() -> int:
 	return _countItems("sfang", 6)
 
+## Robot codex: every kind of robot you have met, kept across games in PREFS
+func codexAdd(k: String) -> bool:
+	if not PREFS.has("codex") or typeof(PREFS.codex) != TYPE_DICTIONARY:
+		PREFS.codex = {}
+	if PREFS.codex.has(k):
+		return false
+	PREFS.codex[k] = 1
+	save_prefs()
+	return true
+
+func codexCount() -> int:
+	return PREFS.get("codex", {}).size() if typeof(PREFS.get("codex", {})) == TYPE_DICTIONARY else 0
+
 func loreCount() -> int:
 	return _countItems("lore", 6)
 

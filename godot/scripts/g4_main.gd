@@ -339,8 +339,8 @@ func toTitle() -> void:
 		return
 	showCard({ey="A Starblood Saga · Six Worlds", h="Aetherfall", big=true, tag="One small dino. One stolen sky. One very big Rift.", b=b, btns=btns})
 
-const WHATS_NEW_VER := "4.6"
-const WHATS_NEW := "[b]A new map every game[/b] · bigger worlds across 26 districts. Share the map code on your pause screen so friends can play the same one.\n\n[b]New options[/b] · Map of the day, Shuffle powers and Story mode.\n\n[color=#ffe08a][b]Overcharged robots[/b][/color], [b]Trial[/b] rooms, capsule elevators, and hazards: icicles, toxic gas and sparking floors."
+const WHATS_NEW_VER := "4.7"
+const WHATS_NEW := "[b]Robot codex[/b] · pause → Archive keeps lore and a fighting tip for every robot and guardian you meet.\n\n[b]A new map every game[/b] · bigger worlds across 26 districts. Share the map code from the pause screen.\n\n[b]New options[/b] · Map of the day, Shuffle powers and Story mode.\n\n[color=#ffe08a][b]Overcharged robots[/b][/color], [b]Trial[/b] rooms, capsule elevators, and hazards: icicles, toxic gas and sparking floors."
 
 func _fmt(n: int) -> String:
 	var s = str(n)
@@ -692,7 +692,7 @@ func pauseCard() -> void:
 		btns.append(["Fast travel", travelCard])
 	if ROOM != null and ROOM.kind == "save" and G.rush == null:
 		btns.append(["Claude's Exchange", func(): exchangeCard(pauseCard)])
-	if loreCount() or META.sable:
+	if loreCount() or META.sable or codexCount():
 		btns.append(["Archive", archiveCard, true])
 	btns.append(["Settings", func(): soundCard(pauseCard), true])
 	btns.append(["Controls", func(): controls(pauseCard), true])
@@ -822,7 +822,66 @@ func archiveCard() -> void:
 			b += "[color=#ffe08a][b]%s · %s[/b][/color]\n%s\n\n" % [DB.LV[a].ch, DB.T.LORE[a].h, DB.T.LORE[a].b]
 	if got == 0:
 		b += "No tablets yet. The Starblood hid their records well."
-	showCard({ey="Starblood archive", h="Data Tablets", tag="%d of 6 recovered" % got, b=b, btns=[["Back", pauseCard]]})
+	var btns = []
+	if codexCount():
+		btns.append(["Robot codex  (%d/%d)" % [codexCount(), CODEX_ORDER.size() + 6], codexCard])
+	btns.append(["Back", pauseCard, btns.size() > 0])
+	showCard({ey="Starblood archive", h="Data Tablets", tag="%d of 6 recovered" % got, b=b, btns=btns})
+
+# ---------- Robot codex: lore and a fighting tip for every robot you have met ----------
+const CODEX_ORDER := ["g", "r", "b", "c", "h", "d", "t", "B", "oc"]
+const CODEX := {
+	g = ["Ronin", "Hollowed swordframes, the first machines the Rift woke in the hangars. Quick, reckless and always closing in.",
+		"A Ronin stops for a heartbeat before every slash. Hit it, then hop back before the blade comes round."],
+	r = ["Trooper", "Gunners from the Iron Armory's drill halls, still running a firing doctrine nobody remembers writing.",
+		"Three rounds, then a reload. That reload is your opening: dash in and strike."],
+	b = ["Crusher", "Loader frames refitted for siege work. Slow and heavy, and they lob molten slag at anyone who keeps their distance.",
+		"Up close the hammer takes a long time to fall. From far away, watch for the arcing slag and keep moving."],
+	c = ["Volt", "Phase-shifted sentries that fold themselves through space and reappear wherever the fight is.",
+		"It fires a fan of three violet bolts. Get close and it blinks away, so jump between the bolts and hit it as it fades back in."],
+	h = ["Hound", "Four-legged hunters built to run down anything that flees. They hunt in packs on the open decks.",
+		"It crouches before it leaps. Jump over the pounce and hit it from behind while it skids."],
+	d = ["Drone", "Scout drones that hover just out of reach and call targets for the rest of the Hollowed.",
+		"It always keeps its distance. Double jump to reach it, or knock it down with a Starburst Roar."],
+	t = ["Turret", "Wall-mounted cannons left behind by the station's defences. They turn slowly, but never sleep.",
+		"Its barrel swings slowly. Circle under or over its aim, then close in while it is still turning."],
+	B = ["Iron Warden", "Elite Crusher commanders, plated twice over. When one wakes, the floor itself becomes a weapon.",
+		"Every hammer blow sends a shockwave racing along the floor both ways. Jump the waves, then punish the long recovery."],
+	oc = ["Overcharged", "Robots the Rift has overfed. Raw Aether leaks from every seam and gives them a gold glow.",
+		"Nearly twice the health and they hit a quarter harder, but each one bursts into 4 extra Stardust and a shower of coins. Trial rooms are full of them."],
+}
+
+func codexCard() -> void:
+	var cx: Dictionary = PREFS.get("codex", {})
+	var b = ""
+	for k in CODEX_ORDER:
+		if cx.has(k):
+			var c: Array = CODEX[k]
+			b += "[color=%s][b]%s[/b][/color]\n%s\n[color=#9de0a8]Tip:[/color] %s\n\n" % ["#ffd24a" if k == "oc" else "#ff7ad9", c[0], c[1], c[2]]
+	var miss := 0
+	for k in CODEX_ORDER:
+		if not cx.has(k):
+			miss += 1
+	for a in 5:
+		if cx.has("G" + str(a)):
+			var D0: Dictionary = DB.GUARD[a]
+			b += "[color=#ffe08a][b]%s · %s[/b][/color]\n[color=#9de0a8]Tip:[/color] %s\n\n" % [D0.name, D0.sub, D0.get("tip", "")]
+	if cx.has("M"):
+		b += "[color=#ff5a7a][b]Malakar · the Egg-Keeper[/b][/color]\nThe Starblood's own Egg-Keeper, who tore the Rift open and made the Hollowed. Beaten, but the Rift still hums.\n\n"
+	var gm := 0
+	for a in 5:
+		if not cx.has("G" + str(a)):
+			gm += 1
+	var rest = []
+	if miss:
+		rest.append("%d robot%s you have not met" % [miss, "s" if miss > 1 else ""])
+	if gm:
+		rest.append("%d guardian%s still standing" % [gm, "s" if gm > 1 else ""])
+	if not cx.has("M"):
+		rest.append("one who waits at the top of the Rift")
+	if rest.size():
+		b += "[color=#6a6488][b]Still unknown:[/b] " + ", ".join(rest) + ".[/color]"
+	showCard({ey="Starblood archive", h="Robot Codex", tag="%d of %d entries" % [cx.size(), CODEX_ORDER.size() + 6], b=b, btns=[["Back", archiveCard]]})
 
 func travelCard() -> void:
 	# random worlds have three stations each, so pick a world first, then a station in it
@@ -2404,10 +2463,13 @@ func _test_tick(dt: float) -> void:
 		match TEST.showcard:
 			"map": mapCard(false, toTitle)
 			"mode": modeCard(toTitle)
-			"new": showCard({ey="Aetherfall 4.6", h="What's new", b=WHATS_NEW, btns=[["Got it", toTitle]]})
+			"new": showCard({ey="Aetherfall 4.7", h="What's new", b=WHATS_NEW, btns=[["Got it", toTitle]]})
 			"code": codeCard(false, toTitle, "That code doesn't look right. Codes use letters and numbers only.")
 			"pause": togglePause()
 			"title": toTitle()
+			"codex":
+				PREFS.codex = {g=1, r=1, b=1, h=1, oc=1, G0=1, G1=1}
+				codexCard()
 	if TEST.get("noen", false):
 		en = []; spawnQ = []; shots = shots.filter(func(q): return q.friend)
 	if TEST.get("hzdbg", false) and f % 30 == 0 and ROOM != null:

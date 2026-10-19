@@ -1,6 +1,6 @@
 # Aetherfall devlog
 
-## 19 October 2026 · overnight build session (versions 4.1 – 4.4)
+## 19 October 2026 · overnight build session (versions 4.1 – 4.7)
 
 ### New for players
 - **Capsule elevators**: a glass tube in a lit shaft. Stand inside to charge it (green for up, amber for down), it fires a beam and launches; it is still glowing when you arrive.
@@ -20,6 +20,7 @@
 - **100% completion fixed on random maps** (4.6): found by the completionist bot. Random worlds had no Chapter VI shrine room, where the classic map keeps the sixth golden egg; it now waits in Chapter VI's first supply cache (old saves get it too). `--gencheck` now verifies every collectible exists exactly once per world.
 - **Personal records** (4.6): fastest clear per map code and mode, shown on the victory screen.
 - Long cards show a "more below" hint at phone font sizes.
+- **Robot codex** (4.7): pause → Archive → Robot codex. Every robot, guardian and Malakar you meet gets an entry with lore and a fighting tip; "New codex entry" pops up the first time. Kept across games.
 - **Balance check**: playing without god mode, the bot does the same on random maps as on the classic map (12 falls / 3 game overs vs 13 / 3); Chapter III is the hardest on both.
 
 ### Under the hood

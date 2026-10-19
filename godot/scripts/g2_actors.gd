@@ -893,6 +893,7 @@ func malSlash(b) -> void:
 
 func killBoss() -> void:
 	var b = boss
+	codexAdd("M")
 	b.dead = true
 	bossDone = true
 	G.score += 10000
@@ -1331,6 +1332,7 @@ func guardianDown(b) -> void:
 	var a: int = b.guard
 	var D0: Dictionary = DB.GUARD[a]
 	var had: bool = META.guards.has(str(a))
+	codexAdd("G" + str(a))
 	b.dead = true
 	boss = null
 	lock = false; camLock = null

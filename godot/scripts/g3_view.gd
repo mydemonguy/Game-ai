@@ -1717,6 +1717,11 @@ func corpse(type: String, x: float, y: float, face: int) -> void:
 
 func mkEnemyView(e) -> Dictionary:
 	var v: Dictionary
+	var nw: bool = codexAdd(e.type)
+	if e.get("oc", false):
+		nw = codexAdd("oc") or nw
+	if nw and G.state == "play":
+		ftext(e.x, e.y - e.h - 40, "New codex entry", "#9de0a8")
 	match e.type:
 		"t": v = mkTurret()
 		"g", "b", "B", "r", "c": v = mkRobot(e)
