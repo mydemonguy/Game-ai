@@ -1842,7 +1842,7 @@ func idleFrame(b, mv: bool) -> String:
 func mkGuardView(b) -> Dictionary:
 	var D0: Dictionary = DB.GUARD[b.guard]
 	var s = bossSprite(D0.art, D0.k, D.boss)
-	var aura = gI(0, 0, b.h * 2.4, D0.glow, .22); aura.z_index = zi(D.boss - .5); act_root.add_child(aura)
+	var aura = gI(0, 0, b.h * (2.9 if rushGold() else 2.4), "#ffd24a" if rushGold() else D0.glow, .22); aura.z_index = zi(D.boss - .5); act_root.add_child(aura)
 	var shield = gI(0, 0, 260, "#ffcc4a", 0); shield.z_index = zi(D.boss + .3); act_root.add_child(shield)
 	var sh = null if D0.get("fly", 0) == 1 else shadowObj()
 	var objs = [s, aura, shield]
@@ -1874,9 +1874,11 @@ func updGuardView(b, v) -> void:
 		s.self_modulate = Color.WHITE
 	else:
 		s.material = null
-		s.self_modulate = C("#ffb080") if (b.weak > 0 and int(lvT * 10) % 2) else Color.WHITE
+		s.self_modulate = C("#ffb080") if (b.weak > 0 and int(lvT * 10) % 2) else (Color(1.0, .9, .62) if rushGold() else Color.WHITE)
 	v.aura.position = Vector2(b.x, b.y - b.h * .5 + bob)
-	v.aura.modulate.a = .18 + .06 * sin(lvT * 3) + (.1 if b.phase == 2 else 0.0) + (.15 if b.weak > 0 else 0.0)
+	v.aura.modulate.a = .18 + .06 * sin(lvT * 3) + (.1 if b.phase == 2 else 0.0) + (.15 if b.weak > 0 else 0.0) + (.3 if rushGold() else 0.0)
+	if rushGold() and randf() < .5 * partMul:
+		part(b.x + (randf() - .5) * b.w * 1.2, b.y - randf() * b.h, (randf() - .5) * 60, -120 - randf() * 120, .9, "#ffd24a", 8 + randf() * 8, 0, "glow")
 	v.shield.position = Vector2(b.x + b.face * 120, b.y - b.h * .55)
 	v.shield.scale = Vector2(160 / 128.0, b.h * 1.1 / 128.0)
 	v.shield.modulate.a = .28 + .1 * sin(lvT * 20) if b.guarding else 0.0

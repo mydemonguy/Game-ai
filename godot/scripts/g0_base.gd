@@ -223,7 +223,10 @@ class Rng:
 
 # ---------- difficulty and progression helpers ----------
 func dm() -> float:
-	return (1.0 + G.lv * 0.12) * (1.45 if META.get("hard", 0) else 1.0)
+	return (1.0 + G.lv * 0.12) * (1.45 if META.get("hard", 0) else 1.0) * (1.25 if rushGold() else 1.0)
+
+func rushGold() -> bool:
+	return G.rush != null and G.rush.get("gold", false)
 
 func hasAb(id: String) -> bool:
 	return META.ab.has(id)
@@ -279,6 +282,7 @@ const FEATS := [
 	["fast", "Comet Run", "Beat the game in under two hours."],
 	["clean", "Unbroken", "Beat the game without falling once."],
 	["rush", "Gauntlet", "Clear Boss Rush."],
+	["gold", "Golden Gauntlet", "Clear Boss Rush with every guardian Overcharged."],
 	["codex", "Archivist", "Fill every page of the Robot codex."],
 ]
 

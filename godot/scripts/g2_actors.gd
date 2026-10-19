@@ -772,7 +772,7 @@ func startBoss() -> void:
 	sfx("boom"); sfx("broar", null, null, 1.0, .5)
 	shake = 16
 	var ac = arenaCam()
-	var hp = 5000.0 if META.hard else 3600.0
+	var hp = (5000.0 if META.hard else 3600.0) * (1.4 if rushGold() else 1.0)
 	boss = {isBoss=true, guard=null, name="", x=ac + W - RSAFE - 160, y=GY, w=200.0, h=420.0, hp=hp, max=hp, seed=0.0, face=-1, state="enter", t=2.6,
 		flash=0.0, vx=0.0, phase=1, dy=-800.0, hov=0.0, last="", fire=0.0, left=0, spin=0.0, dash2=false, sl2=0, hitP=false, mv=0.0, dead=false,
 		id=_nid(), v=null, heavy=true, fly=false, guarding=0, weak=0.0, fadeT=0.0}
@@ -953,7 +953,7 @@ func startGuardian(a: int) -> void:
 	lock = true; camLock = 0.0
 	clearEnemies(); spawnQ = []
 	bossTexLoad(D0.art)
-	var hp: float = D0.hp * (1.5 if META.hard else 1.0)
+	var hp: float = D0.hp * (1.5 if META.hard else 1.0) * (1.6 if rushGold() else 1.0)
 	boss = {isBoss=true, guard=a, name=D0.name, x=clampf(min(W * .33, pl.x - 520), 300, W - RSAFE - 200), y=FY, oy=-950.0, vy=0.0, w=float(D0.w), h=float(D0.h),
 		hp=hp, max=hp, face=1, state="enter", t=1.4, flash=0.0, vx=0.0, phase=1, fr="leap", seed=randf() * 10, last="", n=0, fadeT=0.0, guarding=0,
 		weak=0.0, heat=0, spin=0.0, next="", hitP=false, fire=0.0, trail=0.0, ax=0.0, ay=0.0, blkT=-1.0, dead=false, id=_nid(), v=null, heavy=true,

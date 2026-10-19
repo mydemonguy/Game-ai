@@ -372,7 +372,7 @@ func toTitle() -> void:
 		btns.append(["Continue", func(): continueGame()])
 	btns.append(["New game" if sv != null else "Begin the Saga", confirmNew if sv != null else startNew, sv != null])
 	if riftOpen:
-		btns.append(["Boss Rush", startRush, true])
+		btns.append(["Boss Rush", _rushBtn, true])
 	btns.append(["Co-op", coopCard, true])
 	if featCount() or codexCount():
 		btns.append(["Feats & codex", titleArchive, true])
@@ -387,7 +387,7 @@ func toTitle() -> void:
 	showCard({ey="A Starblood Saga · Six Worlds", h="Aetherfall", big=true, tag="One small dino. One stolen sky. One very big Rift.", b=b, btns=btns})
 
 const WHATS_NEW_VER := "4.8"
-const WHATS_NEW := "[color=#ffe08a][b]14 Feats[/b][/color] to earn, from beating a guardian without a scratch to clearing the Map of the day.\n\n[b]Robot codex[/b] · lore and a fighting tip for every robot and guardian you meet. Both are on the title screen and in pause → Archive.\n\n[b]A new map every game[/b] · bigger worlds across 26 districts. Share the map code from the pause screen.\n\n[b]New options[/b] · Map of the day, Shuffle powers and Story mode.\n\n[color=#ffe08a][b]Overcharged robots[/b][/color], [b]Trial[/b] rooms, capsule elevators, and hazards: icicles, toxic gas, sparking floors and new [b]void rifts[/b]."
+const WHATS_NEW := "[color=#ffe08a][b]15 Feats[/b][/color] to earn, plus lifetime Stats. Clear Boss Rush to unlock the [color=#ffd24a][b]Golden Gauntlet[/b][/color].\n\n[b]Robot codex[/b] · lore and a fighting tip for every robot and guardian you meet. Both are on the title screen and in pause → Archive.\n\n[b]A new map every game[/b] · bigger worlds across 26 districts. Share the map code from the pause screen.\n\n[b]New options[/b] · Map of the day, Shuffle powers and Story mode.\n\n[color=#ffe08a][b]Overcharged robots[/b][/color], [b]Trial[/b] rooms, capsule elevators, and hazards: icicles, toxic gas, sparking floors and new [b]void rifts[/b]."
 
 func _fmt(n: int) -> String:
 	var s = str(n)
@@ -952,6 +952,8 @@ func statsCard() -> void:
 			b += "%s  [b]%s[/b]\n" % [label, fmtTime(float(recs[ks[i]]))]
 	if G.rush == null and rushBest() > 0:
 		b += "\nBoss Rush best [b]%s[/b]" % fmtT(rushBest())
+		if rushBest(true) > 0:
+			b += " · Golden Gauntlet best [b]%s[/b]" % fmtT(rushBest(true))
 	showCard({ey="Starblood archive", h="Stats", b=b, btns=[["Back", _archGo]]})
 
 func featsCard() -> void:
@@ -1231,8 +1233,28 @@ func controls(back: Callable) -> void:
 	showCard({ey="How to play", h="Controls", fs=28, b=k, btns=[["Back", back]]})
 
 # ---------- Boss Rush ----------
-func rushBest() -> float:
-	return float(PREFS.get("rush", 0.0))
+var rushIsGold := false
+
+func _rushBtn() -> void:
+	if featHas("rush"):
+		rushCard()
+	else:
+		rushIsGold = false
+		startRush()
+
+func rushBest(gold := false) -> float:
+	return float(PREFS.get("rushG" if gold else "rush", 0.0))
+
+func rushCard() -> void:
+	var b = "Every guardian and the Void Sovereign, back to back.\n\nBest time [b]%s[/b]" % (fmtT(rushBest()) if rushBest() > 0 else "-")
+	b += "\n\n[color=#ffd24a][b]Golden Gauntlet[/b][/color] · the same fights, but every guardian is Overcharged: tougher, and hitting harder."
+	if rushBest(true) > 0:
+		b += " Best time [b]%s[/b]" % fmtT(rushBest(true))
+	showCard({ey="Boss Rush", h="Choose your gauntlet", b=b, btns=[["Boss Rush", func():
+		rushIsGold = false
+		startRush()], ["Golden Gauntlet", func():
+		rushIsGold = true
+		startRush()], ["Back", toTitle, true]]})
 
 func fmtT(t: float) -> String:
 	return "%d:%02d.%d" % [int(t / 60), int(fmod(t, 60)), int(fmod(t * 10, 10))]
@@ -1256,11 +1278,11 @@ func startRush() -> void:
 	m.arm = -1
 	META = m
 	DB.set_world(0)
-	G.rush = {i=0, t=0.0, next=0.0}
+	G.rush = {i=0, t=0.0, next=0.0, gold=rushIsGold}
 	G.score = 0
 	G.lives = 3
 	startGame(DB.RUSH[0], {x=W * .72, y=GY})
-	showBanner("Boss Rush", "Fight 1 of 6", 2)
+	showBanner("Golden Gauntlet" if rushIsGold else "Boss Rush", "Fight 1 of 6", 2)
 
 func rushEnd() -> void:
 	if G.rush != null and realMeta != null:
@@ -1270,24 +1292,27 @@ func rushEnd() -> void:
 
 func rushDone() -> void:
 	var t: float = G.rush.t
-	var best = rushBest()
+	var gold: bool = rushGold()
+	var best = rushBest(gold)
 	var nb = best == 0 or t < best
 	if nb:
-		PREFS.rush = t
+		PREFS["rushG" if gold else "rush"] = t
 		save_prefs()
 	rushEnd()
 	feat("rush")
+	if gold:
+		feat("gold")
 	G.state = "card"
 	padShow(false)
 	clearInput()
 	Sfx.music("victory")
-	showCard({ey="Boss Rush complete", h=fmtT(t), b=("[color=#ffd27a][b]New best time![/b][/color]" if nb else "Best time " + fmtT(best)) + "\n\nEvery guardian and the Void Sovereign, back to back. The Starblood would be proud.",
+	showCard({ey=("Golden Gauntlet" if gold else "Boss Rush") + " complete", h=fmtT(t), b=("[color=#ffd27a][b]New best time![/b][/color]" if nb else "Best time " + fmtT(best)) + ("\n\nEvery guardian Overcharged, and you still came out on top. The Starblood would be proud." if gold else "\n\nEvery guardian and the Void Sovereign, back to back. The Starblood would be proud."),
 		btns=[["Again", startRush], ["Title", toTitle, true]]})
 
 func rushFail() -> void:
 	var Rr: Dictionary = G.rush
 	rushEnd()
-	later(.9, func(): showCard({ey="Boss Rush", h="Tyko is down", b="You reached fight %d of 6 in %s." % [Rr.i + 1, fmtT(Rr.t)], btns=[["Try again", startRush], ["Title", toTitle, true]]}))
+	later(.9, func(): showCard({ey="Golden Gauntlet" if Rr.get("gold", false) else "Boss Rush", h="Tyko is down", b="You reached fight %d of 6 in %s." % [Rr.i + 1, fmtT(Rr.t)], btns=[["Try again", startRush], ["Title", toTitle, true]]}))
 
 # ---------- cards: one panel for every menu and story page ----------
 func build_theme() -> void:
@@ -1588,10 +1613,12 @@ func hudUpdate() -> void:
 	HU.ae.label_settings.font_color = C("#5ce1ff") if rdy else C("#9d97bd")
 	place(HU.ae, 48, 142, 0, 0)
 	if G.rush != null:
-		_tx(HU.rift, "◆ BOSS RUSH  " + fmtT(G.rush.t))
+		_tx(HU.rift, ("◆ GOLDEN GAUNTLET  " if rushGold() else "◆ BOSS RUSH  ") + fmtT(G.rush.t))
+		HU.rift.label_settings.font_color = C("#ffd24a") if rushGold() else C("#ff4a6a")
 		HU.rift.visible = true
 	else:
 		_tx(HU.rift, "◆ RIFT MODE")
+		HU.rift.label_settings.font_color = C("#ff4a6a")
 		HU.rift.visible = META.hard == 1
 	place(HU.rift, 528, 141, 1, 0)
 	var nx: float = 48 + HU.name.size.x + 30
@@ -1695,7 +1722,10 @@ func hudDraw(c: Control) -> void:
 	if boss != null and not boss.dead and boss.state != "enter":
 		var bw = 900.0
 		var bx = W / 2.0 - bw / 2.0
-		bar.call(bx, 164, bw, 20, boss.hp / boss.max, C("#7a0a2a"), C("#ff3d6e"))
+		if rushGold():
+			bar.call(bx, 164, bw, 20, boss.hp / boss.max, C("#8a5a00"), C("#ffd24a"))
+		else:
+			bar.call(bx, 164, bw, 20, boss.hp / boss.max, C("#7a0a2a"), C("#ff3d6e"))
 		for m in ([.5] if boss.guard != null else [.55, .25]):
 			c.draw_rect(Rect2(bx + bw * m - 1, 161, 2, 26), Color(1, 1, 1, .6))
 	if banner != null:
@@ -1911,6 +1941,8 @@ func _test_init() -> void:
 				TEST.walk = false
 			"rush":
 				TEST.rush = true
+			"gold":
+				rushIsGold = true
 			"showcard":
 				TEST.showcard = v
 			"gatetest":

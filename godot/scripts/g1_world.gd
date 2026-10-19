@@ -393,7 +393,7 @@ func updTrans(dt: float) -> void:
 			enterRoom(id, {x=600.0 if id == "5-8" else W * .72, y=GY})
 			pl.hp = min(pl.max, pl.hp + pl.max * .4)
 			pl.en = max(pl.en, 50)
-			showBanner("Boss Rush", "Fight " + str(a.rush + 1) + " of 6", 1.8)
+			showBanner("Golden Gauntlet" if rushGold() else "Boss Rush", "Fight " + str(a.rush + 1) + " of 6", 1.8)
 		elif a.has("travel"):
 			var to: Dictionary = DB.ROOMS[a.travel]
 			enterRoom(to.id, {x=to.station.x + 110, y=GY})
