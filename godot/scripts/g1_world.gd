@@ -333,6 +333,7 @@ func updTrans(dt: float) -> void:
 			enterRoom(to.id, {x=lx, y=GY})
 			if ROOM.lift != null:
 				ROOM.lift.arrive = 1.3
+				sfx("lift_arrive", null, null, .9, .3)
 			if first:
 				META.save = {room=to.id, x=lx + 170, score=G.score}
 				save_meta()
@@ -382,6 +383,9 @@ func updWorld(dt: float) -> void:
 		if not on:
 			o.lift.armed = 1
 		o.lift.hold = (o.lift.hold + dt) if (on and o.lift.armed) else 0.0
+		if o.lift.hold > 0 and not o.lift.get("ch", false):
+			sfx("lift_charge", o.lift.x, FY - 150, .9, .3)
+		o.lift.ch = o.lift.hold > 0
 		if on and o.lift.armed and (o.lift.hold > 1.1 or P.has("down")):
 			startTrans({lift=o.lift})
 	# lockdown arena
@@ -393,6 +397,8 @@ func updWorld(dt: float) -> void:
 			showBanner("Trial" if o.kind == "trial" else "Lockdown", ("Overcharged robots · " if o.kind == "trial" else "") + "Wave 1 of " + str(o.waves.size()), 1.4)
 			sfx("warn", null, null, 1.0, .15)
 			sfx("alarm", null, null, 1.0, 1.0)
+			if o.kind == "trial":
+				sfx("trial", null, null, 1.0, 1.0)
 			allyArena(o, 0)
 		elif lock and A.i >= 0 and spawnQ.is_empty() and en.is_empty():
 			A.i += 1

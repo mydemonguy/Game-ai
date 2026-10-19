@@ -1935,11 +1935,15 @@ func _campaign(f: int) -> void:
 			_cpGo(ROOM.id, {x=ROOM.station.x + 30, y=float(FY)})
 		if META.save != null and META.save.room == ROOM.id:
 			_cpLog("saved")
-			C.saved = a
+			if not C.has("savedW"):
+				C.savedW = {}
+			C.savedW[a] = 1
 			C.sub = ""
 		elif C.t > 200:
 			_cpFail("save station did not save")
-			C.saved = a
+			if not C.has("savedW"):
+				C.savedW = {}
+			C.savedW[a] = 1
 			C.sub = ""
 		return
 	if C.sub == "lift":
@@ -1991,7 +1995,7 @@ func _campaign(f: int) -> void:
 	if ROOM.kind == "shrine" and ROOM.shrine != null and ROOM.shrine.ab != null and not hasAb(ROOM.shrine.ab):
 		C.sub = "ability"; C.t = 0
 		return
-	if ROOM.kind == "save" and C.get("saved", -1) != a:
+	if ROOM.kind == "save" and not C.get("savedW", {}).has(a):
 		C.sub = "save"; C.t = 0
 		return
 	if TEST.get("full", false) and _cpRoomWants(ROOM).size() and C.get("skipRoom", "") != ROOM.id:
@@ -2008,14 +2012,18 @@ func _campaign(f: int) -> void:
 	var goal: String
 	if a < 5 and not hasAb(abilOf(a).id):
 		goal = _cpFind(a, "shrine")
-	elif C.get("saved", -1) != a:
+	elif not C.get("savedW", {}).has(a):
 		goal = _cpNearest(a, "save")
 	else:
 		goal = _cpFind(a, "liftDown" if a < 5 else "boss")
 		if TEST.get("full", false):
-			var want = _cpWanted(a if a < 5 else -1)
+			# anything reachable now in this world or an earlier one (backtracking for items that needed a later power)
+			var want = _cpWanted(-1).filter(func(id): return DB.ROOMS[id].a <= a)
 			if want.size():
 				goal = want[0]
+				if goal != C.get("lastGoal", ""):
+					_cpLog("heading for %s (%s)" % [goal, ",".join(_cpRoomWants(DB.ROOMS[goal]).map(func(q): return str(q.type))) ])
+				C.lastGoal = goal
 	if ROOM.id == goal:
 		if ROOM.kind == "liftDown":
 			C.sub = "lift"; C.t = 0

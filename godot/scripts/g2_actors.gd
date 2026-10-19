@@ -433,6 +433,7 @@ func damage(e, d: float, kb: float) -> void:
 		explode(e)
 		dropFrom(e)
 		if e.get("oc", false):
+			sfx("oc_die", e.x, e.y, 1.0, .1)
 			addDust(4)
 			for k in 4:
 				picks.append(mk_drop(e.x, e.y - e.h * .6, R(-320, 320), R(-950, -650), "coin", 12))
