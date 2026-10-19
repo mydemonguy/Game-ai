@@ -339,8 +339,8 @@ func toTitle() -> void:
 		return
 	showCard({ey="A Starblood Saga · Six Worlds", h="Aetherfall", big=true, tag="One small dino. One stolen sky. One very big Rift.", b=b, btns=btns})
 
-const WHATS_NEW_VER := "4.4"
-const WHATS_NEW := "[b]A new map every game[/b] · six bigger worlds across 26 districts, laid out fresh each time. Share the map code on your pause screen so friends can play the same one.\n\n[b]New options[/b] · Map of the day, Shuffle powers, and Story mode (40% less damage).\n\n[color=#ffe08a][b]Overcharged robots[/b][/color] glow gold and drop extra Stardust. Find a [b]Trial[/b] room in each world from Chapter II.\n\nPlus capsule elevators and a map coloured by district."
+const WHATS_NEW_VER := "4.5"
+const WHATS_NEW := "[b]A new map every game[/b] · six bigger worlds across 26 districts, laid out fresh each time. Share the map code on your pause screen so friends can play the same one.\n\n[b]New options[/b] · Map of the day, Shuffle powers, and Story mode (40% less damage).\n\n[color=#ffe08a][b]Overcharged robots[/b][/color] glow gold and drop extra Stardust. Find a [b]Trial[/b] room in each world from Chapter II.\n\nWatch your step: icy districts drop icicles, smoggy ones vent toxic gas, and neon floors spark.\n\nPlus capsule elevators and a map coloured by district."
 
 func _fmt(n: int) -> String:
 	var s = str(n)
@@ -1669,6 +1669,8 @@ func _test_init() -> void:
 						TEST.cp.gi = i
 			"hzdbg":
 				TEST.hzdbg = true
+			"noen":
+				TEST.noen = true
 			"armlift":
 				TEST.armlift = true
 			"memlog":
@@ -2327,10 +2329,12 @@ func _test_tick(dt: float) -> void:
 		match TEST.showcard:
 			"map": mapCard(false, toTitle)
 			"mode": modeCard(toTitle)
-			"new": showCard({ey="Aetherfall 4.4", h="What's new", b=WHATS_NEW, btns=[["Got it", toTitle]]})
+			"new": showCard({ey="Aetherfall 4.5", h="What's new", b=WHATS_NEW, btns=[["Got it", toTitle]]})
 			"code": codeCard(false, toTitle, "That code doesn't look right. Codes use letters and numbers only.")
 			"pause": togglePause()
 			"title": toTitle()
+	if TEST.get("noen", false):
+		en = []; spawnQ = []; shots = shots.filter(func(q): return q.friend)
 	if TEST.get("hzdbg", false) and f % 30 == 0 and ROOM != null:
 		print("HZ f=%d %s" % [f, str(ROOM.get("dhz", []).map(func(h): return [h.k, int(h.x), h.st, snappedf(hzPhase(h, 4.6 if h.k == "tox" else 4.0), .1)]))])
 	if TEST.get("armlift", false) and f == 30 and ROOM != null and ROOM.lift != null:

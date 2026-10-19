@@ -304,26 +304,32 @@ func genHazards(o: Dictionary) -> Array:
 	var r = Rng.new(hstr(o.id) + 77)
 	var n: int = max(1, int(o.w))
 	for i in n:
-		var x: float = o.RW * (i + .5) / n + (r.next() - .5) * o.RW / n * .4
-		var ok = x > 650 and x < o.RW - 650
-		for z in o.zones:
-			if x > z[0] - 260 and x < z[1] + 260:
-				ok = false
-		for g in o.gates:
-			if absf(g.x - x) < 520:
-				ok = false
-		for c in o.crates:
-			if absf(c - x) < 200:
-				ok = false
-		for it in o.items:
-			if absf(it.x - x) < 240:
-				ok = false
-		for pr in o.props:
-			if absf(pr.x - x) < 190:
-				ok = false
-		if ok:
-			out.append({k=k, x=x, ph=r.next() * 4.0, st="hang", t=0.0, y=70.0, y0=70.0, vy=0.0, tick=0.0, v=null})
+		for tries in 5:
+			var x: float = o.RW * (i + .5) / n + (r.next() - .5) * o.RW / n * .7
+			if _hzFree(o, x):
+				out.append({k=k, x=x, ph=r.next() * 4.0, st="hang", t=0.0, y=70.0, y0=70.0, vy=0.0, tick=0.0, v=null})
+				break
 	return out
+
+func _hzFree(o: Dictionary, x: float) -> bool:
+	if x < 650 or x > o.RW - 650:
+		return false
+	for z in o.zones:
+		if x > z[0] - 260 and x < z[1] + 260:
+			return false
+	for g in o.gates:
+		if absf(g.x - x) < 520:
+			return false
+	for c in o.crates:
+		if absf(c - x) < 200:
+			return false
+	for it in o.items:
+		if absf(it.x - x) < 240:
+			return false
+	for pr in o.props:
+		if absf(pr.x - x) < 190:
+			return false
+	return true
 
 func _nid() -> int:
 	eid += 1

@@ -15,6 +15,9 @@
 - Play time and falls are tracked; the victory screen shows them with the map code.
 - Title screen shows a random district behind the menu; a one-time *What's new* card after updating.
 - New sounds: capsule charge hum, arrival chime, Overcharged sparkle, trial horn.
+- **District hazards** (4.5): icy districts drop icicle clusters when you pass under (14 damage, regrow after 6 s), smoggy districts vent toxic gas on a cycle with a bubbling warning, neon districts have hazard-striped floor plates that flicker and then arc. Only in the new districts' halls, kept clear of doors, gates, items and machines.
+- **Map of the day** (4.5): the same map for everyone on a given day.
+- **Balance check**: playing without god mode, the bot does the same on random maps as on the classic map (12 falls / 3 game overs vs 13 / 3); Chapter III is the hardest on both.
 
 ### Under the hood
 - The map generator is versioned (`META.gv`). Saves made with version 4.0–4.3 keep exactly the map they started on.
