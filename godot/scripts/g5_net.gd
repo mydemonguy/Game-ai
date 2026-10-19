@@ -528,7 +528,7 @@ func _sendSnap() -> void:
 	S.p1 = [_r(p.x), _r(p.y), _r(p.vx), _r(p.vy), p.face, p.ground, p.atk, p.combo, p.dashT, p.dead, p.deadT, p.inv, p.hp, p.max, p.en, p.shield, p.fury, p.landT, p.run, p.squash, p.aegis, p.slam, p.ch, p.sup]
 	var E = []
 	for e in en:
-		E.append([e.id, e.type, _r(e.x), _r(e.y), e.face, e.state, e.t, e.hp, e.max, _r(e.vx), e.flash, e.fade, e.tp, e.la, e.n, e.seed, e.fly, e.w, e.h, e.heavy])
+		E.append([e.id, e.type, _r(e.x), _r(e.y), e.face, e.state, e.t, e.hp, e.max, _r(e.vx), e.flash, e.fade, e.tp, e.la, e.n, e.seed, e.fly, e.w, e.h, e.heavy, e.get("oc", false)])
 	S.en = E
 	var b = boss
 	if b != null and not b.dead:
@@ -767,7 +767,7 @@ func _applySnap(S: Dictionary) -> void:
 		e.type = r[1]; e.tx = r[2]; e.ty = r[3]; e.face = r[4]; e.state = r[5]; e.t = r[6]; e.hp = r[7]; e.max = r[8]; e.vx = r[9]
 		if r[10] > e.get("flash", 0.0):
 			e.flash = r[10]
-		e.fade = r[11]; e.tp = r[12]; e.la = r[13]; e.n = r[14]; e.seed = r[15]; e.fly = r[16]; e.w = r[17]; e.h = r[18]; e.heavy = r[19]
+		e.fade = r[11]; e.tp = r[12]; e.la = r[13]; e.n = r[14]; e.seed = r[15]; e.fly = r[16]; e.w = r[17]; e.h = r[18]; e.heavy = r[19]; e.oc = r[20] if r.size() > 20 else false
 		e.hy = e.ty
 		return e)
 	if S.has("bo"):

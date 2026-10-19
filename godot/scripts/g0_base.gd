@@ -21,6 +21,7 @@ var touchy = false
 var RSAFE = 200.0
 var K = {left=0, right=0, jump=0, attack=0, special=0, dash=0, down=0, arm=0, armc=0}
 var P = {}
+var ocForce := false   # tests: every robot spawns Overcharged
 var G = {state="menu", lv=0, score=0, paused=false, best=0, lives=3, respawnT=0.0, rush=null}
 var META: Dictionary = {}
 var pl = null

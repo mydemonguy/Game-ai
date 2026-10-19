@@ -325,6 +325,15 @@ func spawnEnemy(type: String, side: float, quiet := false):
 		fly=fly, hy=0.0, score=int(T.score), fade=0.0, tp=0.0, hitP=false, body=null, id=_nid(), v=null, dead=false, guard=null, isBoss=false,
 		la=null, wall=0, n=0, fire=0.0, beep=0, inside=0, ct=1.5 + randf() * 2, shotT=0.0}
 	e.hy = e.y
+	# Overcharged robots: rarer gold-lit versions, tougher and hitting harder, worth extra Stardust
+	e.oc = false
+	e.dmul = 1.0
+	if type in ["g", "r", "b", "c"] and G.rush == null and (ocForce or randf() < .04 + .03 * G.lv):
+		e.oc = true
+		e.dmul = 1.25
+		e.hp *= 1.9
+		e.max *= 1.9
+		e.score *= 2
 	if type == "c":
 		e.x = cam + 260 if side < 0 else cam + W - RSAFE - 60
 		e.y = FY; e.fade = 1.0; e.t = 1.2
@@ -423,6 +432,11 @@ func damage(e, d: float, kb: float) -> void:
 		shake = max(shake, 7.0)
 		explode(e)
 		dropFrom(e)
+		if e.get("oc", false):
+			addDust(4)
+			for k in 4:
+				picks.append(mk_drop(e.x, e.y - e.h * .6, R(-320, 320), R(-950, -650), "coin", 12))
+			ftext(e.x, e.y - e.h - 40, "Overcharged! +◆4", "#ffe08a", true)
 
 func updEnemy(e, dt: float) -> void:
 	var dx: float = pl.x - e.x
@@ -484,7 +498,7 @@ func updEnemy(e, dt: float) -> void:
 			var a0 = atan2(pl.y - 90 - (e.y - 120), dx)
 			for k in [-1, 0, 1]:
 				var a: float = a0 + k * .22
-				shots.append(mk_shot(e.x + e.face * 40, e.y - 120, cos(a) * 520, sin(a) * 520, 17, DB.ETYPES.c.dmg * dm(), false, 3, "#b48cff"))
+				shots.append(mk_shot(e.x + e.face * 40, e.y - 120, cos(a) * 520, sin(a) * 520, 17, DB.ETYPES.c.dmg * dm() * float(e.get("dmul", 1.0)), false, 3, "#b48cff"))
 			sEnemy("shot", e)
 			e.shotT = .5
 			muzzle(e.x + e.face * 60, e.y - 120, "#b48cff")
@@ -572,7 +586,7 @@ func updEnemy(e, dt: float) -> void:
 			var box = Rect2(e.x if e.face > 0 else e.x - reach, e.y - e.h, reach, e.h)
 			if overlap(box, pbox()):
 				e.hitP = true
-				hurtPlayer(T.dmg * dm(), e.face * (900 if hv else 450))
+				hurtPlayer(T.dmg * dm() * float(e.get("dmul", 1.0)), e.face * (900 if hv else 450))
 		if e.t <= 0:
 			e.state = "walk"
 			e.t = (1.6 if e.type == "B" else 1.3 if hv else .8) + randf() * .7
@@ -609,7 +623,7 @@ func updTrooper(e, dt: float, dx: float, ad: float) -> void:
 			var a = atan2(pl.y - 90 - y0, pl.x - x0)
 			a = clampf(a, -.5, .5) if e.face > 0 else (a if absf(a) > PI - .5 else (PI - .5 if a > 0 else -PI + .5))
 			var v = 900.0 + G.lv * 30
-			shots.append(mk_shot(x0, y0, cos(a) * v, sin(a) * v, 12, DB.ETYPES.r.dmg * dm(), false, 2.4, "#7fe9ff"))
+			shots.append(mk_shot(x0, y0, cos(a) * v, sin(a) * v, 12, DB.ETYPES.r.dmg * dm() * float(e.get("dmul", 1.0)), false, 2.4, "#7fe9ff"))
 			sEnemy("shot", e)
 			muzzle(x0, y0, "#7fe9ff")
 		if e.t <= 0:

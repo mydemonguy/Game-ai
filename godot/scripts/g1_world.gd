@@ -326,6 +326,8 @@ func updTrans(dt: float) -> void:
 			var prev: int = G.lv
 			var lx: float = to.lift.x if to.lift != null else 300.0
 			enterRoom(to.id, {x=lx, y=GY})
+			if ROOM.lift != null:
+				ROOM.lift.arrive = 1.3
 			if first:
 				META.save = {room=to.id, x=lx + 170, score=G.score}
 				save_meta()

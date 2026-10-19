@@ -648,6 +648,7 @@ func _mapLine() -> String:
 	return ("Map code [color=#ffe08a][b]%s[/b][/color]" % c if c != "" else "Classic map") + (" · powers shuffled" if META.get("perm", []).size() == 5 else "") + " · Time " + fmtTime(float(META.get("time", 0.0)))
 
 class MapView extends Control:
+	const ZCOL := [Color("#a8327a"), Color("#2f6f9a"), Color("#5f8a2a"), Color("#7448a8"), Color("#a86a24")]
 	var g
 	func _draw() -> void:
 		var a: int = g.G.lv
@@ -662,7 +663,7 @@ class MapView extends Control:
 		var ch: float = size.y
 		draw_rect(Rect2(0, 0, cw, ch), Color("#0a0814"))
 		draw_rect(Rect2(0, 0, cw, ch), Color(180 / 255.0, 140 / 255.0, 1, .35), false, 2)
-		var cs: float = min((cw - 80) / mw, (ch - 90) / mh)
+		var cs: float = min((cw - 80) / mw, (ch - 104) / mh)
 		var ox: float = (cw - mw * cs) / 2.0
 		var oy = 60.0
 		for i in mw + 1:
@@ -671,6 +672,11 @@ class MapView extends Control:
 			draw_line(Vector2(ox, oy + i * cs), Vector2(ox + mw * cs, oy + i * cs), Color(120 / 255.0, 200 / 255.0, 1, .1))
 		var M: Dictionary = g.META
 		var f: Font = DB.font_u
+		var zs = {}
+		for id in rooms:
+			var q: Dictionary = DB.ROOMS[id]
+			if q.has("zn") and not zs.has(q.zn) and (M.map.has(id) or M.mapped.has(str(a))):
+				zs[q.zn] = ZCOL[zs.size() % ZCOL.size()]
 		for id in rooms:
 			var o: Dictionary = DB.ROOMS[id]
 			var seen: bool = M.map.has(id)
@@ -685,6 +691,11 @@ class MapView extends Control:
 				draw_rect(Rect2(x + 1, y + 1, w - 2, h - 2), Color("#6a4a7a"), false, max(2.0, cs * .05))
 				continue
 			var col = Color("#2a8a5a") if o.kind == "save" else Color("#8a1a3a") if o.kind == "boss" else Color("#8a6a1a") if o.kind == "secret" else Color("#a8327a")
+			if o.has("th") and o.kind != "save" and o.kind != "boss" and o.kind != "secret":
+				# random worlds: colour each district by its own light
+				if not zs.has(o.zn):
+					zs[o.zn] = ZCOL[zs.size() % ZCOL.size()]
+				col = zs[o.zn]
 			draw_rect(Rect2(x + 1, y + 1, w - 2, h - 2), col)
 			for i in range(1, o.w):
 				draw_line(Vector2(x + i * cs, y + 2), Vector2(x + i * cs, y + h - 2), Color(1, .78, .94, .35))
@@ -721,6 +732,17 @@ class MapView extends Control:
 			var py: float = oy + o.gy * cs + min(o.h - .2, g.pl.y / 1080.0) * cs
 			draw_circle(Vector2(px, py - cs * .15), max(3.0, cs * .13), Color.WHITE)
 		draw_string(DB.font_d, Vector2(24, 44), String(DB.LV[a].name).to_upper(), HORIZONTAL_ALIGNMENT_LEFT, -1, 30, Color("#ece7ff"))
+		# district legend
+		var lx = 24.0
+		for zn in zs:
+			var lab: String = String(zn).trim_prefix("The ")
+			var lw = f.get_string_size(lab, HORIZONTAL_ALIGNMENT_LEFT, -1, 18).x
+			if lx + 26 + lw > cw - 10:
+				break
+			draw_rect(Rect2(lx, ch - 27, 16, 16), zs[zn])
+			draw_rect(Rect2(lx, ch - 27, 16, 16), Color("#ffd0f0"), false, 1.5)
+			draw_string(f, Vector2(lx + 22, ch - 13), lab, HORIZONTAL_ALIGNMENT_LEFT, -1, 18, Color("#cfc8ea"))
+			lx += 22 + lw + 22
 		var t = 0
 		for k in 2:
 			if M.tanks.has(str(a) + "-" + str(k)):
@@ -1577,15 +1599,19 @@ func _test_init() -> void:
 				G.lives = 3
 				G.score = 0
 				startGame("0-0", {x=300.0, y=GY})
-				TEST.cp = {a=0, goal="", path=[], sub="", t=0, fails=[], log=[], wf0=0, dmg=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], hurts=[0, 0, 0, 0, 0, 0], frames=[0, 0, 0, 0, 0, 0], done=false}
+				TEST.cp = {a=0, goal="", path=[], sub="", t=0, fails=[], log=[], wf0=0, dmg=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], hurts=[0, 0, 0, 0, 0, 0], frames=[0, 0, 0, 0, 0, 0], deaths=[0, 0, 0, 0, 0, 0], done=false}
 				print("CAMPAIGN start seed=", DB.WORLD_SEED)
 			"shuffle":
 				TEST.shuffle = true
+			"dbg":
+				TEST.dbg = true
+			"oc":
+				ocForce = true
 			"showcard":
 				TEST.showcard = v
 			"gatetest":
 				# --seed=N --room=ID:abilities --gatetest : run just the gate step of the campaign
-				TEST.cp = {a=G.lv, goal="", path=[], sub="gate", t=0, fails=[], log=[], wf0=0, dmg=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], hurts=[0, 0, 0, 0, 0, 0], frames=[0, 0, 0, 0, 0, 0], done=false, gdir=1, gi=0}
+				TEST.cp = {a=G.lv, goal="", path=[], sub="gate", t=0, fails=[], log=[], wf0=0, dmg=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], hurts=[0, 0, 0, 0, 0, 0], frames=[0, 0, 0, 0, 0, 0], deaths=[0, 0, 0, 0, 0, 0], done=false, gdir=1, gi=0}
 				for i in ROOM.gates.size():
 					if ROOM.gates[i].kind != "secret":
 						TEST.cp.gi = i
@@ -1787,6 +1813,21 @@ func _campaign(f: int) -> void:
 	var C: Dictionary = TEST.cp
 	if C.done:
 		return
+	# without --god the bot can fall: count it, and take "Continue from save" on game over
+	if pl != null and pl.dead and not C.get("wasDead", false):
+		C.deaths[clampi(G.lv, 0, 5)] += 1
+		_cpLog("fell (lives left %d)" % G.lives)
+	C.wasDead = pl != null and pl.dead
+	if G.state == "over":
+		KP.clear()
+		if cardOpen and f % 30 == 0:
+			for c in card_box.get_children():
+				if c is HFlowContainer and c.get_child_count() > 0:
+					c.get_child(0).emit_signal("pressed")
+					break
+			C.sub = ""
+			C.gameovers = C.get("gameovers", 0) + 1
+		return
 	if G.state == "card":
 		KP.clear()
 		if f % 20 == 0 and cardOpen:
@@ -1960,8 +2001,10 @@ func _cpNearest(a: int, kind: String) -> String:
 func _cpGate(f: int, C: Dictionary) -> void:
 	var g: Dictionary = ROOM.gates[C.gi]
 	var dir: int = C.gdir
-	var t: int = C.t
+	var t: int = C.t % 80      # each attempt takes 80 frames; a hit or a cooldown just means try again
 	KP.clear()
+	if t == 0:
+		en = en.filter(func(e): return absf(e.x - g.x) > 900)   # a player would clear nearby robots first
 	match g.kind:
 		"crack":
 			if t == 5:
@@ -1970,6 +2013,8 @@ func _cpGate(f: int, C: Dictionary) -> void:
 				KP["right" if dir > 0 else "left"] = true
 			if t == 14:
 				P["dash"] = 1
+			if t >= 12 and t <= 30 and t % 3 == 0 and TEST.get("dbg", false):
+				_cpLog("crack dbg t=%d x=%d vx=%d dashT=%.2f ground=%s hurt=%.2f gx=%d" % [t, pl.x, pl.vx, pl.dashT, str(pl.ground), pl.hurtT, g.x])
 		"laser":
 			if t == 5:
 				_cpGo(ROOM.id, {x=g.x - dir * 380.0, y=float(FY)}); pl.face = dir
@@ -2009,9 +2054,9 @@ func _cpGate(f: int, C: Dictionary) -> void:
 		if g.kind == "ledge":
 			C.ledgeDone = ROOM.id
 		C.sub = ""
-	elif t > 240:
+	elif C.t > 240:
 		KP.clear()
-		_cpFail("could not get past the %s gate" % g.kind)
+		_cpFail("could not get past the %s gate in 3 tries" % g.kind)
 		if g.kind == "ledge":
 			C.ledgeDone = ROOM.id
 		else:
@@ -2027,7 +2072,8 @@ func _cpFinish(f: int) -> void:
 	C.frames[C.a] = f - C.wf0
 	print("CAMPAIGN END seed=%d boss=%d frames=%d fails=%d" % [DB.WORLD_SEED, int(META.boss), f, C.fails.size()])
 	for a in 6:
-		print("  world %d frames=%d dmg=%d hurts=%d" % [a, C.frames[a], C.dmg[a], C.hurts[a]])
+		print("  world %d frames=%d dmg=%d hurts=%d falls=%d" % [a, C.frames[a], C.dmg[a], C.hurts[a], C.deaths[a]])
+	print("  gameovers=%d" % C.get("gameovers", 0))
 	for x in C.fails:
 		print("  FAIL ", x)
 	TEST.quit = f + 2
@@ -2067,10 +2113,11 @@ func _test_tick(dt: float) -> void:
 	if TEST.get("liftf", 0) > 0 and f == TEST.liftf + 120:
 		print("AFTER LIFT room=", ROOM.id, " state=", G.state, " pl=", int(pl.x), ",", int(pl.y), " th=", curTh())
 	if TEST.has("cp") and pl != null and G.lv >= 0 and G.lv < 6:
-		var lost: float = pl.max - pl.hp
-		if lost > 0.5 and TEST.get("god", false):
+		var lost: float = (pl.max - pl.hp) if TEST.get("god", false) else (TEST.cp.get("lastHp", pl.hp) - pl.hp)
+		if lost > 0.5 and not pl.dead:
 			TEST.cp.dmg[G.lv] += lost
 			TEST.cp.hurts[G.lv] += 1
+		TEST.cp.lastHp = pl.hp
 	if TEST.get("god", false) and pl != null:
 		pl.hp = float(pl.max)
 	if TEST.has("rooms") and f % 45 == 0 and G.state == "play":

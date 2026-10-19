@@ -885,6 +885,12 @@ func roomUpdate(dt: float) -> void:
 		var k: float = min(1.0, o.lift.hold / 1.1)
 		if TRANS.on and TRANS.act != null and TRANS.act.has("lift") and TRANS.phase == 0:
 			k = 1.0 + TRANS.t / transDur()
+		# just arrived: the capsule is still charged and fades down as you step out
+		var arr: float = o.lift.get("arrive", 0.0)
+		if arr > 0:
+			if G.state == "play" and not TRANS.on:
+				o.lift.arrive = arr - get_process_delta_time()
+			k = max(k, 1.0 + min(1.0, arr) * .8)
 		lightW(o.lift.x, FY - 160, 320 + 120 * k, .8 + .4 * min(k, 1.0))
 		q.bar.visible = o.lift.hold > 0 and k < 1.0
 		q.bar.scale.x = min(1.0, k)
@@ -1502,10 +1508,17 @@ func mkRobot(e) -> Dictionary:
 	s.centered = false
 	s.offset = -Vector2(M.ax, M.ay)
 	var core = gI(0, -M.h * .55, 70, "#ff4fd8", .0)
-	var root = Cn(0, 0, [s, core])
+	var kids = [s, core]
+	var aura = null
+	if e.get("oc", false):
+		aura = gI(0, -M.h * .5, M.h * 1.8, "#ffd24a", .45)
+		kids.push_front(aura)
+	var root = Cn(0, 0, kids)
 	if e.type == "B":
 		s.self_modulate = C("#ffc0b0")
-	return {root=root, spr=s, core=core, key=key, M=M, sc=ROBOT_SC[e.type]}
+	if e.get("oc", false):
+		s.self_modulate = C("#ffe7a8")
+	return {root=root, spr=s, core=core, key=key, M=M, sc=ROBOT_SC[e.type] * (1.12 if e.get("oc", false) else 1.0), aura=aura}
 
 func _af(M: Dictionary, anim: String, q: float, loop := false) -> int:
 	var A: Array = M.anims.get(anim, M.anims.idle)
@@ -1521,6 +1534,8 @@ func updRobot(e, v) -> Dictionary:
 	var fr: int
 	var moving: bool = absf(e.vx) > 30
 	var walkF = _af(M, "walk", lvT * 1.3 + e.seed, true) if moving else _af(M, "idle", lvT * .9 + e.seed, true)
+	if v.get("aura") != null:
+		v.aura.modulate.a = .38 + .16 * sin(lvT * 5 + e.seed)
 	match e.type:
 		"g":
 			if st == "wind":
@@ -1636,7 +1651,7 @@ func updEnemyView(e, v) -> void:
 		MARKS.append([e.x, r.warn])
 	if r.wg != null:
 		WGL.append(r.wg)
-	if e.hp < e.max:
+	if e.hp < e.max or e.get("oc", false):
 		BARS.append([e, r.bar])
 	lightW(e.x, r.get("ly", e.y) - e.h * .6, 170.0 if e.fly else 130.0, .55)
 
@@ -2122,8 +2137,11 @@ func _draw_bars() -> void:
 		var w: float = max(70.0, e.w + 20)
 		var x: float = e.x - w / 2.0
 		var f: float = max(0.0, e.hp / e.max)
+		var oc: bool = e.get("oc", false)
 		g.draw_rect(Rect2(x - 2, y - 2, w + 4, 12), Color(5 / 255.0, 4 / 255.0, 12 / 255.0, .75))
-		g.draw_rect(Rect2(x, y, w * f, 8), C("#ff3d6e"))
+		if oc:
+			g.draw_rect(Rect2(x - 4, y - 4, w + 8, 16), Color(1, .82, .3, .55 + .25 * sin(lvT * 6)), false, 2)
+		g.draw_rect(Rect2(x, y, w * f, 8), C("#ffcc3a") if oc else C("#ff3d6e"))
 		g.draw_rect(Rect2(x, y, w * f, 2), Color(1, 1, 1, .35))
 
 func _draw_hza() -> void:
