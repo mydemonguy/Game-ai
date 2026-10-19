@@ -238,10 +238,12 @@ func slamLand(p, y: float) -> void:
 	dust(p.x, y); dust(p.x + 60, y); dust(p.x - 60, y)
 	for i in 16:
 		part(p.x + (randf() - .5) * 300, y - 6, (randf() - .5) * 500, -300 - randf() * 400, .6, "#ffb347", 6, 1500)
+	_pierce = true
 	for e in en:
 		if not e.fly and absf(e.x - p.x) < 280 and absf(e.y - y) < 60:
 			damage(e, 32 * pdm(), sgn(e.x - p.x) * 700)
 			e.state = "walk"; e.t = 1.0
+	_pierce = false
 	if boss != null and not boss.dead and absf(boss.x - p.x) < 300:
 		damage(boss, 40 * pdm(), 0)
 	slamAt(p.x)
@@ -410,6 +412,12 @@ func spawnEnemy(type: String, side: float, quiet := false):
 		e.hp *= 1.9
 		e.max *= 1.9
 		e.score *= 2
+	e.aegis = false
+	if type == "r" and (aegisForce or ((G.rush == null and G.lv >= 2) or endlessWave() >= 8) and randf() < .35):
+		e.aegis = true
+		e.hp *= 1.15
+		e.max *= 1.15
+		e.score += 100
 	if type == "c":
 		e.x = cam + 260 if side < 0 else cam + W - RSAFE - 60
 		e.y = FY; e.fade = 1.0; e.t = 1.2
@@ -466,6 +474,24 @@ func damage(e, d: float, kb: float) -> void:
 	if e.guard != null:
 		d = guardHit(e, d)
 		if d == 0:
+			return
+	if aegisUp(e) and kb != 0 and sgn(kb) == -float(e.face):
+		var sy: float = e.y - e.h * .55
+		if _pierce:
+			# roar waves and ground slams knock the shield out for a few seconds
+			e.brk = 4.0
+			aegisStats.brk += 1
+			ring(e.x - e.face * 70, sy, "#7fe9ff", 200)
+			burst(e.x - e.face * 70, sy, "#bff6ff", 18, 600)
+			sfx("fizz", e.x, e.y, 1.0, .1, .8)
+			ftext(e.x, e.y - e.h - 30, "Shield down!", "#7fe9ff", true)
+		else:
+			aegisStats.block += 1
+			sparks(e.x - e.face * 80, sy, "#bff6ff", 10, -float(e.face))
+			sfx("block", e.x, e.y, .9, .06)
+			ftext(e.x - e.face * 60, e.y - e.h - 10, "Blocked", "#7fe9ff")
+			if pl:
+				pl.hitsT = 1.8
 			return
 	d = round(d)
 	e.hp -= d
@@ -677,6 +703,8 @@ func updEnemy(e, dt: float) -> void:
 
 ## Trooper: keeps its distance, fires a three-round burst, then has to reload (free hits!)
 func updTrooper(e, dt: float, dx: float, ad: float) -> void:
+	if e.get("brk", 0.0) > 0:
+		e.brk = max(0.0, e.brk - dt)
 	if e.state != "shoot":
 		e.face = int(sgn(dx)) if dx != 0 else 1
 	if e.state == "walk":
@@ -1482,7 +1510,9 @@ func updShots(dt: float) -> void:
 					continue
 				if circleBox(s, ebox(e)):
 					s.hit[e.id] = 1
+					_pierce = s.get("pierce", false)
 					damage(e, s.dmg * (1 + G.lv * .05), sgn(s.vx) * 500)
+					_pierce = false
 					if not s.pierce:
 						s.life = 0.0
 						if s.boom:

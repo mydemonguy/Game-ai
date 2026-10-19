@@ -1,6 +1,6 @@
 # Aetherfall devlog
 
-## 19 October 2026 · overnight build session (versions 4.1 – 4.10)
+## 19 October 2026 · overnight build session (versions 4.1 – 4.11)
 
 ### New for players
 - **Capsule elevators**: a glass tube in a lit shaft. Stand inside to charge it (green for up, amber for down), it fires a beam and launches; it is still glowing when you arrive.
@@ -18,6 +18,7 @@
 - **District hazards** (4.5): icy districts drop icicle clusters when you pass under (14 damage, regrow after 6 s), smoggy districts vent toxic gas on a cycle with a bubbling warning, neon districts have hazard-striped floor plates that flicker and then arc. Only in the new districts' halls, kept clear of doors, gates, items and machines.
 - **Map of the day** (4.5): the same map for everyone on a given day.
 - **100% completion fixed on random maps** (4.6): found by the completionist bot. Random worlds had no Chapter VI shrine room, where the classic map keeps the sixth golden egg; it now waits in Chapter VI's first supply cache (old saves get it too). `--gencheck` now verifies every collectible exists exactly once per world.
+- **Aegis Troopers** (4.11): from Chapter III (and wave 8 of Endless Siege) about a third of Troopers carry a cyan front shield that blocks every hit while they walk and aim. It drops while they fire and reload, and a Starburst Roar or Ground Slam knocks it out for 4 s. New codex entry (16 now). Bot check: 22 blocked hits and 9 shield breaks in one Endless run.
 - **Endless Siege** (4.10): title → Challenges. One locked room (the Iron Armory arena), waves that never stop: bigger each wave, more Overcharged robots, an Iron Warden every 10th wave, health back every 5 waves. Best wave is saved; Siege Breaker feat at wave 15. Bot (no god mode, full loadout) reached wave 26.
 - **Photo mode** (4.10): pause → Photo mode hides the HUD, buttons and menus so you can screenshot the scene; tap or press anything to come back. Single-player only.
 - **Overcharged hounds and drones** (4.10): they can now spawn gold-lit too, with the same extra health, damage and Stardust.

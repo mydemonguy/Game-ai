@@ -21,7 +21,9 @@ var touchy = false
 var RSAFE = 200.0
 var K = {left=0, right=0, jump=0, attack=0, special=0, dash=0, down=0, arm=0, armc=0}
 var P = {}
-var ocForce := false   # tests: every robot spawns Overcharged
+var ocForce := false
+var aegisForce := false
+var aegisStats := {block=0, brk=0}   # tests: every robot spawns Overcharged
 var G = {state="menu", lv=0, score=0, paused=false, best=0, lives=3, respawnT=0.0, rush=null}
 var META: Dictionary = {}
 var pl = null
@@ -270,6 +272,16 @@ func codexAdd(k: String) -> bool:
 	save_prefs()
 	return true
 
+const CODEX_TOTAL := 16
+
+## Aegis Troopers carry a front energy shield while they walk and aim; it drops while they fire and reload
+var _pierce := false
+
+func aegisUp(e) -> bool:
+	if NETR == "client":
+		return e.get("aeg", false)
+	return e.get("aegis", false) and e.state == "walk" and float(e.get("brk", 0.0)) <= 0.0
+
 func codexCount() -> int:
 	return PREFS.get("codex", {}).size() if typeof(PREFS.get("codex", {})) == TYPE_DICTIONARY else 0
 
@@ -343,7 +355,7 @@ func featTick() -> void:
 		feat("fangs")
 	if not featHas("full") and completion() >= 100:
 		feat("full")
-	if not featHas("codex") and codexCount() >= 15:
+	if not featHas("codex") and codexCount() >= CODEX_TOTAL:
 		feat("codex")
 
 func loreCount() -> int:

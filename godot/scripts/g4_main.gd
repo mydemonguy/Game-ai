@@ -418,8 +418,8 @@ func toTitle() -> void:
 		return
 	showCard({ey="A Starblood Saga · Six Worlds", h="Aetherfall", big=true, tag="One small dino. One stolen sky. One very big Rift.", b=b, btns=btns})
 
-const WHATS_NEW_VER := "4.10"
-const WHATS_NEW := "[color=#b48cff][b]Endless Siege[/b][/color] · title → Challenges: one locked room, waves that never stop. Also [b]Photo mode[/b] in the pause menu, and Overcharged hounds and drones.\n\n[b]Map of the day streaks[/b], [color=#ffe08a][b]16 Feats[/b][/color], lifetime Stats, and the [color=#ffd24a][b]Golden Gauntlet[/b][/color] after Boss Rush.\n\n[b]Robot codex[/b] · lore and a fighting tip for every robot and guardian you meet. Both are on the title screen and in pause → Archive.\n\n[b]A new map every game[/b] · bigger worlds across 26 districts. Share the map code from the pause screen.\n\n[b]New options[/b] · Map of the day, Shuffle powers and Story mode.\n\n[color=#ffe08a][b]Overcharged robots[/b][/color], [b]Trial[/b] rooms, capsule elevators, and hazards: icicles, toxic gas, sparking floors and new [b]void rifts[/b]."
+const WHATS_NEW_VER := "4.11"
+const WHATS_NEW := "[color=#7fe9ff][b]Aegis Troopers[/b][/color] · from Chapter III, some Troopers carry a front shield. Hit them while they fire and reload, or break it with a Roar or Slam.\n\n[color=#b48cff][b]Endless Siege[/b][/color] · title → Challenges: one locked room, waves that never stop. Also [b]Photo mode[/b] in the pause menu, and Overcharged hounds and drones.\n\n[b]Map of the day streaks[/b], [color=#ffe08a][b]16 Feats[/b][/color], lifetime Stats, and the [color=#ffd24a][b]Golden Gauntlet[/b][/color] after Boss Rush.\n\n[b]Robot codex[/b] · lore and a fighting tip for every robot and guardian you meet. Both are on the title screen and in pause → Archive.\n\n[b]A new map every game[/b] · bigger worlds across 26 districts. Share the map code from the pause screen.\n\n[b]New options[/b] · Map of the day, Shuffle powers and Story mode.\n\n[color=#ffe08a][b]Overcharged robots[/b][/color], [b]Trial[/b] rooms, capsule elevators, and hazards: icicles, toxic gas, sparking floors and new [b]void rifts[/b]."
 
 func _fmt(n: int) -> String:
 	var s = str(n)
@@ -957,7 +957,7 @@ func archiveCard() -> void:
 	showCard({ey="Starblood archive", h="Data Tablets", tag="%d of 6 recovered" % got, b=b, btns=btns})
 
 # ---------- Robot codex: lore and a fighting tip for every robot you have met ----------
-const CODEX_ORDER := ["g", "r", "b", "c", "h", "d", "t", "B", "oc"]
+const CODEX_ORDER := ["g", "r", "b", "c", "h", "d", "t", "B", "aegis", "oc"]
 const CODEX := {
 	g = ["Ronin", "Hollowed swordframes, the first machines the Rift woke in the hangars. Quick, reckless and always closing in.",
 		"A Ronin stops for a heartbeat before every slash. Hit it, then hop back before the blade comes round."],
@@ -975,6 +975,8 @@ const CODEX := {
 		"Its barrel swings slowly. Circle under or over its aim, then close in while it is still turning."],
 	B = ["Iron Warden", "Elite Crusher commanders, plated twice over. When one wakes, the floor itself becomes a weapon.",
 		"Every hammer blow sends a shockwave racing along the floor both ways. Jump the waves, then punish the long recovery."],
+	aegis = ["Aegis Trooper", "Troopers from the Null Citadel's honour guard, carrying a projected shield that stops anything from the front.",
+		"The shield is only up while it walks and aims. Strike while it fires and reloads, or break the shield for a few seconds with a Starburst Roar or a Ground Slam."],
 	oc = ["Overcharged", "Robots the Rift has overfed. Raw Aether leaks from every seam and gives them a gold glow.",
 		"Nearly twice the health and they hit a quarter harder, but each one bursts into 4 extra Stardust and a shower of coins. Trial rooms are full of them."],
 }
@@ -991,7 +993,7 @@ func titleArchive() -> void:
 	btns.append(["Back", func():
 		_archBack = Callable()
 		toTitle(), true])
-	showCard({ey="Starblood archive", h="Feats & Codex", b="Kept across every game you play on this device.\n\nFeats earned [b]%d of %d[/b] · Codex entries [b]%d of 15[/b]" % [featCount(), FEATS.size(), codexCount()], btns=btns})
+	showCard({ey="Starblood archive", h="Feats & Codex", b="Kept across every game you play on this device.\n\nFeats earned [b]%d of %d[/b] · Codex entries [b]%d of %d[/b]" % [featCount(), FEATS.size(), codexCount(), CODEX_TOTAL], btns=btns})
 
 func _archGo() -> void:
 	if _archBack.is_valid():
@@ -1033,7 +1035,7 @@ func featsCard() -> void:
 		if f[0] == "oc25" and not got:
 			extra = "  (%d/25)" % min(25, int(PREFS.get("ocK", 0)))
 		if f[0] == "codex" and not got:
-			extra = "  (%d/15)" % codexCount()
+			extra = "  (%d/%d)" % [codexCount(), CODEX_TOTAL]
 		if got:
 			b += "[color=#ffd24a]★[/color] [color=#ffe08a][b]%s[/b][/color] · %s\n" % [f[1], f[2]]
 		else:
@@ -2041,6 +2043,8 @@ func _test_init() -> void:
 				TEST.dbg = true
 			"oc":
 				ocForce = true
+			"aegis":
+				aegisForce = true
 			"full":
 				TEST.full = true
 			"nowalk":
@@ -2768,7 +2772,7 @@ func _test_tick(dt: float) -> void:
 		match TEST.showcard:
 			"map": mapCard(false, toTitle)
 			"mode": modeCard(toTitle)
-			"new": showCard({ey="Aetherfall 4.10", h="What's new", b=WHATS_NEW, btns=[["Got it", toTitle]]})
+			"new": showCard({ey="Aetherfall 4.11", h="What's new", b=WHATS_NEW, btns=[["Got it", toTitle]]})
 			"code": codeCard(false, toTitle, "That code doesn't look right. Codes use letters and numbers only.")
 			"pause": togglePause()
 			"title": toTitle()
@@ -2880,7 +2884,7 @@ func _test_tick(dt: float) -> void:
 			img.save_png(s[1])
 			print("shot ", s[1], " state=", G.state, " room=", ROOM.id if ROOM else "-", " hp=", pl.hp if pl else -1, " en=", en.size(), " boss=", boss != null)
 	if TEST.quit > 0 and f >= TEST.quit:
-		print("TEST END seed=", DB.WORLD_SEED, " net=", NETR, " p2=", [int(pl2.x), int(pl2.y), pl2.ch, pl2.hp] if pl2 != null else null, " me=", [int(pl.x), int(pl.y), pl.ch] if pl != null else null, " frame=", f, " state=", G.state, " room=", ROOM.id if ROOM else "-", " hp=", pl.hp if pl else -1, " score=", G.score, " dust=", META.dust, " lives=", G.lives, " map=", META.map.size(), " guards=", META.guards.keys(), " ab=", META.ab.keys(), " cleared=", META.cleared.keys())
+		print("TEST END seed=", DB.WORLD_SEED, " net=", NETR, " p2=", [int(pl2.x), int(pl2.y), pl2.ch, pl2.hp] if pl2 != null else null, " me=", [int(pl.x), int(pl.y), pl.ch] if pl != null else null, " frame=", f, " state=", G.state, " room=", ROOM.id if ROOM else "-", " hp=", pl.hp if pl else -1, " score=", G.score, " dust=", META.dust, " lives=", G.lives, " map=", META.map.size(), " guards=", META.guards.keys(), " ab=", META.ab.keys(), " cleared=", META.cleared.keys(), " aegis=", aegisStats)
 		get_tree().quit()
 
 func _bot(f: int) -> void:

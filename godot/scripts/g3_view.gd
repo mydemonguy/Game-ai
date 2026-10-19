@@ -1673,6 +1673,34 @@ func _af(M: Dictionary, anim: String, q: float, loop := false) -> int:
 	i = posmod(i, n) if loop else clampi(i, 0, n - 1)
 	return int(A[i])
 
+## the Aegis Trooper's front shield: a cyan arc that flips with the robot (child of its root)
+func mkAegis(v) -> Node2D:
+	var n = Node2D.new()
+	var h: float = float(v.M.h)
+	var fill = Polygon2D.new()
+	var edge = Line2D.new()
+	var pts = PackedVector2Array()
+	var cx: float = 30.0
+	var cy: float = -h * .5
+	for i in 13:
+		var a: float = lerpf(-1.1, 1.1, i / 12.0)
+		pts.append(Vector2(cx + cos(a) * 70, cy + sin(a) * h * .48))
+	var poly = PackedVector2Array(pts)
+	for i in range(12, -1, -1):
+		var a: float = lerpf(-1.1, 1.1, i / 12.0)
+		poly.append(Vector2(cx + cos(a) * 52, cy + sin(a) * h * .44))
+	fill.polygon = poly
+	fill.color = Color(.5, .92, 1.0, .28)
+	fill.material = MAT_ADD
+	edge.points = pts
+	edge.width = 5
+	edge.default_color = Color("#bff6ff")
+	edge.material = MAT_ADD
+	n.add_child(fill)
+	n.add_child(edge)
+	v.root.add_child(n)
+	return n
+
 func updRobot(e, v) -> Dictionary:
 	var M: Dictionary = v.M
 	var st: String = e.state
@@ -1792,6 +1820,15 @@ func mkEnemyView(e) -> Dictionary:
 
 func updEnemyView(e, v) -> void:
 	var r: Dictionary
+	if e.type == "r":
+		var au: bool = aegisUp(e)
+		if au and not v.has("aeg"):
+			v.aeg = mkAegis(v)
+			if codexAdd("aegis") and G.state == "play":
+				ftext(e.x, e.y - e.h - 40, "New codex entry", "#9de0a8")
+		if v.has("aeg"):
+			v.aeg.visible = au
+			v.aeg.modulate.a = .75 + .25 * sin(lvT * 9 + e.seed)
 	match e.type:
 		"t": r = updTurretV(e, v)
 		"h": r = updHound(e, v)
