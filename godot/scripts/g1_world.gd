@@ -175,6 +175,20 @@ func enterRoom(id: String, how: Dictionary) -> void:
 	lock = false; camLock = null; ally = null; PLUGS = []; boss = null
 	bossDone = int(META.boss) == 1
 	o.arena = null; o.bossT = 1.4
+	# Shuffle powers: this world's shrine and gate use a different power
+	if o.a < 5 and int(META.get("perm", []).size()) == 5:
+		var Ab: Dictionary = abilOf(o.a)
+		if o.shrine != null and o.shrine.ab != null:
+			o.shrine.ab = Ab.id
+		for i in o.gates.size():
+			var g0: Dictionary = o.gates[i]
+			if g0.kind != "secret" and g0.kind != Ab.gate:
+				o.gates[i] = mkGate(Ab.gate, g0.x)
+				if Ab.gate == "laser":
+					o.items.append({type="shard", id=null, x=g0.x - 320, y=GY - 80, cage=-1})
+					o.items.append({type="shard", id=null, x=g0.x - 420, y=GY - 80, cage=-1})
+				var clr = 900.0 if Ab.gate == "ledge" else 600.0
+				o.plats = o.plats.filter(func(p): return p.get("iso", 0) or absf(p.x + p.w / 2.0 - g0.x) > clr)
 	for i in o.gates.size():
 		var g: Dictionary = o.gates[i]
 		g.broken = 1 if META.gates.has(o.id + ":g" + str(i)) else 0

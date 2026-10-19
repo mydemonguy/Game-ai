@@ -297,6 +297,8 @@ func hurtPlayer(d: float, kx: float) -> void:
 		return
 	if p.hp <= 0:
 		p.hp = 0.0
+		if p == pl and G.rush == null:
+			META.deaths = int(META.get("deaths", 0)) + 1
 		if G.lives > 0:
 			G.lives -= 1
 			p.dead = 1; p.deadT = 0.0; p.vx = 0.0; p.inv = 99.0
@@ -1807,10 +1809,18 @@ func npcHint() -> String:
 			"When Malakar raises his blade, he is about to dash. Get ready to jump.", "In his last phase he dashes twice. Do not stop moving."][int(lvT / 8) % 3]
 	if not gDone(a):
 		return "The shrine guardian here is %s. %s" % [DB.GUARD[a].name, DB.GUARD[a].tip]
-	if not hasAb(DB.ABIL[a].id):
-		return "The shrine is awake now. Go and claim the %s!" % DB.ABIL[a].name
+	var A0: Dictionary = abilOf(a)
+	if not hasAb(A0.id):
+		return "The shrine is awake now. Go and claim the %s!" % A0.name
+	var rnd: bool = DB.WORLD_SEED != 0
 	if not META.items.has("sfang" + str(a)):
-		return "My sensors ping a hollow wall in this world's climbing shaft, halfway up on the west side. Give it a good scratch."
+		if not rnd:
+			return "My sensors ping a hollow wall in this world's climbing shaft, halfway up on the west side. Give it a good scratch."
+		for id in DB.AREAS[a]:
+			var o: Dictionary = DB.ROOMS[id]
+			for d in o.doors:
+				if DB.ROOMS[d.to].kind == "secret":
+					return "My sensors ping a hollow wall %s, by the west door of %s %s. Give it a good scratch." % [_dirTo(o), "a climbing shaft" if o.kind == "shaft" else "a hall", "in " + String(o.zn)]
 	for k in [0, 1]:
 		if not META.tanks.has(str(a) + "-" + str(k)):
 			var need: String = NEED[DB.TANKS[a][k]]
@@ -1819,11 +1829,27 @@ func npcHint() -> String:
 				if q.id == need:
 					ab = q
 			var place = "at the far end of the gate hall" if k else "in the room just below this station"
-			return "An Energy Tank is waiting %s. " % place + ("You already have what you need to reach it." if hasAb(ab.id) else "You will need the %s from a later world." % ab.name)
+			if rnd:
+				for id in DB.AREAS[a]:
+					for it in DB.ROOMS[id].items:
+						if it.type == "tank" and it.id == str(a) + "-" + str(k):
+							place = "in a side room %s, in %s" % [_dirTo(DB.ROOMS[id]), DB.ROOMS[id].zn]
+			return "An Energy Tank is waiting %s. " % place + ("You already have what you need to reach it." if hasAb(ab.id) else "You will need the %s first." % ab.name)
 	if not META.items.has("egg" + str(a)):
 		return "A Golden Egg is tucked up high at the far end of the shrine room."
+
 	var idle: Array = DB.T.NPC_IDLE
 	return idle[int(lvT / 9) % idle.size()]
+
+## rough direction from this room to another, for hints
+func _dirTo(o: Dictionary) -> String:
+	var dx: float = (o.gx + o.w / 2.0) - (ROOM.gx + ROOM.w / 2.0)
+	var dy: float = (o.gy + o.h / 2.0) - (ROOM.gy + ROOM.h / 2.0)
+	if absf(dx) < 1 and absf(dy) < 1:
+		return "close by"
+	if absf(dy) > absf(dx) * 1.5:
+		return "above here" if dy < 0 else "below here"
+	return ("to the east" if dx > 0 else "to the west") + (" and up" if dy < -1 else " and down" if dy > 1 else "")
 
 func npcGift(a: int) -> void:
 	if npc == null:

@@ -102,7 +102,7 @@ func _init() -> void:
 
 static func fresh_meta() -> Dictionary:
 	return {ab={}, tanks={}, items={}, gates={}, cleared={}, map={}, areas={}, save=null, boss=0, guards={}, mapped={}, dust=0,
-		relics={}, eq=[], arm=-1, met={}, talk={}, sable=0, hard=0, seed=0}
+		relics={}, eq=[], arm=-1, met={}, talk={}, sable=0, hard=0, seed=0, time=0.0, deaths=0, perm=[]}
 
 # ---------- small helpers ----------
 func R(a: float, b: float) -> float:
@@ -153,6 +153,54 @@ static func hstr(s: String) -> int:
 	return (h % 2147483646) + 1
 
 ## Park–Miller generator, same sequence as the original JS rng(seed)
+## map codes: the world seed in Crockford base 32 (no I, L, O or U to mix up), e.g. K3F9QZ ("" for the classic map)
+const B36 := "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
+static func mapCode(seed: int) -> String:
+	if seed <= 0:
+		return ""
+	var out = ""
+	var n = seed
+	while n > 0:
+		out = B36[n % 32] + out
+		n = n / 32
+	return out
+
+static func codeSeed(code: String) -> int:
+	var c = code.strip_edges().to_upper().replace(" ", "").replace("-", "").replace("O", "0").replace("I", "1").replace("L", "1")
+	if c == "" or c.length() > 7:
+		return -1
+	var n = 0
+	for ch in c:
+		var v = B36.find(ch)
+		if v < 0:
+			return -1
+		n = n * 32 + v
+	return n if n > 0 and n <= 2147483646 else -1
+
+static func fmtTime(t: float) -> String:
+	var s = int(t)
+	return "%d:%02d:%02d" % [s / 3600, (s / 60) % 60, s % 60] if s >= 3600 else "%d:%02d" % [s / 60, s % 60]
+
+## which power a world's shrine grants (Shuffle powers mode reorders them)
+func abilOf(a: int) -> Dictionary:
+	var pm = META.get("perm", [])
+	if typeof(pm) == TYPE_ARRAY and pm.size() == 5 and a < 5:
+		return DB.ABIL[int(pm[a])]
+	return DB.ABIL[clampi(a, 0, 4)]
+
+static func mkGate(kind: String, x: float) -> Dictionary:
+	var g = {kind=kind, x=x, top=0, bot=null, hp=null, plate=null, broken=0, flash=0.0}
+	match kind:
+		"crack": g.w = 80
+		"ledge":
+			g.w = 150; g.top = GY - 330
+		"laser": g.w = 46
+		"blast":
+			g.w = 90; g.plate = x - 300
+		_:
+			g.w = 96; g.hp = 4
+	return g
+
 ## the tile set the current room is drawn in (random worlds mix several per world)
 func curTh() -> String:
 	if ROOM != null and ROOM.has("th"):

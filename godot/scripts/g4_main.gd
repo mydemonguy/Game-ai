@@ -88,6 +88,8 @@ func _process(delta: float) -> void:
 	pollInput()
 	if G.state == "play" and not G.paused:
 		gameUpdate(dt)
+		if G.rush == null and NETR != "client":
+			META.time = float(META.get("time", 0.0)) + dt
 	elif G.state == "over":
 		lvT += dt
 		shake *= .9
@@ -211,8 +213,17 @@ func newRun(hard := false) -> void:
 	META = fresh_meta()
 	if hard:
 		META.hard = 1
-	# every new game rolls its own world layout
-	META.seed = randi_range(1, 2000000000)
+	# every new game rolls its own world layout (or uses the map code / classic map picked on the new-game card)
+	META.seed = pendSeed if pendSeed >= 0 else randi_range(1, 2000000000)
+	pendSeed = -1
+	if pendShuffle:
+		# a fixed order per map, so friends sharing a code and the shuffle get the same game
+		var r = Rng.new(int(META.seed) * 13 + 5)
+		var pm = [0, 1, 2, 3, 4]
+		for i in range(4, 0, -1):
+			var j = int(floor(r.next() * (i + 1)))
+			var tmp = pm[i]; pm[i] = pm[j]; pm[j] = tmp
+		META.perm = pm
 	DB.set_world(int(META.seed))
 	META.save = {room="0-0", x=210, score=0}
 	save_meta()
@@ -286,7 +297,9 @@ func toTitle() -> void:
 	var tot: int = max(1, DB.rooms_of(int(META.get("seed", 0))).size())
 	var b = ""
 	if sv != null:
-		b += "Save: %s%s · Map %d%% · Items %d%%\n" % [DB.LV[clampi(int(String(sv.room).get_slice("-", 0)), 0, 5)].name, " · [color=#ff4a6a][b]Rift Mode[/b][/color]" if META.hard else "", round(found * 100.0 / tot), completion()]
+		var mc = mapCode(int(META.get("seed", 0)))
+		b += "Save: %s%s · Map %d%% · Items %d%%" % [DB.LV[clampi(int(String(sv.room).get_slice("-", 0)), 0, 5)].name, " · [color=#ff4a6a][b]Rift Mode[/b][/color]" if META.hard else "", round(found * 100.0 / tot), completion()]
+		b += (" · Map %s\n" % mc) if mc != "" else "\n"
 	if G.best:
 		b += "Best score %s" % _fmt(G.best)
 	var btns = []
@@ -308,18 +321,54 @@ func _fmt(n: int) -> String:
 		s = s.substr(0, s.length() - 3)
 	return s + out
 
+var pendSeed := -1   # -1 = roll a random map, 0 = classic map, >0 = a map code
+var pendShuffle := false
+
 func startNew() -> void:
 	if riftOpen:
 		modeCard(toTitle)
 	else:
-		beginSaga(false)
+		mapCard(false, toTitle)
+
+## which world layout to play: a fresh random one, one from a friend's map code, or the original
+func mapCard(hard: bool, back: Callable) -> void:
+	showCard({ey="New game" + (" · Rift Mode" if hard else ""), h="Choose a map",
+		b="[b]New random map[/b] · every world laid out fresh: routes, guardians, saves and treasure in new places.\n\n[b]Map code[/b] · play the same map as a friend. Their code is on their pause screen.\n\n[b]Classic map[/b] · the original hand-built worlds.\n\n[b]Shuffle powers[/b] · [color=%s]%s[/color] · each shrine grants a different power than usual, and its gate changes to match." % ["#7dffb0" if pendShuffle else "#9d97bd", "ON" if pendShuffle else "off"],
+		btns=[["New random map", func():
+			pendSeed = -1
+			beginSaga(hard)], ["Map code", func(): codeCard(hard, back, ""), true], ["Classic map", func():
+			pendSeed = 0
+			beginSaga(hard), true], ["Shuffle powers: " + ("on" if pendShuffle else "off"), func():
+			pendShuffle = not pendShuffle
+			mapCard(hard, back), true], ["Back", back, true]]})
+
+func codeCard(hard: bool, back: Callable, err: String) -> void:
+	var row = HBoxContainer.new()
+	row.add_theme_constant_override("separation", 14)
+	var ed = LineEdit.new()
+	ed.placeholder_text = "e.g. K3F9QZ"
+	ed.max_length = 7
+	ed.custom_minimum_size = Vector2(420, 70)
+	ed.add_theme_font_size_override("font_size", 34)
+	row.add_child(ed)
+	var go = _btn("Play this map")
+	go.pressed.connect(func():
+		var sd = codeSeed(ed.text)
+		if sd < 0:
+			codeCard(hard, back, "That code doesn't look right. Codes use letters and numbers only.")
+		else:
+			pendSeed = sd
+			beginSaga(hard))
+	row.add_child(go)
+	showCard({ey="New game · map code", h="Enter a map code", b="Type the code from a friend's pause screen." + ("\n\n[color=#ff8a8a]%s[/color]" % err if err != "" else ""),
+		extra=row, btns=[["Back", func(): mapCard(hard, back), true]]})
 
 func confirmNew() -> void:
 	showCard({ey="New game", h="Start over?", b="This erases your map, abilities and energy tanks.", btns=[["Start over", startNew], ["Back", toTitle, true]]})
 
 func modeCard(back: Callable) -> void:
 	showCard({ey="New game", h="Choose your path", b="[b]Normal[/b] · the saga as it was meant to be told.\n\n[color=#ff4a6a][b]Rift Mode[/b][/color] · the Rift remembers you. Robots hit 45% harder and take more punishment, and the guardians and Malakar are far tougher.",
-		btns=[["Normal", func(): beginSaga(false)], ["Rift Mode", func(): beginSaga(true)], ["Back", back, true]]})
+		btns=[["Normal", func(): mapCard(false, back)], ["Rift Mode", func(): mapCard(true, back)], ["Back", back, true]]})
 
 func story(pages: Array, i: int, done: Callable) -> void:
 	var p: Dictionary = pages[i]
@@ -388,7 +437,8 @@ func victory() -> void:
 	var found: int = META.map.size()
 	var tot: int = DB.ROOMS.size()
 	story(DB.T.STORY.ending, 0, func():
-		var b = "Final score [b]%s[/b]\n\nItems collected [b]%d%%[/b] · Map explored %d%%\n\nEnergy tanks %d/12 · Eggs %d/6 · Aether cores %d/5 · Guardians %d/5\n\n" % [_fmt(G.score), completion(), round(found * 100.0 / tot), tankCount(), eggCount(), coreCount(), guardCount()]
+		var b = "Final score [b]%s[/b]\n\nItems collected [b]%d%%[/b] · Map explored %d%%\n\nEnergy tanks %d/12 · Eggs %d/6 · Aether cores %d/5 · Guardians %d/5\n\nTime [b]%s[/b] · Falls [b]%d[/b] · %s\n\n" % [_fmt(G.score), completion(), round(found * 100.0 / tot), tankCount(), eggCount(), coreCount(), guardCount(),
+			fmtTime(float(META.get("time", 0.0))), int(META.get("deaths", 0)), ("Map code [b]%s[/b]" % mapCode(int(META.seed))) if int(META.get("seed", 0)) > 0 else "Classic map"]
 		if wasRift:
 			b += "[color=#ff4a6a][b]Rift Mode conquered.[/b][/color] The Starblood would be proud.\n\n"
 		elif newRift:
@@ -591,7 +641,11 @@ func pauseCard() -> void:
 	mp.g = self
 	mp.custom_minimum_size = Vector2(min(780.0, W * .34), 380)
 	showCard({ey=DB.LV[G.lv].ch + " · " + String(ROOM.get("zn", DB.LV[G.lv].name) if ROOM != null else DB.LV[G.lv].name) + (" · Rift Mode" if META.hard else ""), h="Paused", left=mp, fs=27,
-		b="[color=#9d97bd]Map %d/%d rooms · Items %d%%[/color]\n" % [META.map.size(), DB.ROOMS.size(), completion()] + abilitiesBB(), btns=btns})
+		b="[color=#9d97bd]Map %d/%d rooms · Items %d%% · %s[/color]\n" % [META.map.size(), DB.ROOMS.size(), completion(), _mapLine()] + abilitiesBB(), btns=btns})
+
+func _mapLine() -> String:
+	var c = mapCode(int(META.get("seed", 0)))
+	return ("Map code [color=#ffe08a][b]%s[/b][/color]" % c if c != "" else "Classic map") + (" · powers shuffled" if META.get("perm", []).size() == 5 else "") + " · Time " + fmtTime(float(META.get("time", 0.0)))
 
 class MapView extends Control:
 	var g
@@ -1429,6 +1483,7 @@ func _test_init() -> void:
 		match k:
 			"seed":
 				DB.set_world(int(v))
+				TEST.seedSet = true
 			"gendump":
 				var parts2 := v.split("@")
 				DB.set_world(int(parts2[0]))
@@ -1504,6 +1559,36 @@ func _test_init() -> void:
 				load_meta()
 				continueGame()
 				print("CONT seed=", DB.WORLD_SEED, " room=", ROOM.id, " th=", curTh(), " rooms=", DB.ROOMS.size())
+			"campaign":
+				# play a whole game: --campaign (random world) or --seed=N --campaign
+				if not TEST.has("seedSet") and v != "classic":
+					DB.set_world(randi_range(1, 2000000000) if v == "" else int(v))
+				META = fresh_meta()
+				META.seed = DB.WORLD_SEED
+				META.save = {room="0-0", x=210, score=0}
+				if TEST.get("shuffle", false):
+					var r = Rng.new(int(META.seed) * 13 + 5)
+					var pm = [0, 1, 2, 3, 4]
+					for i in range(4, 0, -1):
+						var j = int(floor(r.next() * (i + 1)))
+						var tmp = pm[i]; pm[i] = pm[j]; pm[j] = tmp
+					META.perm = pm
+					print("CAMPAIGN shuffle ", pm.map(func(i): return DB.ABIL[i].id))
+				G.lives = 3
+				G.score = 0
+				startGame("0-0", {x=300.0, y=GY})
+				TEST.cp = {a=0, goal="", path=[], sub="", t=0, fails=[], log=[], wf0=0, dmg=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], hurts=[0, 0, 0, 0, 0, 0], frames=[0, 0, 0, 0, 0, 0], done=false}
+				print("CAMPAIGN start seed=", DB.WORLD_SEED)
+			"shuffle":
+				TEST.shuffle = true
+			"showcard":
+				TEST.showcard = v
+			"gatetest":
+				# --seed=N --room=ID:abilities --gatetest : run just the gate step of the campaign
+				TEST.cp = {a=G.lv, goal="", path=[], sub="gate", t=0, fails=[], log=[], wf0=0, dmg=[0.0, 0.0, 0.0, 0.0, 0.0, 0.0], hurts=[0, 0, 0, 0, 0, 0], frames=[0, 0, 0, 0, 0, 0], done=false, gdir=1, gi=0}
+				for i in ROOM.gates.size():
+					if ROOM.gates[i].kind != "secret":
+						TEST.cp.gi = i
 			"armlift":
 				TEST.armlift = true
 			"memlog":
@@ -1629,6 +1714,324 @@ func _doorWalk(f: int) -> void:
 		TEST.dwi += 1
 		TEST.dwf = f + 1
 
+# ---------- campaign bot: plays a whole game through every world ----------
+func _cpLog(msg: String) -> void:
+	print("CP f=%d a=%d room=%s %s" % [TEST.frame, TEST.cp.a, ROOM.id if ROOM else "-", msg])
+
+func _cpFail(msg: String) -> void:
+	TEST.cp.fails.append("%s: %s" % [ROOM.id if ROOM else "-", msg])
+	_cpLog("FAIL " + msg)
+
+func _cpPath(from: String, to: String) -> Array:
+	var prev = {from: ""}
+	var q = [from]
+	while q.size():
+		var id = q.pop_front()
+		if id == to:
+			break
+		for d in DB.ROOMS[id].doors:
+			if not prev.has(d.to):
+				prev[d.to] = id
+				q.append(d.to)
+	if not prev.has(to):
+		return []
+	var out = [to]
+	while out[0] != from:
+		out.push_front(prev[out[0]])
+	return out
+
+func _cpFind(a: int, kind: String) -> String:
+	for id in DB.AREAS[a]:
+		if DB.ROOMS[id].kind == kind:
+			return id
+	return ""
+
+## simple brawler: walk at the nearest target and claw it, staying away from the doors
+func _cpFight(f: int) -> void:
+	var tgt = null
+	var bd := 1e9
+	for e in allTargets():
+		var d: float = absf(e.x - pl.x)
+		if d < bd:
+			bd = d
+			tgt = e
+	KP.clear()
+	if tgt == null:
+		return
+	var dir: int = int(sgn(tgt.x - pl.x)) if bd > 100 else pl.face
+	if pl.x < 260:
+		dir = 1
+	elif pl.x > RW - 260:
+		dir = -1
+	KP["left"] = dir < 0 and (bd > 120 or pl.x > RW - 260)
+	KP["right"] = dir > 0 and (bd > 120 or pl.x < 260)
+	if pl.face != dir and bd <= 120:
+		KP["left" if dir < 0 else "right"] = true
+	if f % 9 == 0:
+		P["attack"] = 1
+	if (tgt.y < pl.y - 220 and f % 18 == 0) or f % 53 == 0:
+		P["jump"] = 1
+	if hasAb("roar") and pl.en >= 50 and f % 40 == 0:
+		P["special"] = 1
+	if hasAb("dash") and f % 97 == 0:
+		P["dash"] = 1
+
+func _cpGo(id: String, how: Dictionary) -> void:
+	plTeleport(how.x, how.y)
+	pl.ground = true
+	# a real player walks there, so the camera would already be on them (off-screen shots get culled)
+	cam = clampf(pl.x - W * .4, 0, max(0.0, RW - W))
+	camY = clampf(pl.y - H * .66, 0, max(0.0, RH - H))
+
+func _campaign(f: int) -> void:
+	var C: Dictionary = TEST.cp
+	if C.done:
+		return
+	if G.state == "card":
+		KP.clear()
+		if f % 20 == 0 and cardOpen:
+			for c in card_box.get_children():
+				if c is HFlowContainer and c.get_child_count() > 0:
+					c.get_child(0).emit_signal("pressed")
+					break
+		if G.state == "card" and ROOM != null and ROOM.kind == "boss" and int(META.boss) == 1:
+			_cpFinish(f)
+		return
+	if G.state != "play" or TRANS.on or pl == null:
+		return
+	if int(META.boss) == 1 or (ROOM.kind == "boss" and doneT > 0):
+		if f % 60 == 0:
+			_cpLog("boss beaten")
+		return
+	var a: int = ROOM.a
+	if a != C.a:
+		C.frames[C.a] = f - C.wf0
+		_cpLog("WORLD %d done frames=%d dmg=%d hurts=%d" % [C.a, C.frames[C.a], C.dmg[C.a], C.hurts[C.a]])
+		C.a = a
+		C.wf0 = f
+		C.goal = ""
+		C.sub = ""
+	C.t += 1
+	# ----- sub-states that own the controls -----
+	if C.sub == "fight":
+		_cpFight(f)
+		var A = ROOM.arena
+		var done: bool = META.cleared.has(ROOM.id)
+		if done or C.t > 4800:
+			KP.clear()
+			if not done:
+				_cpFail("arena not cleared in time (wave %s, %d enemies left)" % [str(A.i) if A != null else "-", en.size()])
+				META.cleared[ROOM.id] = 1
+				lock = false
+				ROOM.arena = null
+				en = []
+			else:
+				_cpLog("arena cleared in %d frames" % C.t)
+			C.sub = ""
+		return
+	if C.sub == "guard":
+		_cpFight(f)
+		if gDone(a) or C.t > 9000:
+			KP.clear()
+			if not gDone(a):
+				_cpFail("guardian %d not beaten in time" % a)
+				META.guards[str(a)] = 1
+				boss = null
+			else:
+				_cpLog("guardian beaten in %d frames" % C.t)
+			C.sub = "ability"
+			C.t = 0
+		return
+	if C.sub == "ability":
+		var sh = ROOM.shrine
+		if C.t == 30:
+			_cpGo(ROOM.id, {x=sh.x + 260.0, y=float(FY)})
+		KP["left"] = C.t > 40 and pl.x > sh.x
+		if hasAb(sh.ab):
+			KP.clear()
+			_cpLog("got ability " + sh.ab)
+			C.sub = ""
+		elif C.t > 400:
+			KP.clear()
+			_cpFail("could not take ability at the shrine")
+			META.ab[sh.ab] = 1
+			C.sub = ""
+		return
+	if C.sub == "gate":
+		_cpGate(f, C)
+		return
+	if C.sub == "save":
+		if C.t == 5:
+			_cpGo(ROOM.id, {x=ROOM.station.x + 30, y=float(FY)})
+		if META.save != null and META.save.room == ROOM.id:
+			_cpLog("saved")
+			C.saved = a
+			C.sub = ""
+		elif C.t > 200:
+			_cpFail("save station did not save")
+			C.saved = a
+			C.sub = ""
+		return
+	if C.sub == "lift":
+		if C.t == 5:
+			_cpGo(ROOM.id, {x=ROOM.lift.x, y=float(FY)})
+			ROOM.lift.armed = 1
+		if C.t > 600:
+			_cpFail("elevator did not start")
+			startTrans({lift=ROOM.lift})
+		return
+	if C.sub == "boss":
+		_cpFight(f)
+		if C.t > 15000:
+			_cpFail("Malakar not beaten in time")
+			META.boss = 1
+			victory()
+		return
+	# ----- room jobs on arrival -----
+	if ROOM.waves != null and not META.cleared.has(ROOM.id):
+		_cpGo(ROOM.id, {x=RW / 2.0, y=float(FY)})
+		C.sub = "fight"; C.t = 0
+		return
+	if ROOM.kind == "shrine" and not gDone(a):
+		_cpGo(ROOM.id, {x=1200.0, y=float(FY)})
+		if boss == null:
+			guardianIntro(a)
+		C.sub = "guard"; C.t = 0
+		return
+	if ROOM.kind == "shrine" and ROOM.shrine != null and ROOM.shrine.ab != null and not hasAb(ROOM.shrine.ab):
+		C.sub = "ability"; C.t = 0
+		return
+	if ROOM.kind == "save" and C.get("saved", -1) != a:
+		C.sub = "save"; C.t = 0
+		return
+	if ROOM.kind == "boss" and not int(META.boss):
+		_cpGo(ROOM.id, {x=600.0, y=float(FY)})
+		C.sub = "boss"; C.t = 0
+		return
+	# ----- choose the next goal for this world -----
+	var goal: String
+	if a < 5 and not hasAb(abilOf(a).id):
+		goal = _cpFind(a, "shrine")
+	elif C.get("saved", -1) != a:
+		goal = _cpNearest(a, "save")
+	else:
+		goal = _cpFind(a, "liftDown" if a < 5 else "boss")
+	if ROOM.id == goal:
+		if ROOM.kind == "liftDown":
+			C.sub = "lift"; C.t = 0
+		return
+	var path = _cpPath(ROOM.id, goal)
+	if path.size() < 2:
+		_cpFail("no route to " + goal)
+		C.done = true
+		_cpFinish(f)
+		return
+	var nxt: String = path[1]
+	var door = null
+	for d in ROOM.doors:
+		if d.to == nxt:
+			door = d
+	# the ability gate stands between this door and where we came in
+	for i in ROOM.gates.size():
+		var g: Dictionary = ROOM.gates[i]
+		if g.kind == "secret" or g.broken or C.get("ledgeDone", "") == ROOM.id:
+			continue
+		var doorX: float = 0.0 if door.side == "L" else float(RW)
+		if (pl.x < g.x) != (doorX < g.x):
+			C.sub = "gate"; C.t = 0; C.gi = i; C.gdir = 1 if doorX > g.x else -1
+			_cpLog("gate %s in the way" % g.kind)
+			return
+	if C.t % 2 == 0:
+		plTeleport(60.0 if door.side == "L" else RW - 60.0, door.row * H + GY - 2)
+		startTrans({door=door})
+
+func _cpNearest(a: int, kind: String) -> String:
+	var best = ""
+	var bl = 999
+	for id in DB.AREAS[a]:
+		if DB.ROOMS[id].kind == kind:
+			var p = _cpPath(ROOM.id, id)
+			if p.size() and p.size() < bl:
+				bl = p.size()
+				best = id
+	return best
+
+## use this world's power on its gate, the way a player would
+func _cpGate(f: int, C: Dictionary) -> void:
+	var g: Dictionary = ROOM.gates[C.gi]
+	var dir: int = C.gdir
+	var t: int = C.t
+	KP.clear()
+	match g.kind:
+		"crack":
+			if t == 5:
+				_cpGo(ROOM.id, {x=g.x - dir * 420.0, y=float(FY)}); pl.face = dir
+			if t > 8:
+				KP["right" if dir > 0 else "left"] = true
+			if t == 14:
+				P["dash"] = 1
+		"laser":
+			if t == 5:
+				_cpGo(ROOM.id, {x=g.x - dir * 380.0, y=float(FY)}); pl.face = dir
+				pl.en = 100.0
+			if t == 12:
+				P["special"] = 1
+			if t == 13 or t == 20:
+				var ws = shots.filter(func(q): return q.friend and q.wave)
+				_cpLog("laser dbg en=%d hurtT=%.2f face=%d x=%d gx=%d waves=%s" % [pl.en, pl.hurtT, pl.face, pl.x, g.x, str(ws.map(func(q): return int(q.x)))])
+		"blast":
+			if t == 5:
+				_cpGo(ROOM.id, {x=float(g.plate), y=float(FY)})
+			if t == 10:
+				P["jump"] = 1
+			if t >= 24 and t <= 40:
+				KP["down"] = true
+			if t == 26:
+				P["attack"] = 1
+		"crystal":
+			if t == 5:
+				_cpGo(ROOM.id, {x=g.x - dir * 110.0, y=float(FY)}); pl.face = dir
+			if t > 8 and t % 14 == 0:
+				P["attack"] = 1
+		"ledge":
+			if t == 5:
+				_cpGo(ROOM.id, {x=g.x - dir * 330.0, y=float(FY)}); pl.face = dir
+			if t > 8:
+				KP["right" if dir > 0 else "left"] = true
+			if t == 12:
+				P["jump"] = 1
+			if t == 32:
+				P["jump"] = 1
+	var through: bool = g.broken or (g.kind == "ledge" and (pl.x - g.x) * dir > g.w)
+	if through:
+		KP.clear()
+		_cpLog("gate %s opened in %d frames" % [g.kind, t])
+		if g.kind == "ledge":
+			C.ledgeDone = ROOM.id
+		C.sub = ""
+	elif t > 240:
+		KP.clear()
+		_cpFail("could not get past the %s gate" % g.kind)
+		if g.kind == "ledge":
+			C.ledgeDone = ROOM.id
+		else:
+			breakGate(g, C.gi)
+		C.sub = ""
+
+func _cpFinish(f: int) -> void:
+	var C: Dictionary = TEST.cp
+	if C.get("ended", false):
+		return
+	C.ended = true
+	C.done = true
+	C.frames[C.a] = f - C.wf0
+	print("CAMPAIGN END seed=%d boss=%d frames=%d fails=%d" % [DB.WORLD_SEED, int(META.boss), f, C.fails.size()])
+	for a in 6:
+		print("  world %d frames=%d dmg=%d hurts=%d" % [a, C.frames[a], C.dmg[a], C.hurts[a]])
+	for x in C.fails:
+		print("  FAIL ", x)
+	TEST.quit = f + 2
+
 func _test_tick(dt: float) -> void:
 	TEST.frame += 1
 	var f: int = TEST.frame
@@ -1650,6 +2053,12 @@ func _test_tick(dt: float) -> void:
 		startTrans({travel=TEST.travelto})
 	if TEST.has("travelto") and f == 320:
 		print("TRAVEL room=", ROOM.id, " kind=", ROOM.kind, " pl=", int(pl.x), ",", int(pl.y), " ground=", pl.ground, " save=", META.save.room)
+	if TEST.has("showcard") and f == 40:
+		match TEST.showcard:
+			"map": mapCard(false, toTitle)
+			"code": codeCard(false, toTitle, "That code doesn't look right. Codes use letters and numbers only.")
+			"pause": togglePause()
+			"title": toTitle()
 	if TEST.get("armlift", false) and f == 30 and ROOM != null and ROOM.lift != null:
 		ROOM.lift.armed = 1
 	if TEST.get("liftf", 0) == f and ROOM != null and ROOM.lift != null:
@@ -1657,6 +2066,11 @@ func _test_tick(dt: float) -> void:
 		startTrans({lift=ROOM.lift})
 	if TEST.get("liftf", 0) > 0 and f == TEST.liftf + 120:
 		print("AFTER LIFT room=", ROOM.id, " state=", G.state, " pl=", int(pl.x), ",", int(pl.y), " th=", curTh())
+	if TEST.has("cp") and pl != null and G.lv >= 0 and G.lv < 6:
+		var lost: float = pl.max - pl.hp
+		if lost > 0.5 and TEST.get("god", false):
+			TEST.cp.dmg[G.lv] += lost
+			TEST.cp.hurts[G.lv] += 1
 	if TEST.get("god", false) and pl != null:
 		pl.hp = float(pl.max)
 	if TEST.has("rooms") and f % 45 == 0 and G.state == "play":
@@ -1667,6 +2081,8 @@ func _test_tick(dt: float) -> void:
 			TEST.quit = f
 	if TEST.has("dw"):
 		_doorWalk(f)
+	if TEST.has("cp"):
+		_campaign(f)
 	if TEST.get("sc", false):
 		if f == 30:
 			var sid = ""
