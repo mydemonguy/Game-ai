@@ -1659,6 +1659,8 @@ func _test_init() -> void:
 				ocForce = true
 			"full":
 				TEST.full = true
+			"nowalk":
+				TEST.walk = false
 			"showcard":
 				TEST.showcard = v
 			"gatetest":
@@ -1900,6 +1902,8 @@ func _campaign(f: int) -> void:
 			_cpFinish(f)
 		return
 	if G.state != "play" or TRANS.on or pl == null:
+		if TRANS.on:
+			KP.clear()
 		return
 	if int(META.boss) == 1 or (ROOM.kind == "boss" and doneT > 0):
 		C.bb = C.get("bb", 0) + 1
@@ -2091,6 +2095,31 @@ func _campaign(f: int) -> void:
 			C.sub = "gate"; C.t = 0; C.gi = i; C.gdir = 1 if doorX > g.x else -1
 			_cpLog("gate %s in the way" % g.kind)
 			return
+	# flat rooms: walk there like a player (fighting on the way, crossing hazards); climbing shafts: hop to the door
+	if ROOM.h == 1 and door.row == 0 and TEST.get("walk", true):
+		if C.get("walkRoom", "") != ROOM.id + door.to:
+			C.walkRoom = ROOM.id + door.to
+			C.wt = 0
+			C.stuck = 0
+		C.wt += 1
+		var dir = -1 if door.side == "L" else 1
+		KP.clear()
+		KP["left" if dir < 0 else "right"] = true
+		if f % 9 == 0:
+			P["attack"] = 1
+		if absf(pl.vx) < 40 and pl.ground:
+			C.stuck += 1
+		else:
+			C.stuck = 0
+		if C.stuck > 12:
+			P["jump"] = 1
+			C.stuck = 0
+		if C.wt > 1500:
+			_cpLog("walk to %s timed out at x=%d" % [door.to, pl.x])
+			KP.clear()
+			plTeleport(60.0 if door.side == "L" else RW - 60.0, door.row * H + GY - 2)
+			startTrans({door=door})
+		return
 	if C.t % 2 == 0:
 		plTeleport(60.0 if door.side == "L" else RW - 60.0, door.row * H + GY - 2)
 		startTrans({door=door})
