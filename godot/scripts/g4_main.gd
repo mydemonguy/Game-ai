@@ -331,7 +331,16 @@ func toTitle() -> void:
 	btns.append(["Co-op", coopCard, true])
 	btns.append(["Controls", func(): controls(toTitle), true])
 	btns.append(["Settings", func(): soundCard(toTitle), true])
+	var ver = String(ProjectSettings.get_setting("application/config/version", ""))
+	if String(PREFS.get("seen", "")) != WHATS_NEW_VER and not TEST.on:
+		PREFS.seen = WHATS_NEW_VER
+		save_prefs()
+		showCard({ey="Aetherfall " + ver, h="What's new", b=WHATS_NEW, btns=[["Got it", toTitle]]})
+		return
 	showCard({ey="A Starblood Saga · Six Worlds", h="Aetherfall", big=true, tag="One small dino. One stolen sky. One very big Rift.", b=b, btns=btns})
+
+const WHATS_NEW_VER := "4.4"
+const WHATS_NEW := "[b]A new map every game[/b] · six bigger worlds across 26 districts, laid out fresh each time. Share the map code on your pause screen so friends can play the same one.\n\n[b]New options[/b] · Shuffle powers, and Story mode (40% less damage).\n\n[color=#ffe08a][b]Overcharged robots[/b][/color] glow gold and drop extra Stardust. Find a [b]Trial[/b] room in each world from Chapter II.\n\nPlus capsule elevators and a map coloured by district."
 
 func _fmt(n: int) -> String:
 	var s = str(n)
@@ -2309,6 +2318,7 @@ func _test_tick(dt: float) -> void:
 		match TEST.showcard:
 			"map": mapCard(false, toTitle)
 			"mode": modeCard(toTitle)
+			"new": showCard({ey="Aetherfall 4.4", h="What's new", b=WHATS_NEW, btns=[["Got it", toTitle]]})
 			"code": codeCard(false, toTitle, "That code doesn't look right. Codes use letters and numbers only.")
 			"pause": togglePause()
 			"title": toTitle()
