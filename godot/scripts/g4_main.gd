@@ -286,6 +286,7 @@ func bossTexLoad(key: String) -> void:
 
 # ---------- starting and ending runs ----------
 func newRun(hard := false) -> void:
+	soloCh = "tyko"
 	stat("games")
 	META = fresh_meta()
 	if hard:
@@ -321,7 +322,7 @@ func dailyMod() -> String:
 	return MODS[posmod(int(dailySeed() / 7), MODS.size())][0]
 
 func startGame(room: String, how: Dictionary) -> void:
-	pl = newPlayer()
+	pl = newPlayer(soloCh)
 	lvT = 0.0; hitStop = 0.0; shake = 0.0; doneT = 0.0
 	G.respawnT = 0.0
 	TRANS.on = 0
@@ -337,6 +338,7 @@ func startGame(room: String, how: Dictionary) -> void:
 	musicFor()
 
 func continueGame() -> void:
+	soloCh = "tyko"
 	var s = META.save
 	if s == null:
 		newRun()
@@ -426,8 +428,8 @@ func toTitle() -> void:
 		return
 	showCard({ey="A Starblood Saga · Six Worlds", h="Aetherfall", big=true, tag="One small dino. One stolen sky. One very big Rift.", b=b, btns=btns})
 
-const WHATS_NEW_VER := "4.12"
-const WHATS_NEW := "[b]Map of the day[/b] now comes with a [color=#ffd24a][b]daily twist[/b][/color]: Overcharged Surge, Glass Dino, Stardust Rain, Shield Wall or Swarm. Same twist for everyone.\n\n[color=#7fe9ff][b]Aegis Troopers[/b][/color] · from Chapter III, some Troopers carry a front shield. Hit them while they fire and reload, or break it with a Roar or Slam.\n\n[color=#b48cff][b]Endless Siege[/b][/color] · title → Challenges: one locked room, waves that never stop. Also [b]Photo mode[/b] in the pause menu, and Overcharged hounds and drones.\n\n[b]Map of the day streaks[/b], [color=#ffe08a][b]16 Feats[/b][/color], lifetime Stats, and the [color=#ffd24a][b]Golden Gauntlet[/b][/color] after Boss Rush.\n\n[b]Robot codex[/b] · lore and a fighting tip for every robot and guardian you meet. Both are on the title screen and in pause → Archive.\n\n[b]A new map every game[/b] · bigger worlds across 26 districts. Share the map code from the pause screen.\n\n[b]New options[/b] · Map of the day, Shuffle powers and Story mode.\n\n[color=#ffe08a][b]Overcharged robots[/b][/color], [b]Trial[/b] rooms, capsule elevators, and hazards: icicles, toxic gas, sparking floors and new [b]void rifts[/b]."
+const WHATS_NEW_VER := "4.13"
+const WHATS_NEW := "[b]Challenges as Zeph or Rook[/b] · pick your dino for Boss Rush, the Golden Gauntlet and Endless Siege.\n\n[b]Map of the day[/b] now comes with a [color=#ffd24a][b]daily twist[/b][/color]: Overcharged Surge, Glass Dino, Stardust Rain, Shield Wall or Swarm. Same twist for everyone.\n\n[color=#7fe9ff][b]Aegis Troopers[/b][/color] · from Chapter III, some Troopers carry a front shield. Hit them while they fire and reload, or break it with a Roar or Slam.\n\n[color=#b48cff][b]Endless Siege[/b][/color] · title → Challenges: one locked room, waves that never stop. Also [b]Photo mode[/b] in the pause menu, and Overcharged hounds and drones.\n\n[b]Map of the day streaks[/b], [color=#ffe08a][b]16 Feats[/b][/color], lifetime Stats, and the [color=#ffd24a][b]Golden Gauntlet[/b][/color] after Boss Rush.\n\n[b]Robot codex[/b] · lore and a fighting tip for every robot and guardian you meet. Both are on the title screen and in pause → Archive.\n\n[b]A new map every game[/b] · bigger worlds across 26 districts. Share the map code from the pause screen.\n\n[b]New options[/b] · Map of the day, Shuffle powers and Story mode.\n\n[color=#ffe08a][b]Overcharged robots[/b][/color], [b]Trial[/b] rooms, capsule elevators, and hazards: icicles, toxic gas, sparking floors and new [b]void rifts[/b]."
 
 func _fmt(n: int) -> String:
 	var s = str(n)
@@ -1340,6 +1342,13 @@ func rushCard() -> void:
 			rushIsGold = true
 			startRush()])
 	btns.append(["Endless Siege", startEndless])
+	var cc: Dictionary = DB.CHARS[String(PREFS.get("chalCh", "tyko"))] if DB.CHARS.has(String(PREFS.get("chalCh", "tyko"))) else DB.CHARS.tyko
+	b += "\n\nPlaying as [color=%s][b]%s[/b][/color] · %s" % [cc.col, cc.name, cc.perk]
+	btns.append(["Dino: " + cc.name, func():
+		var order = ["tyko", "zeph", "rook"]
+		PREFS.chalCh = order[(order.find(cc.id) + 1) % order.size()]
+		save_prefs()
+		rushCard(), true])
 	btns.append(["Back", toTitle, true])
 	showCard({ey="Challenges", h="Choose your challenge", b=b, btns=btns})
 
@@ -1349,6 +1358,9 @@ func fmtT(t: float) -> String:
 var realMeta = null
 
 func startRush() -> void:
+	soloCh = String(PREFS.get("chalCh", "tyko"))
+	if not DB.CHARS.has(soloCh):
+		soloCh = "tyko"
 	realMeta = META
 	var m = fresh_meta()
 	for A in DB.ABIL:
@@ -1428,7 +1440,7 @@ func rushFail() -> void:
 			btns=[["Try again", startEndless], ["Title", toTitle, true]]}))
 		return
 	rushEnd()
-	later(.9, func(): showCard({ey="Golden Gauntlet" if Rr.get("gold", false) else "Boss Rush", h="Tyko is down", b="You reached fight %d of 6 in %s." % [Rr.i + 1, fmtT(Rr.t)], btns=[["Try again", startRush], ["Title", toTitle, true]]}))
+	later(.9, func(): showCard({ey="Golden Gauntlet" if Rr.get("gold", false) else "Boss Rush", h=DB.CHARS[soloCh].name + " is down", b="You reached fight %d of 6 in %s." % [Rr.i + 1, fmtT(Rr.t)], btns=[["Try again", startRush], ["Title", toTitle, true]]}))
 
 # ---------- cards: one panel for every menu and story page ----------
 func build_theme() -> void:
@@ -2078,6 +2090,8 @@ func _test_init() -> void:
 				rushIsGold = true
 			"endless":
 				TEST.endless = true
+			"chalch":
+				PREFS.chalCh = v
 			"showcard":
 				TEST.showcard = v
 			"gatetest":
@@ -2795,7 +2809,7 @@ func _test_tick(dt: float) -> void:
 		match TEST.showcard:
 			"map": mapCard(false, toTitle)
 			"mode": modeCard(toTitle)
-			"new": showCard({ey="Aetherfall 4.12", h="What's new", b=WHATS_NEW, btns=[["Got it", toTitle]]})
+			"new": showCard({ey="Aetherfall 4.13", h="What's new", b=WHATS_NEW, btns=[["Got it", toTitle]]})
 			"code": codeCard(false, toTitle, "That code doesn't look right. Codes use letters and numbers only.")
 			"pause": togglePause()
 			"title": toTitle()

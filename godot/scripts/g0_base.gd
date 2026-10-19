@@ -23,6 +23,7 @@ var K = {left=0, right=0, jump=0, attack=0, special=0, dash=0, down=0, arm=0, ar
 var P = {}
 var ocForce := false
 var aegisForce := false
+var soloCh := "tyko"   # who you play in single player (Challenges let you pick Zeph or Rook)
 var aegisStats := {block=0, brk=0}   # tests: every robot spawns Overcharged
 var G = {state="menu", lv=0, score=0, paused=false, best=0, lives=3, respawnT=0.0, rush=null}
 var META: Dictionary = {}
