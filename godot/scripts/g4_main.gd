@@ -340,7 +340,7 @@ func toTitle() -> void:
 	showCard({ey="A Starblood Saga · Six Worlds", h="Aetherfall", big=true, tag="One small dino. One stolen sky. One very big Rift.", b=b, btns=btns})
 
 const WHATS_NEW_VER := "4.5"
-const WHATS_NEW := "[b]A new map every game[/b] · bigger worlds across 26 districts. Share the map code on your pause screen so friends can play the same one.\n\n[b]New options[/b] · Map of the day, Shuffle powers and Story mode.\n\n[color=#ffe08a][b]Overcharged robots[/b][/color], [b]Trial[/b] rooms, and district hazards: icicles, toxic gas and sparking floors.\n\nPlus capsule elevators and a map coloured by district."
+const WHATS_NEW := "[b]A new map every game[/b] · bigger worlds across 26 districts. Share the map code on your pause screen so friends can play the same one.\n\n[b]New options[/b] · Map of the day, Shuffle powers and Story mode.\n\n[color=#ffe08a][b]Overcharged robots[/b][/color], [b]Trial[/b] rooms, capsule elevators, and hazards: icicles, toxic gas and sparking floors."
 
 func _fmt(n: int) -> String:
 	var s = str(n)
@@ -1237,8 +1237,17 @@ func showCard(o: Dictionary) -> void:
 	if o.has("extra"):
 		inner.add_child(o.extra)
 		hasBody = true
+	var more: Label = null
 	if hasBody:
 		card_box.add_child(scroll)
+		# a hint when the text runs past the bottom (phones use bigger fonts)
+		more = Label.new()
+		more.text = "▼  more below"
+		more.add_theme_color_override("font_color", C("#9d97bd"))
+		more.add_theme_font_size_override("font_size", 24 if touchy else 20)
+		more.visible = false
+		more.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		card_box.add_child(more)
 	var btns = HFlowContainer.new()
 	btns.add_theme_constant_override("h_separation", 22)
 	btns.add_theme_constant_override("v_separation", 16)
@@ -1262,17 +1271,24 @@ func showCard(o: Dictionary) -> void:
 	# size the scroll area once the text has been laid out
 	if hasBody:
 		scroll.custom_minimum_size = Vector2(wmax - 128, 10)
-		_fit_scroll.call_deferred(scroll, inner, maxBody)
+		_fit_scroll.call_deferred(scroll, inner, maxBody, more)
 	cardOpen = true
 	card_root.visible = true
 	if first != null and not touchy:
 		first.grab_focus.call_deferred()
 
-func _fit_scroll(scroll: ScrollContainer, inner: Control, maxBody: float) -> void:
+func _fit_scroll(scroll: ScrollContainer, inner: Control, maxBody: float, more: Label = null) -> void:
 	if not is_instance_valid(scroll):
 		return
 	var h: float = inner.get_combined_minimum_size().y
-	scroll.custom_minimum_size.y = min(h, max(160.0, maxBody))
+	var shown: float = min(h, max(160.0, maxBody))
+	scroll.custom_minimum_size.y = shown
+	if more != null and is_instance_valid(more) and h > shown + 4:
+		more.visible = true
+		var bar = scroll.get_v_scroll_bar()
+		bar.value_changed.connect(func(v):
+			if is_instance_valid(more):
+				more.visible = v + bar.page < bar.max_value - 8)
 
 # ---------- HUD ----------
 class HudDraw extends Control:
@@ -1606,6 +1622,8 @@ func _test_init() -> void:
 			"touch":
 				touchy = true
 				RSAFE = 500.0
+				build_theme()
+				card_root.theme = THEME
 			"new":
 				META = fresh_meta()
 				newRun()
