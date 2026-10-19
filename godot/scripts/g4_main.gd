@@ -1745,6 +1745,20 @@ func _genCheck(n: int) -> void:
 				return seen
 			var r0: Dictionary = reach.call(true)
 			var r1: Dictionary = reach.call(false)
+			# every collectible id exists exactly once, so 100% is possible
+			var ids_need = ["egg%d" % a, "lore%d" % a, "sfang%d" % a]
+			if a < 5:
+				ids_need += ["%d-0" % a, "%d-1" % a]
+			else:
+				ids_need += ["5-0", "5-1"]
+			var have = {}
+			for id in ids:
+				for it in DB.ROOMS[id].items:
+					if it.id != null:
+						have[it.id] = have.get(it.id, 0) + 1
+			for nid in ids_need:
+				if have.get(nid, 0) != 1:
+					errs.append("world %d has %d of %s" % [a, have.get(nid, 0), nid])
 			if r1.size() != ids.size():
 				errs.append("world %d: %d of %d rooms reachable" % [a, r1.size(), ids.size()])
 			for id in ids:

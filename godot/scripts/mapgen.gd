@@ -95,6 +95,12 @@ func build(seed: int, db_, ver := 2) -> Dictionary:
 		for o in L.rooms:
 			_genRoom(o, a, L.rooms, exits)
 			rooms[o.id] = o
+		# Chapter VI has no shrine, so its golden egg waits in the first supply cache (classic keeps it in the empty shrine room)
+		if a == 5:
+			for o in L.rooms:
+				if o.kind == "cache":
+					o.items.append({type="egg", id="egg5", x=o.RW * .55, y=GY - 90, cage=-1})
+					break
 		areas.append(ids)
 	return {rooms=rooms, areas=areas, themes=themes}
 
