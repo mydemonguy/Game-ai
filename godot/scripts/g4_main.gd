@@ -478,12 +478,26 @@ func victory() -> void:
 	var newRift = not riftOpen
 	riftOpen = true
 	G.best = max(G.best, G.score)
+	# personal record per map (and mode): fastest clear
+	var rkey = (mapCode(int(META.get("seed", 0))) if int(META.get("seed", 0)) > 0 else "classic") + ("-rift" if META.hard else "-story" if int(META.get("easy", 0)) else "") + ("-shuffle" if META.get("perm", []).size() == 5 else "")
+	var recs = PREFS.get("records", {})
+	if typeof(recs) != TYPE_DICTIONARY:
+		recs = {}
+	var tnow = float(META.get("time", 0.0))
+	var prev = float(recs.get(rkey, 0.0))
+	var recLine = ""
+	if prev <= 0 or tnow < prev:
+		recLine = "[color=#7dffb0][b]New record for this map![/b][/color]" + (" (was %s)" % fmtTime(prev) if prev > 0 else "")
+		recs[rkey] = tnow
+	else:
+		recLine = "Your best on this map: [b]%s[/b]" % fmtTime(prev)
+	PREFS.records = recs
 	save_prefs()
 	Sfx.music("victory")
 	var found: int = META.map.size()
 	var tot: int = DB.ROOMS.size()
 	story(DB.T.STORY.ending, 0, func():
-		var b = "Final score [b]%s[/b]\n\nItems collected [b]%d%%[/b] · Map explored %d%%\n\nEnergy tanks %d/12 · Eggs %d/6 · Aether cores %d/5 · Guardians %d/5\n\nTime [b]%s[/b] · Falls [b]%d[/b] · %s\n\n" % [_fmt(G.score), completion(), round(found * 100.0 / tot), tankCount(), eggCount(), coreCount(), guardCount(),
+		var b = recLine + "\n\nFinal score [b]%s[/b]\n\nItems collected [b]%d%%[/b] · Map explored %d%%\n\nEnergy tanks %d/12 · Eggs %d/6 · Aether cores %d/5 · Guardians %d/5\n\nTime [b]%s[/b] · Falls [b]%d[/b] · %s\n\n" % [_fmt(G.score), completion(), round(found * 100.0 / tot), tankCount(), eggCount(), coreCount(), guardCount(),
 			fmtTime(float(META.get("time", 0.0))), int(META.get("deaths", 0)), ("Map code [b]%s[/b]" % mapCode(int(META.seed))) if int(META.get("seed", 0)) > 0 else "Classic map"]
 		if wasRift:
 			b += "[color=#ff4a6a][b]Rift Mode conquered.[/b][/color] The Starblood would be proud.\n\n"
