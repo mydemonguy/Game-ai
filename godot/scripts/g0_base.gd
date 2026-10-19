@@ -103,7 +103,7 @@ func _init() -> void:
 
 static func fresh_meta() -> Dictionary:
 	return {ab={}, tanks={}, items={}, gates={}, cleared={}, map={}, areas={}, save=null, boss=0, guards={}, mapped={}, dust=0,
-		relics={}, eq=[], arm=-1, met={}, talk={}, sable=0, hard=0, seed=0, time=0.0, deaths=0, perm=[]}
+		relics={}, eq=[], arm=-1, met={}, talk={}, sable=0, hard=0, seed=0, time=0.0, deaths=0, perm=[], gv=0}
 
 # ---------- small helpers ----------
 func R(a: float, b: float) -> float:
@@ -181,6 +181,11 @@ static func codeSeed(code: String) -> int:
 static func fmtTime(t: float) -> String:
 	var s = int(t)
 	return "%d:%02d:%02d" % [s / 3600, (s / 60) % 60, s % 60] if s >= 3600 else "%d:%02d" % [s / 60, s % 60]
+
+## the map generator version a save was made with (saves from before versioning are version 1)
+func metaGV() -> int:
+	var v = int(META.get("gv", 0))
+	return v if v > 0 else 1
 
 ## which power a world's shrine grants (Shuffle powers mode reorders them)
 func abilOf(a: int) -> Dictionary:

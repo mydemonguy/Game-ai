@@ -358,7 +358,7 @@ func _clientEv(k: String, a: Array) -> void:
 				for key in m:
 					META[key] = m[key]
 			# the host's world layout
-			DB.set_world(int(META.get("seed", 0)))
+			DB.set_world(int(META.get("seed", 0)), metaGV())
 			NETR = "client"
 			NET.hostCh = a[4]
 			NET.lobby = ""

@@ -215,6 +215,7 @@ func newRun(hard := false) -> void:
 		META.hard = 1
 	# every new game rolls its own world layout (or uses the map code / classic map picked on the new-game card)
 	META.seed = pendSeed if pendSeed >= 0 else randi_range(1, 2000000000)
+	META.gv = DB.GEN_VER
 	pendSeed = -1
 	if pendShuffle:
 		# a fixed order per map, so friends sharing a code and the shuffle get the same game
@@ -224,7 +225,7 @@ func newRun(hard := false) -> void:
 			var j = int(floor(r.next() * (i + 1)))
 			var tmp = pm[i]; pm[i] = pm[j]; pm[j] = tmp
 		META.perm = pm
-	DB.set_world(int(META.seed))
+	DB.set_world(int(META.seed), DB.GEN_VER)
 	META.save = {room="0-0", x=210, score=0}
 	save_meta()
 	G.score = 0
@@ -254,7 +255,7 @@ func continueGame() -> void:
 		return
 	G.lives = 3
 	G.score = int(s.get("score", 0))
-	DB.set_world(int(META.get("seed", 0)))
+	DB.set_world(int(META.get("seed", 0)), metaGV())
 	if not DB.ROOMS.has(s.room):
 		s.room = "0-0"
 	startGame(s.room, {x=float(s.x) + 90, y=GY})
@@ -310,7 +311,7 @@ func toTitle() -> void:
 	musicFor()
 	var sv = META.save
 	var found: int = META.map.size()
-	var tot: int = max(1, DB.rooms_of(int(META.get("seed", 0))).size())
+	var tot: int = max(1, DB.rooms_of(int(META.get("seed", 0)), metaGV()).size())
 	var b = ""
 	if sv != null:
 		var mc = mapCode(int(META.get("seed", 0)))
@@ -1522,9 +1523,11 @@ func _test_init() -> void:
 			"seed":
 				DB.set_world(int(v))
 				TEST.seedSet = true
+			"gv":
+				TEST.gv = int(v)
 			"gendump":
 				var parts2 := v.split("@")
-				DB.set_world(int(parts2[0]))
+				DB.set_world(int(parts2[0]), int(TEST.get("gv", DB.GEN_VER)))
 				var out = {}
 				for id in DB.ROOMS:
 					var o = DB.ROOMS[id]
@@ -1542,6 +1545,7 @@ func _test_init() -> void:
 				var parts := v.split(":")
 				META = fresh_meta()
 				META.seed = DB.WORLD_SEED
+				META.gv = DB.WORLD_GV
 				if parts.size() > 1:
 					for ab in parts[1].split(","):
 						if ab != "":
@@ -1603,6 +1607,7 @@ func _test_init() -> void:
 					DB.set_world(randi_range(1, 2000000000) if v == "" else int(v))
 				META = fresh_meta()
 				META.seed = DB.WORLD_SEED
+				META.gv = DB.WORLD_GV
 				META.save = {room="0-0", x=210, score=0}
 				if TEST.get("shuffle", false):
 					var r = Rng.new(int(META.seed) * 13 + 5)
@@ -1623,6 +1628,8 @@ func _test_init() -> void:
 				TEST.dbg = true
 			"oc":
 				ocForce = true
+			"full":
+				TEST.full = true
 			"showcard":
 				TEST.showcard = v
 			"gatetest":
@@ -1771,10 +1778,15 @@ func _cpPath(from: String, to: String) -> Array:
 		var id = q.pop_front()
 		if id == to:
 			break
+		var nb = []
 		for d in DB.ROOMS[id].doors:
-			if not prev.has(d.to):
-				prev[d.to] = id
-				q.append(d.to)
+			nb.append(d.to)
+		if DB.ROOMS[id].lift != null:
+			nb.append(DB.ROOMS[id].lift.to)
+		for n in nb:
+			if not prev.has(n):
+				prev[n] = id
+				q.append(n)
 	if not prev.has(to):
 		return []
 	var out = [to]
@@ -1857,8 +1869,9 @@ func _campaign(f: int) -> void:
 	if G.state != "play" or TRANS.on or pl == null:
 		return
 	if int(META.boss) == 1 or (ROOM.kind == "boss" and doneT > 0):
-		if f % 60 == 0:
-			_cpLog("boss beaten")
+		C.bb = C.get("bb", 0) + 1
+		if C.bb == 600:
+			_cpFail("victory screen still not up %d frames after Malakar fell (doneT=%.2f lock=%s hitStop=%.2f paused=%s)" % [C.bb, doneT, str(lock), hitStop, str(G.paused)])
 		return
 	var a: int = ROOM.a
 	if a != C.a:
@@ -1937,6 +1950,26 @@ func _campaign(f: int) -> void:
 			_cpFail("elevator did not start")
 			startTrans({lift=ROOM.lift})
 		return
+	if C.sub == "hollow":
+		var g: Dictionary = ROOM.gates[C.gi]
+		var sd: int = 1 if g.x < RW / 2.0 else -1     # wall is by the west door: stand east of it, face west
+		if C.t == 3:
+			_cpGo(ROOM.id, {x=g.x + sd * 170.0, y=float(g.bot)})
+			pl.face = -sd
+		KP.clear()
+		if C.t > 6 and C.t % 16 == 0:
+			P["attack"] = 1
+		if g.broken:
+			_cpLog("hollow wall opened")
+			C.sub = ""
+		elif C.t > 300:
+			_cpFail("could not open the hollow wall")
+			breakGate(g, C.gi)
+			C.sub = ""
+		return
+	if C.sub == "collect":
+		_cpCollect(f, C)
+		return
 	if C.sub == "boss":
 		_cpFight(f)
 		if C.t > 15000:
@@ -1961,10 +1994,16 @@ func _campaign(f: int) -> void:
 	if ROOM.kind == "save" and C.get("saved", -1) != a:
 		C.sub = "save"; C.t = 0
 		return
-	if ROOM.kind == "boss" and not int(META.boss):
-		_cpGo(ROOM.id, {x=600.0, y=float(FY)})
-		C.sub = "boss"; C.t = 0
+	if TEST.get("full", false) and _cpRoomWants(ROOM).size() and C.get("skipRoom", "") != ROOM.id:
+		C.sub = "collect"; C.t = 0; C.ci = 0
 		return
+	if ROOM.kind == "boss" and not int(META.boss):
+		if TEST.get("full", false) and _cpWanted(-1).size() and C.get("backtracks", 0) < 40:
+			pass
+		else:
+			_cpGo(ROOM.id, {x=600.0, y=float(FY)})
+			C.sub = "boss"; C.t = 0
+			return
 	# ----- choose the next goal for this world -----
 	var goal: String
 	if a < 5 and not hasAb(abilOf(a).id):
@@ -1973,6 +2012,10 @@ func _campaign(f: int) -> void:
 		goal = _cpNearest(a, "save")
 	else:
 		goal = _cpFind(a, "liftDown" if a < 5 else "boss")
+		if TEST.get("full", false):
+			var want = _cpWanted(a if a < 5 else -1)
+			if want.size():
+				goal = want[0]
 	if ROOM.id == goal:
 		if ROOM.kind == "liftDown":
 			C.sub = "lift"; C.t = 0
@@ -1984,10 +2027,19 @@ func _campaign(f: int) -> void:
 		_cpFinish(f)
 		return
 	var nxt: String = path[1]
+	if ROOM.lift != null and ROOM.lift.to == nxt:
+		C.sub = "lift"; C.t = 0
+		C.backtracks = C.get("backtracks", 0) + 1
+		return
 	var door = null
 	for d in ROOM.doors:
 		if d.to == nxt:
 			door = d
+	if DB.ROOMS[nxt].kind == "secret":
+		for i in ROOM.gates.size():
+			if ROOM.gates[i].kind == "secret" and not ROOM.gates[i].broken:
+				C.sub = "hollow"; C.t = 0; C.gi = i
+				return
 	# the ability gate stands between this door and where we came in
 	for i in ROOM.gates.size():
 		var g: Dictionary = ROOM.gates[i]
@@ -2001,6 +2053,123 @@ func _campaign(f: int) -> void:
 	if C.t % 2 == 0:
 		plTeleport(60.0 if door.side == "L" else RW - 60.0, door.row * H + GY - 2)
 		startTrans({door=door})
+
+const CP_NEED := {crack="dash", laser="roar", slam="slam", plasma="plasma", high="double"}
+
+## collectibles still in a room that the dino can get with the powers it has
+func _cpRoomWants(o: Dictionary) -> Array:
+	var out = []
+	for it in o.items:
+		if it.id == null:
+			continue
+		var got: bool = META.tanks.has(it.id) if it.type == "tank" else META.items.has(it.id)
+		if got:
+			continue
+		var need = ""
+		if int(it.cage) >= 0:
+			need = CP_NEED[o.cages[int(it.cage)].kind]
+		elif it.type == "tank" and it.y < GY - 300:
+			need = "double"
+		if need != "" and not hasAb(need):
+			continue
+		out.append(it)
+	if o.kind == "shrine" and o.a < 5 and gDone(o.a) and not META.items.has("core" + str(o.a)):
+		out.append({type="core", id="core" + str(o.a), x=W * .33, y=FY - 130, cage=-1})
+	if o.kind == "trial" and not META.cleared.has(o.id) and o.id != ROOM.id:
+		out.append({type="trial", id=o.id, x=0.0, y=0.0, cage=-1})
+	return out
+
+## rooms of world a (or every world when a < 0) that still hold something we can collect now
+func _cpWanted(a: int) -> Array:
+	var out = []
+	var best = []
+	for b in range(6):
+		if a >= 0 and b != a:
+			continue
+		for id in DB.AREAS[b]:
+			if _cpRoomWants(DB.ROOMS[id]).size():
+				var p = _cpPath(ROOM.id, id)
+				if p.size():
+					best.append([p.size(), id])
+	best.sort()
+	for q in best:
+		out.append(q[1])
+	return out
+
+func _cpCollect(f: int, C: Dictionary) -> void:
+	var wants = _cpRoomWants(ROOM)
+	if wants.is_empty():
+		KP.clear()
+		_cpLog("room collected")
+		C.sub = ""
+		return
+	var it = wants[0].duplicate()
+	for k in picks:
+		if k.id == it.id:
+			it.x = k.x; it.y = k.y   # the live pickup (a guardian's core drops where it fell)
+	var t: int = C.t % 100
+	KP.clear()
+	var cage = ROOM.cages[int(it.cage)] if int(it.cage) >= 0 else null
+	if cage != null and not cage.broken:
+		match cage.kind:
+			"crack":
+				if t == 5:
+					_cpGo(ROOM.id, {x=cage.x - 420.0, y=float(FY)}); pl.face = 1
+				if t > 8:
+					KP["right"] = true
+				if t == 14:
+					P["dash"] = 1
+			"laser":
+				if t == 5:
+					_cpGo(ROOM.id, {x=cage.x - 380.0, y=float(FY)}); pl.face = 1
+					pl.en = 100.0
+				if t == 12:
+					P["special"] = 1
+			"slam":
+				if t == 5:
+					_cpGo(ROOM.id, {x=float(cage.x) - 60, y=float(FY)})
+				if t == 10:
+					P["jump"] = 1
+				if t >= 24 and t <= 40:
+					KP["down"] = true
+				if t == 26:
+					P["attack"] = 1
+			"plasma":
+				if t == 5:
+					_cpGo(ROOM.id, {x=cage.x - 110.0, y=float(FY)}); pl.face = 1
+				if t > 8 and t % 14 == 0:
+					P["attack"] = 1
+	elif it.type == "tank" and it.y < GY - 300:
+		# the high ledge: run, jump, double jump, land on it
+		if t == 5:
+			_cpGo(ROOM.id, {x=it.x - 240.0, y=float(FY)}); pl.face = 1
+		if t > 8 and pl.x < it.x - 10:
+			KP["right"] = true
+		if t == 9:
+			P["jump"] = 1
+		if t == 26:
+			P["jump"] = 1
+	elif it.type == "egg":
+		if t == 5:
+			_cpGo(ROOM.id, {x=float(it.x), y=float(FY) - 380})
+	else:
+		if t == 5:
+			_cpGo(ROOM.id, {x=float(it.x) - 160, y=float(FY)}); pl.face = 1
+		if t > 6 and pl.x < it.x:
+			KP["right"] = true
+		if it.y < FY - 200 and t == 12:
+			P["jump"] = 1
+	if C.t > 420:
+		KP.clear()
+		_cpFail("could not collect %s %s" % [it.type, str(it.id)])
+		C.skipRoom = ROOM.id
+		if it.type == "tank":
+			META.tanks[it.id] = 1
+		else:
+			META.items[it.id] = 1
+		C.sub = ""
+	elif t == 99:
+		C.t += 0
 
 func _cpNearest(a: int, kind: String) -> String:
 	var best = ""
@@ -2089,7 +2258,7 @@ func _cpFinish(f: int) -> void:
 	print("CAMPAIGN END seed=%d boss=%d frames=%d fails=%d" % [DB.WORLD_SEED, int(META.boss), f, C.fails.size()])
 	for a in 6:
 		print("  world %d frames=%d dmg=%d hurts=%d falls=%d" % [a, C.frames[a], C.dmg[a], C.hurts[a], C.deaths[a]])
-	print("  gameovers=%d" % C.get("gameovers", 0))
+	print("  gameovers=%d completion=%d%% tanks=%d eggs=%d cores=%d fangs=%d lore=%d" % [C.get("gameovers", 0), completion(), tankCount(), eggCount(), coreCount(), fangCount(), loreCount()])
 	for x in C.fails:
 		print("  FAIL ", x)
 	TEST.quit = f + 2
@@ -2144,6 +2313,8 @@ func _test_tick(dt: float) -> void:
 			TEST.quit = f
 	if TEST.has("dw"):
 		_doorWalk(f)
+	if TEST.get("dbg", false) and bossDone and f % 60 == 0:
+		print("BOSSDBG f=%d doneT=%.2f lock=%s hitStop=%.2f trans=%s state=%s en=%d spawnQ=%d boss=%s" % [f, doneT, str(lock), hitStop, str(TRANS.on), G.state, en.size(), spawnQ.size(), str(boss != null and boss.dead)])
 	if TEST.has("cp"):
 		_campaign(f)
 	if TEST.get("sc", false):

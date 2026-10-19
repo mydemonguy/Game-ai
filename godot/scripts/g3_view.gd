@@ -708,6 +708,14 @@ func roomView(o) -> void:
 		RV.station = {col=col, gl=glowS(room_root, st.x, GY - 30, 180, 40, "#7dffb0", .4, D.fixtures + .5)}
 		var lab = labelN(top_room, "SAVE", 20, "#7dffb0")
 		place(lab, st.x, GY - 244, .5, 1)
+	# trial rooms: a golden sigil on the back wall
+	if o.kind == "trial":
+		var cx2: float = RW * .5
+		glowS(room_root, cx2, GY - 430, 900, 640, "#ffd24a", .12, D.back + .5)
+		var tl = labelN(room_root, "TRIAL OF THE OVERCHARGED", 34, "#ffe08a", DB.font_d)
+		tl.modulate.a = .55
+		place(tl, cx2, GY - 560)
+		tl.z_index = zi(D.back + .5)
 	# the hidden Starblood vault
 	if o.kind == "secret":
 		var cx: float = RW * .5

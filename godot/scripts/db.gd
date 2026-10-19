@@ -27,6 +27,8 @@ var CLASSIC: Dictionary    # the hand-shaped six worlds from rooms.json (boss ru
 var CLASSIC_AREAS: Array = []
 var CLASSIC_PROPS := {}
 var WORLD_SEED: int = 0
+const GEN_VER := 2         # current map generator version (1 = v4.0-4.2 maps, 2 = adds trial rooms)
+var WORLD_GV: int = GEN_VER
 var _gen_cache := {}
 var font_d: Font
 var font_u: Font
@@ -132,33 +134,36 @@ func _load_themes() -> void:
 		TEXMETA.themes[k] = q.meta
 
 ## switch the world map: 0 = the classic layout, anything else = a random layout from that seed
-func set_world(seed: int) -> void:
-	if seed == WORLD_SEED and (seed != 0 or is_same(ROOMS, CLASSIC)):
+func set_world(seed: int, gv := GEN_VER) -> void:
+	if seed == WORLD_SEED and gv == WORLD_GV and (seed != 0 or is_same(ROOMS, CLASSIC)):
 		return
 	WORLD_SEED = seed
+	WORLD_GV = gv
 	if seed == 0:
 		ROOMS = CLASSIC
 		AREAS = CLASSIC_AREAS
 		return
-	if not _gen_cache.has(seed):
+	var key = seed * 10 + gv
+	if not _gen_cache.has(key):
 		_gen_cache.clear()
-		var W = load("res://scripts/mapgen.gd").new().build(seed, self)
+		var W = load("res://scripts/mapgen.gd").new().build(seed, self, gv)
 		if W.is_empty():
 			ROOMS = CLASSIC
 			AREAS = CLASSIC_AREAS
 			return
-		_gen_cache[seed] = W
-	ROOMS = _gen_cache[seed].rooms
-	AREAS = _gen_cache[seed].areas
+		_gen_cache[key] = W
+	ROOMS = _gen_cache[key].rooms
+	AREAS = _gen_cache[key].areas
 
 ## rooms of a given seed without switching to it (title screen save summary)
-func rooms_of(seed: int) -> Dictionary:
+func rooms_of(seed: int, gv := GEN_VER) -> Dictionary:
 	if seed == 0:
 		return CLASSIC
 	var keep = WORLD_SEED
-	set_world(seed)
+	var keepV = WORLD_GV
+	set_world(seed, gv)
 	var r = ROOMS
-	set_world(keep)
+	set_world(keep, keepV)
 	return r
 
 ## drop cached textures of every theme except the one on screen (each theme is ~30 MB of GPU memory)

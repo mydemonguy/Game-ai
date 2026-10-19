@@ -17,6 +17,7 @@ const MAXH := 9
 
 var db
 var seed_: int = 1
+var gv: int = 2       # generator version: saves remember it so an old map never changes under them
 var s: int = 1
 
 # ---------- Park-Miller rng (the game's own) ----------
@@ -49,8 +50,9 @@ static func hstr(t: String) -> int:
 
 # ---------- whole run ----------
 ## returns {rooms={id: room}, areas=[[ids] x6], themes=[[t0,t1,t2,t3] x6]}
-func build(seed: int, db_) -> Dictionary:
+func build(seed: int, db_, ver := 2) -> Dictionary:
 	db = db_
+	gv = ver
 	seed_ = seed
 	rs(seed * 7 + 3)
 	var pool: Array = shuffle(db.THEMES2)
@@ -224,6 +226,8 @@ func _layout(a: int):
 	br.append({path=["hall"] if rnd() < .5 else [], last="item", reg=-1, tank=0})
 	br.append({path=["hall"] if rnd() < .4 else [], last="item", reg=-1, tank=1})
 	br.append({path=[], last="secret", lastSide="R", reg=-1})
+	if a >= 1 and gv >= 2:
+		br.append({path=["hall"] if rnd() < .4 else [], last="trial", reg=-1})
 	for c in ri(1, 2):
 		br.append({path=["hall"] if rnd() < .5 else [], last="cache", reg=-1})
 	if a == 5:
@@ -233,7 +237,7 @@ func _layout(a: int):
 		for t in 40:
 			var cands = []
 			for o in R:
-				if o.kind in ["arena", "gate", "liftDown", "boss", "save", "item", "secret", "shrine", "cache"]:
+				if o.kind in ["arena", "gate", "liftDown", "boss", "save", "item", "secret", "shrine", "cache", "trial"]:
 					continue
 				if b.reg >= 0 and o.reg != b.reg:
 					continue
@@ -466,6 +470,15 @@ func _genRoom(o: Dictionary, a: int, rooms: Array, exits: Array) -> void:
 					o.crates.append(cx)
 			if rnd() < .5:
 				o.coins.append(RW * (.3 + rnd() * .4))
+		"trial":
+			# optional lockdown full of Overcharged robots; big reward when cleared
+			o.waves = []
+			for wv in 3:
+				var w = []
+				for q in 3 + ri(0, 1) + int(a / 2.0):
+					w.append(pick(pool))
+				o.waves.append(w)
+			plats.assign(plats.filter(func(p): return p.y < GY - 300))
 		"cache":
 			plats.clear()
 			for f in [.3, .45, .7]:

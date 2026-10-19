@@ -328,7 +328,7 @@ func spawnEnemy(type: String, side: float, quiet := false):
 	# Overcharged robots: rarer gold-lit versions, tougher and hitting harder, worth extra Stardust
 	e.oc = false
 	e.dmul = 1.0
-	if type in ["g", "r", "b", "c"] and G.rush == null and (ocForce or randf() < .04 + .03 * G.lv):
+	if type in ["g", "r", "b", "c"] and G.rush == null and (ocForce or randf() < (.6 if ROOM != null and ROOM.kind == "trial" else .04 + .03 * G.lv)):
 		e.oc = true
 		e.dmul = 1.25
 		e.hp *= 1.9

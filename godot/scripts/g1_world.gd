@@ -385,7 +385,7 @@ func updWorld(dt: float) -> void:
 		if A.i < 0 and not lock and p.x > 440 and p.x < RW - 440:
 			lock = true; A.i = 0
 			spawnWave(o.waves[0])
-			showBanner("Lockdown", "Wave 1 of " + str(o.waves.size()), 1.4)
+			showBanner("Trial" if o.kind == "trial" else "Lockdown", ("Overcharged robots · " if o.kind == "trial" else "") + "Wave 1 of " + str(o.waves.size()), 1.4)
 			sfx("warn", null, null, 1.0, .15)
 			sfx("alarm", null, null, 1.0, 1.0)
 			allyArena(o, 0)
@@ -402,7 +402,14 @@ func updWorld(dt: float) -> void:
 				addDust(10)
 				save_meta()
 				G.score += 500
-				showBanner("Room clear", "Doors unlocked", 1.6)
+				if o.kind == "trial":
+					showBanner("Trial complete", "+◆25 Stardust · health restored", 2.4)
+					addDust(25)
+					p.hp = float(p.max)
+					for k in 6:
+						picks.append(mk_drop(p.x + (k - 2.5) * 60, p.y - 260, (k - 2.5) * 90, -800, "coin", 14))
+				else:
+					showBanner("Room clear", "Doors unlocked", 1.6)
 				sfx("clear", null, null, 1.0, .5)
 				picks.append(mk_drop(p.x + 120, p.y - 200, 120, -600, "fruit", 14))
 				picks.append(mk_drop(p.x - 120, p.y - 200, -120, -600, "shard", 14))
