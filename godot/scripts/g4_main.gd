@@ -2024,6 +2024,10 @@ func _test_init() -> void:
 				META.seed = DB.WORLD_SEED
 				META.gv = DB.WORLD_GV
 				META.save = {room="0-0", x=210, score=0}
+				if TEST.get("hard", false):
+					META.hard = 1
+				if TEST.get("easy", false):
+					META.easy = 1
 				if TEST.get("shuffle", false):
 					var r = Rng.new(int(META.seed) * 13 + 5)
 					var pm = [0, 1, 2, 3, 4]
@@ -2045,6 +2049,11 @@ func _test_init() -> void:
 				ocForce = true
 			"aegis":
 				aegisForce = true
+			"rift":
+				# Rift Mode campaign (put before --campaign)
+				TEST.hard = true
+			"story":
+				TEST.easy = true
 			"full":
 				TEST.full = true
 			"nowalk":
