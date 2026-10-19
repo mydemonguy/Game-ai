@@ -1382,13 +1382,13 @@ func startRush() -> void:
 	G.lives = 3
 	if _endlessNext:
 		_endlessNext = false
-		startGame(ENDLESS_ROOM, {x=300.0, y=GY})
+		startGame(String(TEST.get("endroom", ENDLESS_ROOMS[randi() % ENDLESS_ROOMS.size()])), {x=300.0, y=GY})
 		showBanner("Endless Siege", "Step in. They won't stop coming.", 2)
 		return
 	startGame(DB.RUSH[0], {x=W * .72, y=GY})
 	showBanner("Golden Gauntlet" if rushIsGold else "Boss Rush", "Fight 1 of 6", 2)
 
-const ENDLESS_ROOM := "1-7"
+const ENDLESS_ROOMS := ["1-7", "2-7", "3-7", "4-7"]   # the classic map's big arenas; Endless Siege picks one each time
 
 var _endlessNext := false
 
@@ -2092,6 +2092,8 @@ func _test_init() -> void:
 				TEST.endless = true
 			"chalch":
 				PREFS.chalCh = v
+			"endroom":
+				TEST.endroom = v
 			"showcard":
 				TEST.showcard = v
 			"gatetest":

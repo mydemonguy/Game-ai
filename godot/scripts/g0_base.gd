@@ -226,7 +226,7 @@ class Rng:
 
 # ---------- difficulty and progression helpers ----------
 func dm() -> float:
-	return (1.0 + G.lv * 0.12) * (1.45 if META.get("hard", 0) else 1.0) * (1.25 if rushGold() else 1.0) * (1.0 + .025 * endlessWave())
+	return (1.0 + (1 if endlessOn() else G.lv) * 0.12) * (1.45 if META.get("hard", 0) else 1.0) * (1.25 if rushGold() else 1.0) * (1.0 + .025 * endlessWave())
 
 func rushGold() -> bool:
 	return G.rush != null and G.rush.get("gold", false)
