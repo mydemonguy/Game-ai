@@ -52,6 +52,38 @@ func _notification(what: int) -> void:
 # ---------- input ----------
 const ACTIONS := ["left", "right", "jump", "attack", "special", "dash", "down", "arm", "armc"]
 
+## Photo mode (pause → Photo mode): hide every overlay so the paused scene can be screenshotted
+var photo := false
+
+func photoMode() -> void:
+	photo = true
+	hideCard()
+	hud_layer.visible = false
+	padShow(false)
+	for t in _toasts:
+		t.visible = false
+	# a hint that fades away before you take the picture
+	var lay = CanvasLayer.new()
+	lay.layer = 40
+	add_child(lay)
+	var l = labelN(lay, "Photo mode · tap or press any button to return", 26, "#ece7ff", DB.font_u6, 6)
+	await get_tree().process_frame
+	l.position = Vector2((get_viewport().get_visible_rect().size.x - l.size.x) / 2.0, 30)
+	var tw = create_tween()
+	tw.tween_interval(1.4)
+	tw.tween_property(l, "modulate:a", 0.0, .6)
+	tw.tween_callback(lay.queue_free)
+
+func _input(event: InputEvent) -> void:
+	if not photo:
+		return
+	var pressed: bool = (event is InputEventScreenTouch or event is InputEventMouseButton or event is InputEventKey or event is InputEventJoypadButton) and event.is_pressed()
+	if pressed:
+		photo = false
+		hud_layer.visible = true
+		get_viewport().set_input_as_handled()
+		pauseCard()
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("pause") and not event.is_echo():
 		if G.state == "play":
@@ -787,6 +819,8 @@ func pauseCard() -> void:
 	if loreCount() or META.sable or codexCount() or featCount():
 		btns.append(["Archive", archiveCard, true])
 	btns.append(["Settings", func(): soundCard(pauseCard), true])
+	if pl2 == null:
+		btns.append(["Photo mode", photoMode, true])
 	btns.append(["Controls", func(): controls(pauseCard), true])
 	btns.append(["Quit to title", toTitle, true])
 	var mp = MapView.new()
@@ -1916,6 +1950,8 @@ func _test_init() -> void:
 				TEST.god = true
 			"pausef":
 				TEST.pausef = int(v)
+			"photof":
+				TEST.photof = int(v)
 			"doorwalk":
 				META = fresh_meta()
 				META.seed = DB.WORLD_SEED
@@ -2669,6 +2705,8 @@ func _test_tick(dt: float) -> void:
 		for e in en:
 			L.append("%s@%d,%d%s" % [e.type, e.x, e.y, "" if e.body == null else "b"])
 		print("LOCK f=", f, " room=", ROOM.id, " wave=", ROOM.arena.i if ROOM.arena != null else -1, " cam=", int(cam), " pl=", int(pl.x), " en=", L, " q=", spawnQ.size())
+	if TEST.get("photof", 0) == f:
+		photoMode()
 	if TEST.get("pausef", 0) == f:
 		togglePause()
 	if TEST.get("travelf", 0) == f:

@@ -403,7 +403,7 @@ func spawnEnemy(type: String, side: float, quiet := false):
 	# Overcharged robots: rarer gold-lit versions, tougher and hitting harder, worth extra Stardust
 	e.oc = false
 	e.dmul = 1.0
-	if type in ["g", "r", "b", "c"] and G.rush == null and (ocForce or randf() < (.6 if ROOM != null and ROOM.kind == "trial" else .04 + .03 * G.lv)):
+	if type in ["g", "r", "b", "c", "h", "d"] and G.rush == null and (ocForce or randf() < (.6 if ROOM != null and ROOM.kind == "trial" else .04 + .03 * G.lv)):
 		e.oc = true
 		e.dmul = 1.25
 		e.hp *= 1.9
@@ -546,7 +546,7 @@ func updEnemy(e, dt: float) -> void:
 			e.t = max(1.4, 2.8 - G.lv * .25)
 			var a = atan2(pl.y - 80 - (e.y - 35), pl.x - e.x)
 			var v = 560.0 + G.lv * 30
-			shots.append(mk_shot(e.x, e.y - 35, cos(a) * v, sin(a) * v, 15, DB.ETYPES.d.dmg * dm(), false, 3.2, "#ff8a3a"))
+			shots.append(mk_shot(e.x, e.y - 35, cos(a) * v, sin(a) * v, 15, DB.ETYPES.d.dmg * dm() * float(e.get("dmul", 1.0)), false, 3.2, "#ff8a3a"))
 			sEnemy("shot", e)
 			muzzle(e.x, e.y - 35, "#ff8a3a")
 		return
@@ -604,7 +604,7 @@ func updEnemy(e, dt: float) -> void:
 		elif e.state == "leap":
 			if not e.hitP and overlap(ebox(e), pbox()):
 				e.hitP = true
-				hurtPlayer(DB.ETYPES.h.dmg * dm(), e.face * 520)
+				hurtPlayer(DB.ETYPES.h.dmg * dm() * float(e.get("dmul", 1.0)), e.face * 520)
 			e.vx *= pow(.25, dt)
 			if e.t <= 0:
 				e.state = "walk"; e.t = .5 + randf() * .4

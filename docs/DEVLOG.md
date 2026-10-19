@@ -18,6 +18,8 @@
 - **District hazards** (4.5): icy districts drop icicle clusters when you pass under (14 damage, regrow after 6 s), smoggy districts vent toxic gas on a cycle with a bubbling warning, neon districts have hazard-striped floor plates that flicker and then arc. Only in the new districts' halls, kept clear of doors, gates, items and machines.
 - **Map of the day** (4.5): the same map for everyone on a given day.
 - **100% completion fixed on random maps** (4.6): found by the completionist bot. Random worlds had no Chapter VI shrine room, where the classic map keeps the sixth golden egg; it now waits in Chapter VI's first supply cache (old saves get it too). `--gencheck` now verifies every collectible exists exactly once per world.
+- **Photo mode** (4.10): pause → Photo mode hides the HUD, buttons and menus so you can screenshot the scene; tap or press anything to come back. Single-player only.
+- **Overcharged hounds and drones** (4.10): they can now spawn gold-lit too, with the same extra health, damage and Stardust.
 - **Map of the day streak** (4.9): beat the day's map on consecutive days to build a streak; the new-game screen shows today's code, your streak and your best.
 - **Personal records** (4.6): fastest clear per map code and mode, shown on the victory screen.
 - Long cards show a "more below" hint at phone font sizes.

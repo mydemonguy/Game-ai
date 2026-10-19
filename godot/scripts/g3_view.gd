@@ -1774,6 +1774,12 @@ func mkEnemyView(e) -> Dictionary:
 		"h": v = mkHound()
 		"d": v = mkDrone()
 		_: v = mkRobot(e)
+	if e.get("oc", false) and e.type in ["h", "d"]:
+		# Overcharged hounds and drones: gold aura and a warm tint like the robots
+		var au = gI(0, -50 if e.type == "h" else 0, 260 if e.type == "h" else 200, "#ffd24a", .45)
+		v.root.add_child(au)
+		v.root.move_child(au, 0)
+		v.root.modulate = Color(1.0, .9, .62)
 	v.root.z_index = zi(D.drones if e.type == "d" else D.enemies)
 	act_root.add_child(v.root)
 	v.imgs = imgsOf(v.root, [])
