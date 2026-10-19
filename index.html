@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aetherfall</title>
+<meta name="description" content="Aetherfall: a sci-fi fantasy side-scroller. One small dino, six worlds, one very big Rift. Play free in your browser or on Android.">
+<meta property="og:title" content="Aetherfall">
+<meta property="og:description" content="One small dino. One stolen sky. One very big Rift. Play free in your browser or on Android.">
+<meta property="og:image" content="https://mydemonguy.github.io/Game-ai/hero.jpg">
+<meta property="og:url" content="https://mydemonguy.github.io/Game-ai/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Chakra+Petch:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--void:#07060f;--panel:#0c0a1a;--ink:#ece7ff;--dim:#9d97bd;--aether:#5ce1ff;--rune:#b48cff;--ember:#ff8a4c}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--void);color:var(--ink);font-family:"Chakra Petch",system-ui,sans-serif;line-height:1.55}
+a{color:var(--aether)}
+.hero{position:relative;min-height:88vh;display:flex;align-items:flex-end;padding:0 16px 7vh;background:linear-gradient(180deg,rgba(7,6,15,.15),rgba(7,6,15,.55) 55%,var(--void)),url(hero.jpg) 55% center/cover no-repeat}
+.wrap{max-width:1080px;margin:0 auto;width:100%}
+.eyebrow{letter-spacing:.32em;text-transform:uppercase;color:var(--aether);font-size:13px;margin:0 0 8px}
+h1{font-family:Cinzel,Georgia,serif;font-weight:900;font-size:clamp(52px,11vw,124px);line-height:.95;margin:0;letter-spacing:.05em;
+  background:linear-gradient(180deg,#fff 10%,var(--aether) 58%,var(--rune));-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 24px rgba(92,225,255,.35))}
+.tag{font-family:Cinzel,Georgia,serif;color:#cfc8ee;font-size:clamp(17px,2.4vw,23px);margin:14px 0 26px}
+.btns{display:flex;flex-wrap:wrap;gap:12px}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:14px 26px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;color:var(--ink);
+  border:2px solid var(--aether);background:rgba(92,225,255,.14);clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%);font-size:17px}
+.btn:hover{background:rgba(92,225,255,.28)}
+.btn.alt{border-color:var(--rune);background:rgba(180,140,255,.1)}
+.note{color:var(--dim);font-size:14px;margin-top:12px}
+section{padding:56px 16px}
+h2{font-family:Cinzel,Georgia,serif;font-size:clamp(26px,4vw,40px);margin:0 0 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+.card{background:var(--panel);border:1px solid rgba(180,140,255,.28);padding:20px}
+.card h3{margin:0 0 6px;font-size:20px}
+.shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.shots img{width:100%;height:auto;display:block;border:1px solid rgba(180,140,255,.25)}
+.dino{display:flex;gap:16px;align-items:flex-start}
+.who{font-weight:700;letter-spacing:.06em}
+kbd{font-family:inherit;font-weight:700;color:var(--aether)}
+ol li{margin:6px 0}
+footer{padding:36px 16px 60px;color:var(--dim);font-size:14px;border-top:1px solid rgba(180,140,255,.18)}
+  ul.feat{margin:.6em 0 0 1.1em;padding:0;line-height:1.55}
+  ul.feat li{margin:.35em 0}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <p class="eyebrow">A Starblood saga · six worlds</p>
+    <h1>Aetherfall</h1>
+    <p class="tag">One small dino. One stolen sky. One very big Rift.</p>
+    <div class="btns">
+      <a class="btn" href="play/">▶ Play in your browser</a>
+      <a class="btn alt" href="https://github.com/mydemonguy/Game-ai/raw/apk-godot/Aetherfall-Godot.apk">⬇ Android app</a>
+    </div>
+    <p class="note">Free. The browser version is about a 70 MB download the first time; it works on computers and on phones held sideways. Co-op needs the Android app.</p>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h2>The story</h2>
+    <p>For a thousand years the kingdom of Ithra ran on the Aether, the living light between the stars, guarded by the Starblood, a clan of dinosaurs whose claws could hold starlight. Then the Egg-Keeper Malakar tore open a Rift at the world's core, fused his followers with iron and shadow, and hunted the Starblood until none were left.</p>
+    <p>Thirty years later, deep in Hangar Nine, one egg cracks. Out tumbles <b>Tyko</b>: small, green, and very hungry, with a star-spirit named Lyra living in his collar. Six worlds, five shrine guardians and one Void Sovereign stand between him and the dawn.</p>
+    <p><b>A new map every game.</b> Each new game builds all six worlds fresh: about 25 rooms each, spread over 26 different districts, from the Hexed Vault to the Twilight Causeway. Where the routes go, where the shrine guardians wait, where the save stations, energy tanks and secret vaults are hidden: all of it changes every time.</p>
+    <ul class="feat">
+      <li><b>Map codes</b> on the pause screen, so a friend can play your exact map, and <b>Shuffle powers</b> to mix up which shrine grants which power.</li>
+      <li><b>Map of the day</b>: the same map and the same daily twist for everyone, with a streak for days in a row.</li>
+      <li><b>Overcharged</b> robots glowing gold, <b>Aegis Troopers</b> that block everything from the front until they stop to fire, and optional <b>Trial</b> rooms.</li>
+      <li>District hazards: icicles, toxic vents, sparking floors and void rifts.</li>
+      <li><b>Challenges</b>: Boss Rush, the <b>Golden Gauntlet</b> (every guardian Overcharged) and <b>Endless Siege</b>, as Tyko, Zeph or Rook.</li>
+      <li>A <b>Robot codex</b>, 16 <b>Feats</b>, lifetime stats and a <b>Photo mode</b>.</li>
+      <li><b>Story mode</b> takes 40% off the damage if you'd rather just explore; <b>Rift Mode</b> waits for those who finish.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="shots">
+      <img src="shot-hangar.jpg" alt="Tyko in Hangar Nine with a drone and a clawbot" loading="lazy">
+      <img src="shot-krell.jpg" alt="Fighting Foreman Krell, the first shrine guardian" loading="lazy">
+      <img src="shot-coop.jpg" alt="Co-op: Tyko and Zeph fighting together" loading="lazy">
+      <img src="shot-dinos.jpg" alt="Choosing Zeph or Rook for co-op" loading="lazy">
+      <img src="shot-districts.jpg" alt="The Verdant Spire, one of 26 districts" loading="lazy">
+      <img src="shot-elevator.jpg" alt="A capsule elevator in the Tidal Relay" loading="lazy">
+      <img src="shot-map.jpg" alt="The pause map, coloured by district" loading="lazy">
+      <img src="shot-siege.jpg" alt="Endless Siege: holding off wave 5 in the Iron Armory" loading="lazy">
+      <img src="shot-gauntlet.jpg" alt="Golden Gauntlet: an Overcharged Foreman Krell" loading="lazy">
+      <img src="shot-rift.jpg" alt="A void rift pulling Tyko toward its core" loading="lazy">
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2>Three dinos</h2>
+    <div class="grid">
+      <div class="card"><h3 style="color:#7dffb0">Tyko · The Last Starblood</h3><p>The hero of the saga. Balanced claws and speed, a Comet Dash, a double jump and a Starburst roar, each found in the shrines.</p></div>
+      <div class="card"><h3 style="color:#c9a8ff">Zeph · Skyreach Scout</h3><p>A wild raptor from the cliffs who heard Tyko's roar and came down to adopt him as her little brother. Fastest runner, highest jump.</p></div>
+      <div class="card"><h3 style="color:#7fd8ff">Rook · Iron-Horn of Aeris</h3><p>A triceratops hatched in a cargo crate and raised by dock robots. Slow, tough, and his dash is a horn charge.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap grid">
+    <div>
+      <h2>Controls</h2>
+      <p><b>Phone:</b> slide on the left half to move, tap the buttons on the right to jump, strike, dash and roar. Tap <b>II</b> for the map.</p>
+      <p><b>Keyboard:</b> <kbd>A D</kbd> move · <kbd>W</kbd> / <kbd>Space</kbd> jump · <kbd>J</kbd> strike · <kbd>L</kbd> dash · <kbd>K</kbd> roar · <kbd>S</kbd> drop · <kbd>Esc</kbd> map. Game controllers work too.</p>
+    </div>
+    <div>
+      <h2>Co-op on Android</h2>
+      <ol>
+        <li>Install the Android app on two phones on the same Wi-Fi.</li>
+        <li>Phone one: <b>Co-op → Host a game</b> (plays Tyko).</li>
+        <li>Phone two: <b>Co-op → Join a game</b>, pick Zeph or Rook.</li>
+      </ol>
+      <p class="note">Android may ask you to allow installing apps from your browser the first time.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>Made with Godot Engine. Music by Tanner Helland (CC BY 4.0). Sound effects by Kenney (CC0) and synthesised for Aetherfall. Fonts: Cinzel and Chakra Petch (SIL OFL), DejaVu. Source on <a href="https://github.com/mydemonguy/Game-ai">GitHub</a>.</p>
+    <p>Found a bug? Open an issue on <a href="https://github.com/mydemonguy/Game-ai/issues">GitHub</a>.</p>
+  </div>
+</footer>
+</body>
+</html>
