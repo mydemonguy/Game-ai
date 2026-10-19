@@ -17,6 +17,9 @@
 - New sounds: capsule charge hum, arrival chime, Overcharged sparkle, trial horn.
 - **District hazards** (4.5): icy districts drop icicle clusters when you pass under (14 damage, regrow after 6 s), smoggy districts vent toxic gas on a cycle with a bubbling warning, neon districts have hazard-striped floor plates that flicker and then arc. Only in the new districts' halls, kept clear of doors, gates, items and machines.
 - **Map of the day** (4.5): the same map for everyone on a given day.
+- **100% completion fixed on random maps** (4.6): found by the completionist bot. Random worlds had no Chapter VI shrine room, where the classic map keeps the sixth golden egg; it now waits in Chapter VI's first supply cache (old saves get it too). `--gencheck` now verifies every collectible exists exactly once per world.
+- **Personal records** (4.6): fastest clear per map code and mode, shown on the victory screen.
+- Long cards show a "more below" hint at phone font sizes.
 - **Balance check**: playing without god mode, the bot does the same on random maps as on the classic map (12 falls / 3 game overs vs 13 / 3); Chapter III is the hardest on both.
 
 ### Under the hood
