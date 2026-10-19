@@ -408,7 +408,7 @@ func startNew() -> void:
 ## which world layout to play: a fresh random one, one from a friend's map code, or the original
 func mapCard(hard: bool, back: Callable) -> void:
 	showCard({ey="New game" + (" · Rift Mode" if hard else ""), h="Choose a map",
-		b="[b]New random map[/b] · fresh routes, guardians, saves and treasure.\n[b]Map of the day[/b] · the same map for everyone today.\n[b]Map code[/b] · a friend's map, from their pause screen.\n[b]Classic map[/b] · the original hand-built worlds.\n\n[b]Shuffle powers[/b] · [color=%s]%s[/color] · shrines grant different powers." % ["#7dffb0" if pendShuffle else "#9d97bd", "ON" if pendShuffle else "off"],
+		b="[b]New random map[/b] · fresh routes, guardians, saves and treasure.\n" + dailyLine() + "\n[b]Map code[/b] · a friend's map, from their pause screen.\n[b]Classic map[/b] · the original hand-built worlds.\n\n[b]Shuffle powers[/b] · [color=%s]%s[/color] · shrines grant different powers." % ["#7dffb0" if pendShuffle else "#9d97bd", "ON" if pendShuffle else "off"],
 		btns=[["New random map", func():
 			pendSeed = -1
 			beginSaga(hard)], ["Map of the day", func():
@@ -418,6 +418,36 @@ func mapCard(hard: bool, back: Callable) -> void:
 			beginSaga(hard), true], ["Shuffle powers: " + ("on" if pendShuffle else "off"), func():
 			pendShuffle = not pendShuffle
 			mapCard(hard, back), true], ["Back", back, true]]})
+
+func _dayKey(offset := 0) -> String:
+	var d = Time.get_date_dict_from_unix_time(int(Time.get_unix_time_from_system()) + offset * 86400)
+	return "%04d-%02d-%02d" % [d.year, d.month, d.day]
+
+## Map of the day streak: consecutive (UTC) days you beat that day's map
+func dailyWin() -> void:
+	var dl = PREFS.get("daily", null)
+	if typeof(dl) != TYPE_DICTIONARY:
+		dl = {last="", streak=0, best=0}
+	var today = _dayKey()
+	if dl.last != today:
+		dl.streak = int(dl.streak) + 1 if dl.last == _dayKey(-1) else 1
+		dl.last = today
+		dl.best = max(int(dl.get("best", 0)), int(dl.streak))
+	PREFS.daily = dl
+	save_prefs()
+
+func dailyLine() -> String:
+	var s = "[b]Map of the day[/b] · the same map for everyone today (code [b]%s[/b])." % mapCode(dailySeed())
+	var dl = PREFS.get("daily", null)
+	if typeof(dl) == TYPE_DICTIONARY:
+		var live: bool = dl.last == _dayKey() or dl.last == _dayKey(-1)
+		if dl.last == _dayKey():
+			s += " [color=#7dffb0]Beaten today ✓[/color]"
+		if live and int(dl.streak) > 0:
+			s += " Streak [b]%d[/b] day%s" % [int(dl.streak), "" if int(dl.streak) == 1 else "s"]
+		if int(dl.get("best", 0)) > 1:
+			s += " · best %d" % int(dl.best)
+	return s
 
 ## the same seed for everyone on a given (UTC) day
 func dailySeed() -> int:
@@ -544,6 +574,8 @@ func victory() -> void:
 	feat("saga")
 	if int(META.get("seed", 0)) == dailySeed():
 		feat("daily")
+		dailyWin()
+		recLine += "\n[color=#7dffb0][b]Map of the day beaten[/b][/color] · streak %d day%s" % [int(PREFS.daily.streak), "" if int(PREFS.daily.streak) == 1 else "s"]
 	if META.get("perm", []).size() == 5:
 		feat("shuffle")
 	if wasRift:
@@ -2667,6 +2699,17 @@ func _test_tick(dt: float) -> void:
 				touchy = true
 				PREFS.timer = true
 				soundCard(toTitle)
+			"dailytest":
+				PREFS.daily = {last=_dayKey(-1), streak=3, best=3}
+				dailyWin(); print("DAILY ", PREFS.daily)
+				dailyWin(); print("DAILY ", PREFS.daily)
+				PREFS.daily = {last=_dayKey(-3), streak=4, best=4}
+				dailyWin(); print("DAILY ", PREFS.daily)
+				PREFS.erase("daily")
+				dailyWin(); print("DAILY ", PREFS.daily)
+			"mapcard":
+				PREFS.daily = {last=_dayKey(-1), streak=3, best=5}
+				mapCard(false, toTitle)
 			"stats":
 				PREFS.stats = {games=7, wins=2, time=31234.0, falls=19, kills=1543, guards=14, dust=5120}
 				PREFS.records = {"7KQ2M3-shuffle": 4100.0, "classic": 5400.0, "AB12CD-rift": 6000.0}

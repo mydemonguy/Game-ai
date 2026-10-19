@@ -18,6 +18,7 @@
 - **District hazards** (4.5): icy districts drop icicle clusters when you pass under (14 damage, regrow after 6 s), smoggy districts vent toxic gas on a cycle with a bubbling warning, neon districts have hazard-striped floor plates that flicker and then arc. Only in the new districts' halls, kept clear of doors, gates, items and machines.
 - **Map of the day** (4.5): the same map for everyone on a given day.
 - **100% completion fixed on random maps** (4.6): found by the completionist bot. Random worlds had no Chapter VI shrine room, where the classic map keeps the sixth golden egg; it now waits in Chapter VI's first supply cache (old saves get it too). `--gencheck` now verifies every collectible exists exactly once per world.
+- **Map of the day streak** (4.9): beat the day's map on consecutive days to build a streak; the new-game screen shows today's code, your streak and your best.
 - **Personal records** (4.6): fastest clear per map code and mode, shown on the victory screen.
 - Long cards show a "more below" hint at phone font sizes.
 - **Robot codex** (4.7): pause → Archive → Robot codex. Every robot, guardian and Malakar you meet gets an entry with lore and a fighting tip; "New codex entry" pops up the first time. Kept across games.
@@ -37,6 +38,7 @@
   - `--full` adds completionist mode: opens every tank cage with the right power, double-jumps to high tanks, scratches open hollow walls, takes the egg and Aether core, clears trials, and backtracks by elevator for items that needed a later power.
   - Without `--god` it plays mortal: counts falls and takes *Continue from save* on game over.
 - Results so far: 10+ full campaigns on random, shuffled and classic maps all reached and beat Malakar. Bugs it found and that are fixed: off-screen roar waves were culled after a teleport (bot), gates now retried like a player would, completionist ping-pong between worlds (bot), Aether core drops where the guardian dies (bot now reads the real position).
+- 4.8 checks: a shuffled-powers campaign on the new code earned Saga's End, Mixed Up, Comet Run, Unbroken, Gold Rush and Archivist on its own; the fight bot cleared Boss Rush and the Golden Gauntlet (Gauntlet + Golden Gauntlet feats); co-op host/client run clean; deployed web build loads with no console errors.
 - `--gencheck=N`: builds N random worlds and checks doors, overlaps, room counts and that each shrine is before its gate and the exit after it (1,000+ seeds clean).
 - `tools/reach_check.py` (on `--gendump` output): jump-reachability of every door, item and station using the real jump physics (50+ seeds clean; catches broken climbs when platforms are removed).
 - `--doorwalk`: walks through every door and checks the landing spot (all clean).
